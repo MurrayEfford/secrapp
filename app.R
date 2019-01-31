@@ -25,6 +25,7 @@ ui <- function(request) {
         includeCSS("secrstyle.css"),
         withMathJax(),
         tags$head(tags$style(".mypanel{margin-top:5px; margin-bottom:10px; padding-bottom: 5px;}")),
+        tags$head(tags$style("#fitPrint{color:blue; font-size:12px; overflow-y:scroll; max-height: 200px; background: ghostwhite;}")),
         br(),
         navlistPanel(id = "navlist", widths = c(2,10), well=TRUE,
                      
@@ -122,7 +123,9 @@ ui <- function(request) {
                                           h2("Results"),
                                           
                                           fluidRow(
-                                              column(12, verbatimTextOutput("fitPrint"))
+                                              column(12, 
+                                                     
+                                                     verbatimTextOutput("fitPrint"))
                                           ),
                                           
                                           fluidRow(
@@ -132,7 +135,7 @@ ui <- function(request) {
                                                                  id = "tabs",
                                                                  tabPanel("Array",
                                                                           fluidRow(
-                                                                              column(9, style='padding:0px;', plotOutput("arrayPlot", height = 340,
+                                                                              column(9, style='padding:0px;', plotOutput("arrayPlot", 
                                                                                                                          click = clickOpts(id="arrayClick", clip = FALSE))),
                                                                               column(3, br(), conditionalPanel("input.gridlines != 'None'",
                                                                                                                uiOutput("uigridlines") ),
@@ -1491,7 +1494,7 @@ server <- function(input, output, session) {
     
     ##############################################################################
     
-    output$arrayPlot <- renderPlot( height = 340, width = 340, {
+    output$arrayPlot <- renderPlot( { # height = 340, width = 340, {
         tmpgrid <- detectorarray()
         ch <- capthist()
         if (is.null(tmpgrid)) return (NULL)
