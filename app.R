@@ -127,6 +127,7 @@ ui <- function(request) {
                                                      tabsetPanel(type = "pills",
                                                                  id = "plottabs",
                                                                  tabPanel("Array",
+                                                                          br(),
                                                                           fluidRow(
                                                                               column(9, style='padding:0px;', plotOutput("arrayPlot", 
                                                                                                                          click = clickOpts(id="arrayClick", clip = FALSE))),
@@ -135,9 +136,8 @@ ui <- function(request) {
                                                                                      br(), uiOutput('xycoord'))
                                                                           ),
                                                                           fluidRow(
-                                                                              column(2, checkboxInput("tracks", "All tracks", FALSE)),
+                                                                              column(3, checkboxInput("tracks", "All tracks", FALSE)),
                                                                               column(3, checkboxInput("varycol", "Vary colours", TRUE)),
-                                                                              column(3, checkboxInput("tracksi", "Selected track", FALSE)),
                                                                               column(2, numericInput("animal", "Select animal", min = 0, max = 2000, 
                                                                                                      step = 1, value = 0)),
                                                                               column(2, br(), conditionalPanel("input.animal>0", uiOutput("uianimalID")))
@@ -216,7 +216,7 @@ ui <- function(request) {
                      tabPanel("Habitat mask",
                               
                               fluidRow(
-                                  column(7,
+                                  column(4,
                                          
 
                                          wellPanel(class = "mypanel", 
@@ -224,24 +224,24 @@ ui <- function(request) {
                                                        column(6, 
                                                               numericInput("buffer", "Buffer width (m)",
                                                                            min = 0,
-                                                                           max = 20,
+                                                                           max = 100000,
                                                                            value = 100,
-                                                                           step = 0.5,
-                                                                           width = 250),
+                                                                           step = 5,
+                                                                           width = 180),
                                                               numericInput("habnx", "Mesh dimension nx",
                                                                            min = 10,
                                                                            max = 1000,
                                                                            value = 32,
                                                                            step = 1,
-                                                                           width = 180)
-                                                       ),
-                                                       column(6, 
+                                                                           width = 180),
                                                               radioButtons("maskshapebtn", label = "Shape",
                                                                            choices = c("Rectangular", "Rounded"), 
-                                                                           selected = "Rounded")
+                                                                           selected = "Rounded", inline = TRUE)
                                                        )
-                                                   ),
-                                                   br(),
+                                                   )
+                                         ),
+                                         wellPanel(class = "mypanel", 
+                                         br(),
                                                    div(style="height: 80px;",
                                                        fileInput("habpolyfilename", "Mask polygon file(s)",
                                                                  accept = c('.shp','.dbf','.sbn','.sbx',
@@ -249,16 +249,15 @@ ui <- function(request) {
                                                                  multiple = TRUE)),
                                                    uiOutput("habitatfile"),
                                                    fluidRow(
-                                                       column(10, offset = 1, div(style="height: 20px;",
-                                                                                  checkboxInput("polygonbox", "Clip to polygon(s)", value = TRUE, width = 180)))
-                                                   ),
-                                                   fluidRow(
-                                                       column(10, offset = 1, radioButtons("includeexcludebtn", label = "",
-                                                                                           choices = c("Include", "Exclude"), 
-                                                                                           selected = "Include", inline = TRUE))
+                                                       column(10, div(style="height: 20px;",
+                                                                      checkboxInput("polygonbox", "Clip to polygon(s)", value = TRUE, width = 180)),
+                                                              radioButtons("includeexcludebtn", label = "",
+                                                                           choices = c("Include", "Exclude"), 
+                                                                           selected = "Include", inline = TRUE))
                                                    )
                                          )
-                                  )
+                                  ),
+                                  column(6, plotOutput("maskPlot"))
                               )
                      ),
                      
@@ -1602,13 +1601,14 @@ server <- function(input, output, session) {
         if (!is.null(ch)) {
             plot(ch, varycol = input$varycol, tracks = input$tracks, add = TRUE)
             if (input$animal>0) {
+                tracksi <- TRUE
                 chi <- subset(ch, input$animal)
                 selectcol1 <- list(pch = 16, col = 'yellow', cex = 2.5, lwd = 1)
                 selectcol2 <- list(pch = 1, col = 'black', cex = 2.5, lwd = 1)
-                plot(chi, tracks = input$tracksi, add = TRUE, varycol = FALSE, 
+                plot(chi, tracks = tracksi, add = TRUE, varycol = FALSE, 
                      cappar = selectcol1, trkpar=list(col='yellow', lwd = 3),
                      title = "", subtitle = "")
-                plot(chi, tracks = input$tracksi, add = TRUE, varycol = FALSE, 
+                plot(chi, tracks = tracksi, add = TRUE, varycol = FALSE, 
                      cappar = selectcol2, trkpar=list(col='black', lwd = 1),
                      title = "", subtitle = "")
             }
@@ -1727,6 +1727,21 @@ server <- function(input, output, session) {
             rad <- secr::circular.r(p = 0.95, detectfn = input$detectfnbtn, sigma = tmpsig)
             symbols(tmppop$x, tmppop$y, circles = rep(rad, n),
                     inches = FALSE, fg = grey(0.7), add = TRUE, xpd = FALSE)
+        }
+    })
+    ##############################################################################
+    
+    output$maskPlot <- renderPlot({
+        core <- detectorarray()
+        if (is.null(core)) return (NULL)
+        par(mar=c(0,3,0,3), xaxs='i', yaxs='i', xpd = FALSE)
+        
+        plot (core, border = input$buffer, gridlines = FALSE)
+        plot (mask(), add = TRUE, col = grey(0.9), dots=F)
+        plot (core, add = TRUE)
+        
+        if (!is.null(poly()) && input$polygonbox) {
+            sp::plot(poly(), add = TRUE)
         }
     })
     ##############################################################################
