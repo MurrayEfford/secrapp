@@ -133,6 +133,14 @@ ui <- function(request) {
                                                                               column(3, br(), conditionalPanel("input.gridlines != 'None'",
                                                                                                                uiOutput("uigridlines") ),
                                                                                      br(), uiOutput('xycoord'))
+                                                                          ),
+                                                                          fluidRow(
+                                                                              column(2, checkboxInput("tracks", "All tracks", FALSE)),
+                                                                              column(3, checkboxInput("varycol", "Vary colours", TRUE)),
+                                                                              column(3, checkboxInput("tracksi", "Selected track", FALSE)),
+                                                                              column(2, numericInput("animal", "Select animal", min = 0, max = 2000, 
+                                                                                                     step = 1, value = 0)),
+                                                                              column(2, br(), conditionalPanel("input.animal>0", uiOutput("uianimalID")))
                                                                           )
                                                                  ),
                                                                  tabPanel("Detectfn", plotOutput("detnPlot", height = 320)),
@@ -267,10 +275,10 @@ ui <- function(request) {
                                                  column(4, actionButton("selectallbtn", "All", title = "Select all fields"))
                                              ),
                                              br(),
-                                             h2("Scenarios"),
+                                             h2("Analyses"),
                                              fluidRow(
-                                                 column(6, actionButton("clearallbtn", "Clear all", title = "Delete all scenarios")), 
-                                                 column(6, actionButton("clearlastbtn", "Delete last", title = "Delete last scenario"))
+                                                 column(6, actionButton("clearallbtn", "Clear all", title = "Delete all analyses")), 
+                                                 column(6, actionButton("clearlastbtn", "Delete last", title = "Delete last analysis"))
                                              ), 
                                              br(), 
                                              h2("Download"),
@@ -286,24 +294,26 @@ ui <- function(request) {
                                              column(5, offset=1,
                                                     conditionalPanel("output.selectingfields == 'TRUE'",
                                                                      checkboxGroupInput("fields1", "",
-                                                                                        choices = c("date", "time", "note", "detector", "source", "nx", "ny", "spacex", "spacey",
-                                                                                                    "ndetectors", "noccasions", "nrepeats", "distribution", "detectfn",
-                                                                                                    "D", "lambda0", "sigma"),
-                                                                                        selected = c("date", "time", "note", "detector", "source", "nx", "ny", "spacex", "spacey",
-                                                                                                     "ndetectors", "noccasions", "nrepeats", "distribution", "detectfn",
-                                                                                                     "D", "lambda0", "sigma")
+                                                                                        choices = c("date", "time", "note", "traps", "captures", 
+                                                                                                    "ndetectors", "noccasions"
+                                                                                        ),
+                                                                                        selected = c("date", "time", "note", "traps", "captures", 
+                                                                                                     "ndetectors", "noccasions"
+                                                                                        )
                                                                      ))),
-                                             column(6, 
+                                             column(6,
                                                     conditionalPanel("output.selectingfields == 'TRUE'",
                                                                      checkboxGroupInput("fields2", "",
-                                                                                        choices = c("detperHR", "k", "En", "Er", "Em",
-                                                                                                    "rotRSE", "CF", "route", "cost", "simfn",  "nrepl", "simtime",
-                                                                                                    "simRSE", "simRSEse", "simRB", "simRBse"),
-                                                                                        selected = c("detperHR", "k", "En", "Er", "Em",
-                                                                                                     "rotRSE", "CF", "route", "cost", "simfn",  "nrepl", "simtime",
-                                                                                                     "simRSE", "simRSEse", "simRB", "simRBse")
+                                                                                        choices = c("distribution", "model", "detectfn", 
+                                                                                                    "fitfunction", "npar", "logLik", "AIC",
+                                                                                                    "D", "lambda0", "sigma", "k"
+                                                                                        ),
+                                                                                        selected = c("distribution", "model", "detectfn", 
+                                                                                                     "fitfunction", "npar", "logLik", "AIC",
+                                                                                                     "D", "lambda0", "sigma", "k"
+                                                                                        )
                                                                      )
-                                                    )                                                  
+                                                    )
                                              )
                                          )
                                          
@@ -450,12 +460,14 @@ ui <- function(request) {
 server <- function(input, output, session) {
     
     desc <- packageDescription("secr")
-    summaryfields <- c("date", "time", "note", "detector", "source", 
-                       "ndetectors", "noccasions", "distribution", "detectfn", 
-                       "D", "lambda0", "sigma", "detperHR", "k"
+    summaryfields <- c("date", "time", "note", "traps", "captures", 
+                       "ndetectors", "noccasions", "distribution", "model", "detectfn", 
+                       "fitfunction", "npar", "logLik", "AIC",
+                       "D", "lambda0", "sigma", "k"
                        )
-    fieldgroup1 <- 1:14
-    fieldgroup2 <- 1:14
+    
+    fieldgroup1 <- 1:7
+    fieldgroup2 <- 8:18
 
     showNotification(paste("secr", desc$Version, desc$Date),
                      closeButton = FALSE, type = "message", duration = seconds)
@@ -557,6 +569,13 @@ server <- function(input, output, session) {
             helpText(span(style="color:gray", HTML("100-m grid")))
         else 
             helpText(span(style="color:gray", HTML(paste0(round(as.numeric(input$gridlines)/1000,1), "-km grid"))))
+    })
+    
+    output$uianimalID <- renderUI({
+        if(input$animal<=0)
+            helpText("")
+        else 
+            helpText(paste("ID", rownames(capthist())[input$animal]))
     })
     
     output$xycoord <- renderUI({
@@ -826,28 +845,41 @@ server <- function(input, output, session) {
     addtosummary <- function() {
         ## input$fields is character vector of selected fields
         
-        ## tentatively suppress 2019-01-18 
-        ## invalidateOutputs()
         df <- data.frame(
             date = format(Sys.time(), "%Y-%m-%d"),
             time = format(Sys.time(), "%H:%M:%S"),
             note = input$title,
-            detector = input$detector,
-            source = "", # input$arrayinput,
+            traps = if (is.null(input$trapfilename)) "" else input$trapfilename$name[1],
+            captures = if (is.null(input$captfilename)) "" else input$captfilename$name[1],
             ndetectors = dim(capthist())[3],
-            noccasions = isolate(noccasions()),
+            noccasions = noccasions(),
             distribution = input$distributionbtn,
+            model = input$model,
             detectfn = input$detectfnbtn,
-            # D = density(),
-            # lambda0 = input$lambda0,
-            # sigma = input$sigma,
-            k = if (input$detectfnbtn=="HHN") round(density()^0.5 * sigma() / 100,3) else NA
+            fitfunction = "",
+            npar = NA,
+            logLik = NA,
+            AIC = NA,
+            D = NA,
+            lambda0 = NA,
+            sigma = NA,
+            k = NA
         )
-
-        newfields <- ""        
         
+        if (!is.null(fitrv$value)) {
+            fitsum <- summary(fitrv$value)
+            df$fitfunction <- input$packagebtn
+            df$npar <- fitsum$AICtable$npar
+            df$logLik <- fitsum$AICtable$logLik
+            df$AIC <- fitsum$AICtable$AIC
+            df$D <- density()
+            df$lambda0 <- lambda0()
+            df$sigma <- sigma()
+            df$k <- if (input$detectfnbtn=="HHN") round(density()^0.5 * sigma() / 100,3) else NA
+        }
+            
+            
         sumrv$value <- rbind (sumrv$value, df)
-        # updateCheckboxGroupInput("fields2", selected = newfields)  ## FAILS 2019-01-23
         rownames(sumrv$value) <- paste0("Fit", 1:nrow(sumrv$value))
     }
     ##############################################################################
@@ -988,7 +1020,8 @@ server <- function(input, output, session) {
                                      type = "error", id = "nofit", duration = seconds)
             fit <- NULL
         }
-        fit
+        fitrv$value <- fit
+        addtosummary()
     }
     ##############################################################################
 
@@ -1089,8 +1122,10 @@ server <- function(input, output, session) {
     }
     
     capthist <- reactive( {
-        if (is.null(readtrapfile()) || is.null(readcaptfile()))
+        if (is.null(readtrapfile()) || is.null(readcaptfile())) {
+            updateNumericInput(session, "animal", max = 0)
             NULL
+        }
         else {
             captdf <- readcaptfile()
             ch <- try(make.capthist(captdf, readtrapfile(), fmt = input$fmt)) 
@@ -1099,6 +1134,7 @@ server <- function(input, output, session) {
                                  type = "error", id = "badcapt", duration = seconds)
                 ch <- NULL
             }
+            updateNumericInput(session, "animal", max = nrow(ch))
             ch
         }
     })
@@ -1137,7 +1173,7 @@ server <- function(input, output, session) {
         {
             poprv$v
             core <- detectorarray()
-            if (is.null(core) || (density() == 0)) {
+            if (is.null(core) || (density() == 0) || is.na(density())) {
                 return (NULL)
             }
             if (density() * maskarea(mask()) > 10000) {
@@ -1384,7 +1420,7 @@ server <- function(input, output, session) {
             if (time > 0.2)
                 showModal(OKModal(time))
             else {
-                fitrv$value <- fitmodel()
+                fitmodel()
             }
         }
     })
@@ -1559,17 +1595,30 @@ server <- function(input, output, session) {
         tmpgrid <- detectorarray()
         ch <- capthist()
         if (is.null(tmpgrid)) return (NULL)
-        par(mar = c(1,1,1,1), xpd = TRUE)
+        par(mar = c(1,1,2,1), cex = 1.3, xpd = TRUE)
         plot (tmpgrid, border = border(1), bty='o', xaxs = 'i', yaxs = 'i',
                    gridlines = (input$gridlines != "None"), gridspace = as.numeric(input$gridlines))
         
-        if (!is.null(ch)) plot(ch, add = TRUE)
+        if (!is.null(ch)) {
+            plot(ch, varycol = input$varycol, tracks = input$tracks, add = TRUE)
+            if (input$animal>0) {
+                chi <- subset(ch, input$animal)
+                selectcol1 <- list(pch = 16, col = 'yellow', cex = 2.5, lwd = 1)
+                selectcol2 <- list(pch = 1, col = 'black', cex = 2.5, lwd = 1)
+                plot(chi, tracks = input$tracksi, add = TRUE, varycol = FALSE, 
+                     cappar = selectcol1, trkpar=list(col='yellow', lwd = 3),
+                     title = "", subtitle = "")
+                plot(chi, tracks = input$tracksi, add = TRUE, varycol = FALSE, 
+                     cappar = selectcol2, trkpar=list(col='black', lwd = 1),
+                     title = "", subtitle = "")
+            }
+        }
     })
     ##############################################################################
     
     density <- reactive( {
         if (is.null(fitrv$value) || input$likelihoodbtn != "Full") {
-            NULL
+            NA
         }
         else {
             if (input$packagebtn == 'secr.fit')
@@ -1588,7 +1637,7 @@ server <- function(input, output, session) {
 
     lambda0 <- reactive({
         if (is.null(fitrv$value))
-            return (NULL)
+            NA
         else {
             if (input$packagebtn == 'secr.fit')
                 detectpar(fitrv$value)[['lambda0']]
@@ -1599,7 +1648,7 @@ server <- function(input, output, session) {
     
     sigma <- reactive ({
         if (is.null(fitrv$value))
-            return (NULL)
+            NA
         else {
             if (input$packagebtn == 'secr.fit')
                 detectpar(fitrv$value)[['sigma']]
@@ -1777,7 +1826,7 @@ server <- function(input, output, session) {
     output$summarytable <- renderTable({
         fields <- c(input$fields1, input$fields2)
         tmp <- t(sumrv$value[,fields])
-        if (ncol(tmp)>0) colnames(tmp) <- paste0('Scenario', 1:ncol(tmp))
+        if (ncol(tmp)>0) colnames(tmp) <- paste0('Analysis', 1:ncol(tmp))
         tmp <- cbind(Field = fields, tmp)
         tmp } , spacing = "xs"
     )
