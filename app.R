@@ -27,6 +27,7 @@ ui <- function(request) {
         tags$head(tags$style(".mypanel{margin-top:5px; margin-bottom:10px; padding-bottom: 5px;}")),
         #tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 315px; max-height: 315px; background: ghostwhite;}")),
         tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 220px; max-height: 220px; background: ghostwhite;}")),
+        tags$head(tags$style("#maskPrint{color:blue; font-size:12px; background: ghostwhite;}")),
         br(),
         navlistPanel(id = "navlist", widths = c(2,10), well=TRUE,
                      
@@ -166,7 +167,10 @@ ui <- function(request) {
                                                                  ),
                                                                  tabPanel("Pxy",
                                                                           plotOutput("pxyPlot", height = 320, click = "pxyclick"),
-                                                                          helpText(HTML("p.(x) is the probability an animal at point x will be detected at least once"))
+                                                                          helpText(HTML("p.(x) is the probability an animal at point x will be detected at least once")),
+                                                                          fluidRow(
+                                                                              column(3, checkboxInput("maskedge", "show mask edge", value = FALSE))
+                                                                          )
                                                                  ),
                                                                  
                                                                  tabPanel("Power",
@@ -257,7 +261,19 @@ ui <- function(request) {
                                                    )
                                          )
                                   ),
-                                  column(6, plotOutput("maskPlot"))
+                                  column(4, plotOutput("maskPlot"),
+                                         fluidRow(
+                                          column(3, offset = 1, checkboxInput("dotsbox", "dots", value = FALSE, width = 180)),
+                                          column(2, offset = 1, checkboxInput("xpdbox", "xpd", value = TRUE, width = 180))
+                                          )   
+                                         ),
+                                  column(3, 
+                                         h2("Summary"),
+                                         fluidRow(
+                                             column(12, 
+                                                    verbatimTextOutput("maskPrint"))
+                                         )
+                                  )
                               )
                      ),
                      
@@ -362,7 +378,7 @@ ui <- function(request) {
                                                        column(6, numericInput("pxyborder", "Border (spacing units)",
                                                                               min = 0,
                                                                               max = 10,
-                                                                              value = 3,
+                                                                              value = 5,
                                                                               step = 0.5,
                                                                               width = 180),
                                                               numericInput("pxynx", "Mesh dimension nx",
@@ -833,7 +849,7 @@ server <- function(input, output, session) {
                 else {
                     removeNotification(id = "nofile")
                     removeNotification(id = "norgdal")
-                    poly <- rgdal::readOGR(dsn = dsnname, layer = layername)
+                    poly <- rgdal::readOGR(dsn = dsnname, layer = layername, verbose = FALSE)
                 }
             }
         }
@@ -1015,7 +1031,7 @@ server <- function(input, output, session) {
                                      detectfn = input$detectfnbtn, 
                                      details = list(distribution = input$distributionbtn))))
         if (inherits(fit, "try-error")) {
-            showNotification("model fit failed - check formulae",
+            showNotification("model fit failed - check data, formulae and mask",
                                      type = "error", id = "nofit", duration = seconds)
             fit <- NULL
         }
@@ -1576,6 +1592,14 @@ server <- function(input, output, session) {
     })
     ##############################################################################
     
+    output$maskPrint <- renderPrint({
+        if (is.null(mask()))
+            cat("No mask yet - load trap file\n")
+        else 
+            summary(mask())
+    })
+    ##############################################################################
+    
     ## renderPlot
     
     ## arrayPlot
@@ -1734,15 +1758,17 @@ server <- function(input, output, session) {
     output$maskPlot <- renderPlot({
         core <- detectorarray()
         if (is.null(core)) return (NULL)
-        par(mar=c(0,3,0,3), xaxs='i', yaxs='i', xpd = FALSE)
+        par(mar=c(2,2,2,2), xaxs='i', yaxs='i', xpd = input$xpdbox)
         
         plot (core, border = input$buffer, gridlines = FALSE)
-        plot (mask(), add = TRUE, col = grey(0.9), dots=F)
+        plot (mask(), add = TRUE, col = grey(0.9), dots = input$dotsbox)
         plot (core, add = TRUE)
         
         if (!is.null(poly()) && input$polygonbox) {
             sp::plot(poly(), add = TRUE)
         }
+        if (!input$xpdbox)
+            box()
     })
     ##############################################################################
     
@@ -1803,8 +1829,12 @@ server <- function(input, output, session) {
             rect(xr[1],yr[1],xr[2],yr[2], col = NA, border = "black") 
         }
         if (input$pxyfillbox) {
-            strip.legend("right", legend = seq(0,1,0.1), title = "p.(x)", xpd = TRUE,
-                         legendtype='breaks', inset = 0.01, col = cols[3:12])
+            # strip.legend("right", legend = seq(0,1,0.1), title = "p.(x)", xpd = TRUE,
+            strip.legend("right", legend = c(0,lev[1:10],1), title = "p.(x)", xpd = TRUE,
+                         legendtype='breaks', inset = 0.01, col = cols[1:11])
+        }
+        if (input$maskedge) {
+            plotMaskEdge(mask(), add = TRUE)
         }
     })
     ##############################################################################
