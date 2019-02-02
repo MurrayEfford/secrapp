@@ -25,9 +25,9 @@ ui <- function(request) {
         includeCSS("secrstyle.css"),
         withMathJax(),
         tags$head(tags$style(".mypanel{margin-top:5px; margin-bottom:10px; padding-bottom: 5px;}")),
-        #tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 315px; max-height: 315px; background: ghostwhite;}")),
-        tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 220px; max-height: 220px; background: ghostwhite;}")),
+        tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 250px; background: ghostwhite;}")),
         tags$head(tags$style("#maskPrint{color:blue; font-size:12px; background: ghostwhite;}")),
+        tags$head(tags$style(type="text/css", "input.shiny-bound-input { font-size:14px; height:30px}")),
         br(),
         navlistPanel(id = "navlist", widths = c(2,10), well=TRUE,
                      
@@ -85,6 +85,9 @@ ui <- function(request) {
                                                    ),
                                                    fluidRow(
                                                        column(12, textInput("model", "", value = "D~1, lambda0~1, sigma~1"))
+                                                   ),
+                                                   fluidRow(
+                                                       column(12, textInput("otherargs", "", value = "", placeholder = "other args e.g., details"))
                                                    )
                                          ),
                                          
@@ -137,11 +140,14 @@ ui <- function(request) {
                                                                                      br(), uiOutput('xycoord'))
                                                                           ),
                                                                           fluidRow(
-                                                                              column(3, checkboxInput("tracks", "All tracks", FALSE)),
-                                                                              column(3, checkboxInput("varycol", "Vary colours", TRUE)),
+                                                                              column(2, offset = 1, checkboxInput("tracks", "All tracks", FALSE)),
+                                                                              column(2, checkboxInput("varycol", "Vary colours", FALSE)),
                                                                               column(2, numericInput("animal", "Select animal", min = 0, max = 2000, 
-                                                                                                     step = 1, value = 0)),
-                                                                              column(2, br(), conditionalPanel("input.animal>0", uiOutput("uianimalID")))
+                                                                                                     step = 1, value = 1)),
+                                                                              column(2, br(), conditionalPanel("input.animal>0", uiOutput("uianimalID"))),
+                                                                              column(2, conditionalPanel("output.multisession=='true'",
+                                                                                            numericInput("sess", "Session", min = 1, max = 2000, 
+                                                                                                     step = 1, value = 1)))
                                                                           )
                                                                  ),
                                                                  tabPanel("Detectfn", plotOutput("detnPlot", height = 320)),
@@ -166,7 +172,8 @@ ui <- function(request) {
                                                                           )
                                                                  ),
                                                                  tabPanel("Pxy",
-                                                                          plotOutput("pxyPlot", height = 320, click = "pxyclick"),
+                                                                          plotOutput("pxyPlot", height = 350, click = "pxyclick"),
+                                                                          #plotOutput("pxyPlot", click = "pxyclick"),
                                                                           helpText(HTML("p.(x) is the probability an animal at point x will be detected at least once")),
                                                                           fluidRow(
                                                                               column(3, checkboxInput("maskedge", "show mask edge", value = FALSE))
@@ -348,18 +355,22 @@ ui <- function(request) {
                                   column(3,
                                          
                                          h2("Detector array"),
-                                         wellPanel(class = "mypanel", 
+                                         # wellPanel(class = "mypanel", 
+                                         #           fluidRow(
+                                         #               column(6, radioButtons("areaunit", label = "Area units",
+                                         #                                      choices = c("ha", "km^2"), 
+                                         #                                      selected = "ha", inline = TRUE))
+                                         #           )
+                                         # ),
+                                         h2("Model fitting"),
+                                         wellPanel(class = "mypanel",
                                                    fluidRow(
-                                                       column(6, radioButtons("areaunit", label = "Area units",
-                                                                              choices = c("ha", "km^2"), 
-                                                                              selected = "ha", inline = TRUE))
+                                                       column(12, selectInput("method", "Maximization method",
+                                                                   choices = c("Newton-Raphson", "Nelder-Mead", "none"),
+                                                                   selected = "Newton-Raphson", width=160))
                                                    )
-                                         ),
-                                         selectInput("method", "Maximization method",
-                                                     choices = c("Newton-Raphson", "Nelder-Mead", "none"),
-                                                     selected = "Newton-Raphson", width=160)
+                                         )
                                   ),
-                                  
                                   column(3,
                                          
                                          h2("Array plot"),
@@ -487,7 +498,10 @@ server <- function(input, output, session) {
     showNotification(paste("secr", desc$Version, desc$Date),
                      closeButton = FALSE, type = "message", duration = seconds)
      output$selectingfields <- renderText('false')
+     output$multisession <- renderText('false')
      outputOptions(output, "selectingfields", suspendWhenHidden = FALSE)
+     outputOptions(output, "multisession", suspendWhenHidden = FALSE)
+     
     ##############################################################################
     
     ## renderUI
@@ -587,10 +601,15 @@ server <- function(input, output, session) {
     })
     
     output$uianimalID <- renderUI({
-        if(input$animal<=0)
+        if(is.na(input$animal) || input$animal<=0 || is.null(nsessions()))
             helpText("")
-        else 
-            helpText(paste("ID", rownames(capthist())[input$animal]))
+        else {
+            if (nsessions()>1)
+                helpText(paste("ID", rownames(capthist()[[input$sess]])[input$animal]))
+            else
+                helpText(paste("ID", rownames(capthist())[input$animal]))
+        }
+        
     })
     
     output$xycoord <- renderUI({
@@ -640,7 +659,20 @@ server <- function(input, output, session) {
     ## areastr    format area with units
     ## density    density in animals / ha
     
+    ## modelstring
+    
     ##############################################################################
+    
+    modelstring <- function () {
+        form <- strsplit(input$model, ",")[[1]]
+        fn <- function(f) {
+            chf <- as.character(eval(parse(text=f)))
+            if (chf[3]=="1") "" else f
+        }
+        out <- sapply(form, fn)
+        out <- out[out != ""]
+        if (length(out)==0) "~1" else paste0(out, collapse = ", ")
+    }
     
     areastr <- function (area) {
         if (area<1000) 
@@ -859,17 +891,17 @@ server <- function(input, output, session) {
 
     addtosummary <- function() {
         ## input$fields is character vector of selected fields
-        
+        sess <- 1
         df <- data.frame(
             date = format(Sys.time(), "%Y-%m-%d"),
             time = format(Sys.time(), "%H:%M:%S"),
             note = input$title,
             traps = if (is.null(input$trapfilename)) "" else input$trapfilename$name[1],
             captures = if (is.null(input$captfilename)) "" else input$captfilename$name[1],
-            ndetectors = dim(capthist())[3],
-            noccasions = noccasions(),
+            ndetectors = ndetectors()[sess],
+            noccasions = noccasions()[sess],
             distribution = input$distributionbtn,
-            model = input$model,
+            model = modelstring(), # input$model,
             detectfn = input$detectfnbtn,
             fitfunction = "",
             npar = NA,
@@ -880,8 +912,7 @@ server <- function(input, output, session) {
             sigma = NA,
             k = NA
         )
-        
-        if (!is.null(fitrv$value)) {
+        if (inherits(fitrv$value, c("secr", "openCR"))) {
             fitsum <- summary(fitrv$value)
             df$fitfunction <- input$packagebtn
             df$npar <- fitsum$AICtable$npar
@@ -892,7 +923,6 @@ server <- function(input, output, session) {
             df$sigma <- sigma()
             df$k <- if (input$detectfnbtn=="HHN") round(density()^0.5 * sigma() / 100,3) else NA
         }
-            
             
         sumrv$value <- rbind (sumrv$value, df)
         rownames(sumrv$value) <- paste0("Fit", 1:nrow(sumrv$value))
@@ -1007,7 +1037,7 @@ server <- function(input, output, session) {
     ##############################################################################
     
     fitmodel <- function() {
-        ## isolate(fit <- secr.fit (capthist(), mask = mask(), detectfn = input$detectfnbtn))
+        
         if (input$likelihoodbtn == "Full") {
             type <- "secrD"
             CL <- FALSE
@@ -1016,24 +1046,36 @@ server <- function(input, output, session) {
             type <- "secrCL"
             CL <- TRUE
         }
-        fit <- NULL
         model <- eval(parse(text = paste0("list(", input$model, ")")))
-        if (input$packagebtn == "openCR.fit")
-            isolate(fit <- try(openCR.fit (capthist(), type = type, 
-                                       mask = mask(), 
-                                       model = model,
-                                       detectfn = input$detectfnbtn, 
-                                       distribution = tolower(input$distributionbtn))))
-        else if (input$packagebtn == "secr.fit")
-            isolate(fit <- try(secr.fit (capthist(), CL = CL, trace = FALSE,
-                                     mask = mask(), 
-                                     model = model,
-                                     detectfn = input$detectfnbtn, 
-                                     details = list(distribution = input$distributionbtn))))
-        if (inherits(fit, "try-error")) {
-            showNotification("model fit failed - check data, formulae and mask",
-                                     type = "error", id = "nofit", duration = seconds)
+
+        otherargs <- try(eval(parse(text = paste0("list(", input$otherargs, ")"))))
+        if (inherits(otherargs, "try-error")) {
+            showNotification("model fit failed - check other arguments",
+                             type = "error", id = "nofit", duration = seconds)
             fit <- NULL
+        }
+        else {
+            args <- c(list(capthist = capthist(), 
+                           trace = FALSE,
+                           mask = mask(), 
+                           model = model,
+                           detectfn = input$detectfnbtn),
+                      otherargs)
+            if (input$packagebtn == "openCR.fit") {
+                args$type <- type
+                args$distribution <-  tolower(input$distributionbtn)
+            }
+            else if (input$packagebtn == "secr.fit") {
+                args$CL <- CL 
+                args$details <- as.list(replace (args$details, "distribution", input$distributionbtn))
+            }
+            
+            isolate(fit <- try(do.call(input$packagebtn, args)))
+            if (inherits(fit, "try-error")) {
+                showNotification("model fit failed - check data, formulae and mask",
+                                 type = "error", id = "nofit", duration = seconds)
+                fit <- NULL
+            }
         }
         fitrv$value <- fit
         addtosummary()
@@ -1041,7 +1083,7 @@ server <- function(input, output, session) {
     ##############################################################################
 
     maskOK <- function () {
-        if (!is.null(poly())) {
+        if (!is.null(poly()) && !is.null(detectorarray())) {
             sum(pointsInPolygon(detectorarray(), poly())) > 0
         }
         else TRUE
@@ -1093,24 +1135,8 @@ server <- function(input, output, session) {
     detectorarray <- reactive(
         {
             pxyrv$value <- NULL
-            trps <- NULL
             removeNotification("badarray")
-            trps <- readtrapfile()
-            if (!is.null(trps)) {
-                attr(trps, "arrayspan") <- suppressWarnings(pmax(0, max(dist(trps))))
-            }
-            # if (!is.null(trps) && (nrow(trps) > input$maxdetectors)) {
-            #     showNotification(paste0("more than ", input$maxdetectors, " detectors; try again"),
-            #                      type = "warning", id = "bigarray", duration = seconds)
-            #     trps <- NULL
-            # }
-            
-            if (!is.null(trps) && (nrow(trps) == 0)) {
-                showNotification(paste0("no detectors; try again"),
-                                 type = "error", id = "zeroarray", duration = seconds)
-                trps <- NULL
-            }
-            trps
+            readtrapfile()
         }
     )
     ##############################################################################
@@ -1143,18 +1169,58 @@ server <- function(input, output, session) {
         }
         else {
             captdf <- readcaptfile()
-            ch <- try(make.capthist(captdf, readtrapfile(), fmt = input$fmt)) 
+            ch <- try(suppressWarnings(make.capthist(captdf, readtrapfile(), fmt = input$fmt))) 
             if (inherits(ch, 'try-error')) {
                 showNotification("invalid capture file or arguments; try again",
                                  type = "error", id = "badcapt", duration = seconds)
                 ch <- NULL
             }
-            updateNumericInput(session, "animal", max = nrow(ch))
+            else {
+                if (ms(ch)) {
+                    updateNumericInput(session, "animal", max = nrow(ch[[input$sess]]))
+                     output$multisession <- renderText("true")
+                }
+                else {
+                    updateNumericInput(session, "animal", max = nrow(ch))
+                     output$multisession <- renderText("false")
+                }
+                updateNumericInput(session, "sess", max = length(ch))
+            }
             ch
         }
     })
+
+    nsessions <- reactive({
+        ## used to control conditional display of session index input
+        if (is.null(capthist())) {
+            NULL
+        }
+        else {    
+            if (ms(capthist())) {
+               
+                length(capthist())
+            }
+            else {
+               
+                1
+            }
+        }
+    })
     
-    noccasions <- reactive( {ncol(capthist())})
+    noccasions <- reactive( {
+        if (ms(capthist()))
+            sapply(capthist(), ncol)
+        else
+            ncol(capthist())
+        })
+    
+    ndetectors <- reactive ({
+        if (ms(capthist()))
+            sapply(capthist(), function(x) dim(x)[3])
+        else
+            dim(capthist())[3]
+        
+    })
     
     poly <- reactive( {
         if (input$polygonbox) {
@@ -1169,17 +1235,21 @@ server <- function(input, output, session) {
     
     mask <- reactive( {
         pxyrv$value <- NULL
-        if (!maskOK()) showNotification("no detectors in habitat polygon(s)",
-                                        type = "warning", id = "notrapsinpoly",
-                                        duration = seconds)
-        msk <- make.mask (detectorarray(),
-                          buffer = input$buffer,
-                          nx = input$habnx,
-                          type = if (input$maskshapebtn=='Rectangular') 'traprect' else 'trapbuffer',
-                          poly = poly(),
-                          poly.habitat = input$includeexcludebtn == "Include",
-                          keep.poly = FALSE)
-        msk
+        if (is.null(detectorarray()))
+            NULL
+        else {
+            if (!maskOK()) showNotification("no detectors in habitat polygon(s)",
+                                            type = "warning", id = "notrapsinpoly",
+                                            duration = seconds)
+            msk <- make.mask (detectorarray(),
+                              buffer = input$buffer,
+                              nx = input$habnx,
+                              type = if (input$maskshapebtn=='Rectangular') 'traprect' else 'trapbuffer',
+                              poly = poly(),
+                              poly.habitat = input$includeexcludebtn == "Include",
+                              keep.poly = FALSE)
+            msk
+        }
     }
     )
     ##############################################################################
@@ -1217,21 +1287,6 @@ server <- function(input, output, session) {
     )
     ##############################################################################
     
-    Pxy <- reactive({
-#         invalidateOutputs()
-#         trps <- detectorarray()
-#         Pxy <- pdot(mask(), trps, detectfn = input$detectfnbtn,
-#                      detectpar = list(lambda0=input$lambda0, sigma = input$sigma),
-#                      noccasions = noccasions())
-#         sumPxy <- sum(Pxy)
-#         EPxy <- sum(Pxy^2) / sumPxy
-#         EPxy2 <- sum(Pxy^3) /sumPxy
-#         varPxy <- EPxy2 - EPxy^2
-#         sinuosity <- if (nrow(trps)<=1) NA else attr(trps, "arrayspan") / (spacing(trps) * (nrow(trps)-1))
-#         list(CVPxy = sqrt(varPxy)/EPxy, sinuosity = sinuosity, esa = sumPxy * attr(msk, "area"))
-    })
-    ##############################################################################
-
     ## reactiveValues
     
     ## simrv, rotrv, RSErv, pxyrv : logical
@@ -1429,9 +1484,19 @@ server <- function(input, output, session) {
             methodfactor <- 1 + ((input$method != "none") * 4)
             functionfactor <- switch(input$packagebtn, secr.fit = 4, openCR.fit = 1, 0.1)
             detectorfactor <- switch(input$detector, proximity = 1, single = 0.6, multi = 0.6, count = 4)
-            time <- nrow(mask()) * nrow(detectorarray()) / 4.5e9 * ## blocked 2019-01-14 nrepeats() * 
-                noccasions() * 
-                methodfactor * functionfactor * detectorfactor
+           
+            if (ms(capthist())) {
+                nm <- if (ms(mask())) nrow(mask()[[1]]) else nrow(mask())
+                nt <- if (ms(detectorarray())) nrow(detectorarray()[[1]]) else nrow(detectorarray())
+                time <- nm * nt / 4.5e9 * ## blocked 2019-01-14 nrepeats() * 
+                    noccasions()[1] * length(capthist()) *
+                    methodfactor * functionfactor * detectorfactor
+            }
+            else {
+                time <- nrow(mask()) * nrow(detectorarray()) / 4.5e9 * ## blocked 2019-01-14 nrepeats() * 
+                    noccasions() * 
+                    methodfactor * functionfactor * detectorfactor
+            }
             if (time > 0.2)
                 showModal(OKModal(time))
             else {
@@ -1492,6 +1557,7 @@ server <- function(input, output, session) {
         trps <- detectorarray()
         
         border <- border(input$pxyborder)
+        sess <- 1
         
         xy <- c(input$pxyclick$x, input$pxyclick$y)
         if ((xy[2] < (min(trps$y) - border)) ||
@@ -1504,7 +1570,7 @@ server <- function(input, output, session) {
             Pxy <- pdot (xy, trps,
                          detectfn = input$detectfnbtn,
                          detectpar = list(lambda0 = lambda0(), sigma = sigma()),
-                         noccasions = noccasions())
+                         noccasions = noccasions()[sess])
             pxyrv$xy <-xy
             pxyrv$value <- Pxy}
     })
@@ -1563,7 +1629,6 @@ server <- function(input, output, session) {
         hideplotif (is.null(fitrv$value), "Pxy")
         hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != "Full"), "Popn")
         hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != "Full"), "Power")
-
         rse <- RSE() 
         if (is.null(rse) || is.na(rse)) {
             maxRSE <- 100
@@ -1587,8 +1652,12 @@ server <- function(input, output, session) {
             summary(readtrapfile())
         else if (is.null(fitrv$value))
             summary(capthist(), moves = TRUE)
-        else
+        else if (inherits(fitrv$value, c("secr","openCR"))) {
             summary(fitrv$value)
+        }
+        else {
+            fitrv$value
+        }
     })
     ##############################################################################
     
@@ -1615,18 +1684,27 @@ server <- function(input, output, session) {
     ##############################################################################
     
     output$arrayPlot <- renderPlot( { # height = 340, width = 340, {
-        tmpgrid <- detectorarray()
-        ch <- capthist()
+        if (ms(detectorarray()))
+            tmpgrid <- detectorarray()[[input$sess]]
+        else 
+            tmpgrid <- detectorarray()
         if (is.null(tmpgrid)) return (NULL)
         par(mar = c(1,1,2,1), cex = 1.3, xpd = TRUE)
         plot (tmpgrid, border = border(1), bty='o', xaxs = 'i', yaxs = 'i',
                    gridlines = (input$gridlines != "None"), gridspace = as.numeric(input$gridlines))
         
-        if (!is.null(ch)) {
-            plot(ch, varycol = input$varycol, tracks = input$tracks, add = TRUE)
-            if (input$animal>0) {
+        if (!is.null(capthist())) {
+            if (ms(capthist()))
+                ch <- capthist()[[input$sess]]
+            else
+                ch <- capthist()
+            plot(ch, varycol = input$varycol, tracks = input$tracks, add = TRUE,
+                 title = "", subtitle = "")
+            if (nsessions()>1)
+                mtext(side=3, line = 1, paste0("Session : ", session(capthist())[input$sess]), col = 'blue')
+            if (!is.na(input$animal) && (input$animal>0)) {
                 tracksi <- TRUE
-                chi <- subset(ch, input$animal)
+                chi <- suppressWarnings(subset(ch, input$animal))
                 selectcol1 <- list(pch = 16, col = 'yellow', cex = 2.5, lwd = 1)
                 selectcol2 <- list(pch = 1, col = 'black', cex = 2.5, lwd = 1)
                 plot(chi, tracks = tracksi, add = TRUE, varycol = FALSE, 
@@ -1639,54 +1717,74 @@ server <- function(input, output, session) {
         }
     })
     ##############################################################################
+
+    newdata <- reactive({
+        if (is.null(fitrv$value))
+            NULL   ## no model
+        else {
+            if (input$packagebtn == "secr.fit")
+                secr.make.newdata(fitrv$value, all.levels = TRUE)
+            else {
+                openCR.make.newdata(fitrv$value, all.levels = TRUE)
+            }
+        }
+    })
     
     density <- reactive( {
-        if (is.null(fitrv$value) || input$likelihoodbtn != "Full") {
+        if (is.null(fitrv$value) || input$likelihoodbtn != "Full" || !inherits(fitrv$value, c("secr", "openCR"))) {
             NA
         }
         else {
-            if (input$packagebtn == 'secr.fit')
-                D <- predict(fitrv$value)['D', 'estimate']
-            else
-                D <- predict(fitrv$value)[['superD']][1,1]
-            ## return density in animals / hectare
-            if (input$areaunit == "ha")
-                D
-            else
-                D / 100  ## per sq. km
+            newd <- newdata()[1,,drop = FALSE]
+            if (input$packagebtn == 'secr.fit') {
+                D <- predict(fitrv$value, newdata = newd)['D', 'estimate']
+            }
+            else {
+                D <- predict(fitrv$value, newdata = newd)[['superD']][1,'estimate']
+            }
+            
+            D
+            
+            # ## return density in animals / hectare
+            # if (input$areaunit == "ha")
+            #     D
+            # else
+            #     D / 100  ## per sq. km
         }
     })
     ##############################################################################
 
 
     lambda0 <- reactive({
-        if (is.null(fitrv$value))
+        if (!inherits(fitrv$value, c("secr", "openCR")))
             NA
         else {
             if (input$packagebtn == 'secr.fit')
-                detectpar(fitrv$value)[['lambda0']]
+                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['lambda0','estimate']
+                # detectpar(fitrv$value)[['lambda0']]
             else
-                predict(fitrv$value)$lambda0[1,2]   # column 1 is session
+                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$lambda0[1,'estimate']
         }
     })
     
     sigma <- reactive ({
-        if (is.null(fitrv$value))
+        if (!inherits(fitrv$value, c("secr", "openCR")))
             NA
         else {
             if (input$packagebtn == 'secr.fit')
-                detectpar(fitrv$value)[['sigma']]
+                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['sigma','estimate']
+                # detectpar(fitrv$value)[['sigma']]
             else 
-                predict(fitrv$value)$sigma[1,2]   # column 1 is session
+                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$sigma[1,'estimate'] 
         }
     })
     
     RSE <- reactive ({
-        if (is.null(fitrv$value) || (input$likelihoodbtn != "Full"))
+        if (!inherits(fitrv$value, c("secr", "openCR")) || (input$likelihoodbtn != "Full") )
             return (NULL)
         else {
             if (input$packagebtn == 'secr.fit')
-                V <- vcov(fitrv$value)['D','D']
+                V <- vcov(fitrv$value)['D','D']   ## FAILS IF HAVE JUST SWITCHED BUTTON
             else
                 V <- vcov(fitrv$value)['superD','superD']
             sqrt(exp(V)-1) * 100
@@ -1696,24 +1794,30 @@ server <- function(input, output, session) {
     output$detnPlot <- renderPlot( height = 290, width = 400, {
         ## inp <- oS2()
         invalidateOutputs()
-        par(mar=c(4,5,2,5))
-        detectfnplot (detectfn = input$detectfnbtn,
-                      pars = c(lambda0(), sigma()),
-                      xval = 0:(3 * sigma()),
-                      ylab = "",
-                      hazard = TRUE,       ## 2017-08-28
-                      ylim = c(0, lambda0()*1.2),
-                      las=1, col = 'red', lwd = linewidth,
-                      xaxs='i', yaxs='i')
-        mtext(side = 2, line = 3.7, expression(paste("Detection hazard   ", lambda [0])))
-        
-        if (lambda0() <= 0.7) 
-            p <- seq(0,1,0.05)
-        else 
-            p <- seq(0,1,0.1)
-        
-        axis(4, at = -log(1 - p), label = p, xpd = FALSE, las = 1)
-        mtext(side = 4, line = 3.7, "Detection probability")
+        pars <- c(lambda0(), sigma())
+        if (any(is.na(pars))) {
+            return (NULL)
+        }
+        else {
+            par(mar=c(4,5,2,5))
+            detectfnplot (detectfn = input$detectfnbtn,
+                          pars = pars,
+                          xval = 0:(3 * sigma()),
+                          ylab = "",
+                          hazard = TRUE,       ## 2017-08-28
+                          ylim = c(0, lambda0()*1.2),
+                          las=1, col = 'red', lwd = linewidth,
+                          xaxs='i', yaxs='i')
+            mtext(side = 2, line = 3.7, expression(paste("Detection hazard   ", lambda [0])))
+            
+            if (lambda0() <= 0.7) 
+                p <- seq(0,1,0.05)
+            else 
+                p <- seq(0,1,0.1)
+            
+            axis(4, at = -log(1 - p), label = p, xpd = FALSE, las = 1)
+            mtext(side = 4, line = 3.7, "Detection probability")
+        }
     })
     ##############################################################################
     
@@ -1809,11 +1913,11 @@ server <- function(input, output, session) {
         }
         else
             drawlabels <- input$pxylabelbox
-        
+        sess <- 1
         pdot.contour(core, border = border, nx = input$pxynx,
                      detectfn = input$detectfnbtn,
                      detectpar = list(sigma = sigma(), lambda0 = lambda0()),
-                     noccasions = noccasions(), drawlabels = drawlabels,
+                     noccasions = noccasions()[sess], drawlabels = drawlabels,
                      binomN = NULL, levels = lev, poly = poly(), 
                      poly.habitat = input$includeexcludebtn == "Include",
                      plt = TRUE, add = TRUE,
