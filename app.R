@@ -90,7 +90,7 @@ ui <- function(request) {
                                                        column(12, textInput("otherargs", "", value = "", placeholder = "other args e.g., details"))
                                                    ),
                                                    fluidRow(
-                                                       column(12, radioButtons("resultsbtn", label = "Summary function", 
+                                                       column(12, radioButtons("resultsbtn", label = "Results", 
                                                                                inline = TRUE, choices = c("summary", "derived")))
                                                    )
                                          ),
@@ -326,12 +326,14 @@ ui <- function(request) {
                                                     conditionalPanel("output.selectingfields == 'TRUE'",
                                                                      checkboxGroupInput("fields1", "",
                                                                                         choices = c("date", "time", "note", "traps", "captures", 
-                                                                                                    "ndetectors", "noccasions",
+                                                                                                    "n", "r", "ndetectors", "noccasions",
                                                                                                     "usagepct", "maskbuffer", "masknrow", "maskspace"
+                                                                                                    
                                                                                         ),
                                                                                         selected = c("date", "time", "note", "traps", "captures", 
-                                                                                                     "ndetectors", "noccasions",
+                                                                                                     "n", "r", "ndetectors", "noccasions",
                                                                                                      "usagepct", "maskbuffer", "masknrow", "maskspace"
+                                                                                                     
                                                                                         )
                                                                      ))),
                                              column(6,
@@ -504,7 +506,7 @@ ui <- function(request) {
 server <- function(input, output, session) {
     
     desc <- packageDescription("secr")
-    summaryfields <- c("date", "time", "note", "traps", "captures", 
+    summaryfields <- c("date", "time", "note", "traps", "captures", "n", "r",
                        "ndetectors", "noccasions", "usagepct", "maskbuffer", "masknrow", "maskspace",
                        "likelihood", "distribution", "model", 
                        "fitfunction", "detectfn", "npar", "logLik", "AIC",
@@ -512,8 +514,8 @@ server <- function(input, output, session) {
                        "k", "proctime"
                        )
     
-    fieldgroup1 <- 1:11
-    fieldgroup2 <- 12:28
+    fieldgroup1 <- 1:13
+    fieldgroup2 <- 14:30
 
     showNotification(paste("secr", desc$Version, desc$Date),
                      closeButton = FALSE, type = "message", duration = seconds)
@@ -917,19 +919,20 @@ server <- function(input, output, session) {
 
     addtosummary <- function() {
         ## input$fields is character vector of selected fields
-        sess <- 1
         df <- data.frame(
             date = format(Sys.time(), "%Y-%m-%d"),
             time = format(Sys.time(), "%H:%M:%S"),
             note = input$title,
             traps = if (is.null(input$trapfilename)) "" else input$trapfilename$name[1],
             captures = if (is.null(input$captfilename)) "" else input$captfilename$name[1],
-            ndetectors = ndetectors()[sess],
-            noccasions = noccasions()[sess],
-            usagepct = usagepct()[sess],
+            ndetectors = ndetectors()[input$sess],
+            noccasions = noccasions()[input$sess],
+            usagepct = usagepct()[input$sess],
             maskbuffer = input$buffer,
-            masknrow = masknrow()[sess],
-            maskspace = round(maskspace()[sess], 1),
+            masknrow = masknrow()[input$sess],
+            maskspace = round(maskspace()[input$sess], 1),
+            n = n(),
+            r = r(),
             likelihood = input$likelihoodbtn,
             distribution = input$distributionbtn,
             model = modelstring(), # input$model,
@@ -959,7 +962,7 @@ server <- function(input, output, session) {
             df$se.sigma <- se.sigma()
             df$k <- if (input$detectfnbtn=="HHN") density()^0.5 * sigma() / 100 else NA
             df$proctime <- fitrv$value$proctime
-            df[,18:28] <- round(df[,18:28], input$dec)
+            df[,20:30] <- round(df[,20:30], input$dec)
         }
             
         sumrv$value <- rbind (sumrv$value, df)
@@ -1211,6 +1214,7 @@ server <- function(input, output, session) {
             if (inherits(ch, 'try-error')) {
                 showNotification("invalid capture file or arguments; try again",
                                  type = "error", id = "badcapt", duration = seconds)
+                showNotification(ch, type = "error", id = "capterror", duration = seconds)
                 ch <- NULL
             }
             else {
@@ -1258,6 +1262,20 @@ server <- function(input, output, session) {
         else
             dim(capthist())[3]
         
+    })
+    
+    n <- reactive ({
+        if (ms(capthist()))
+            sum(sapply(capthist(), nrow))
+        else
+            nrow(capthist())
+    })
+    
+    r <- reactive ({
+        if (ms(capthist()))
+            sum(sapply(capthist(), sum)) - n()
+        else
+            sum(capthist()) - n()
     })
     
     usagepct <- reactive ({
@@ -1678,8 +1696,7 @@ server <- function(input, output, session) {
         trps <- detectorarray()
         
         border <- border(input$pxyborder)
-        sess <- 1
-        
+
         xy <- c(input$pxyclick$x, input$pxyclick$y)
         if ((xy[2] < (min(trps$y) - border)) ||
             (xy[2] > (max(trps$y) + border)) ||
@@ -1691,7 +1708,7 @@ server <- function(input, output, session) {
             Pxy <- pdot (xy, trps,
                          detectfn = input$detectfnbtn,
                          detectpar = list(lambda0 = lambda0(), sigma = sigma()),
-                         noccasions = noccasions()[sess])
+                         noccasions = noccasions()[input$sess])
             pxyrv$xy <-xy
             pxyrv$value <- Pxy}
     })
@@ -1886,7 +1903,10 @@ server <- function(input, output, session) {
             }
             else {
                 if (input$packagebtn == 'secr.fit') {
-                    D <- derivedresult()['D', 'estimate']
+                    if (nsessions()==1)
+                        D <- derivedresult()['D', 'estimate']
+                    else
+                        D <- derivedresult()[[input$sess]]['D', 'estimate']
                 }
                 else {
                     D <- NA ## derivedresult()['superD','estimate']
@@ -1913,7 +1933,11 @@ server <- function(input, output, session) {
             }
             else {
                 if (input$packagebtn == 'secr.fit') {
-                    se.D <- derivedresult()['D', 'SE.estimate']
+                    if (nsessions()==1)
+                        se.D <- derivedresult()['D', 'SE.estimate']
+                    else
+                        se.D <- derivedresult()[[input$sess]]['D', 'SE.estimate']
+                        
                 }
                 else {
                     se.D <- NA ## derivedresult()['superD','SE.estimate']
@@ -2108,11 +2132,10 @@ server <- function(input, output, session) {
         }
         else
             drawlabels <- input$pxylabelbox
-        sess <- 1
         pdot.contour(core, border = border, nx = input$pxynx,
                      detectfn = input$detectfnbtn,
                      detectpar = list(sigma = sigma(), lambda0 = lambda0()),
-                     noccasions = noccasions()[sess], drawlabels = drawlabels,
+                     noccasions = noccasions()[input$sess], drawlabels = drawlabels,
                      binomN = NULL, levels = lev, poly = poly(), 
                      poly.habitat = input$includeexcludebtn == "Include",
                      plt = TRUE, add = TRUE,

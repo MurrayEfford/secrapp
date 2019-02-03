@@ -1,3 +1,6 @@
+# Detector locations exported from traps(OVpossumCH)
+# Sun Feb 03 4:05:25 p.m. 2019 
+# Detector  x  y 
 5157 2674950 5982570
 5457 2674980 5982570
 5454 2674980 5982540
