@@ -97,24 +97,21 @@ ui <- function(request) {
                                          
                                          
                                          h2("Actions"),
-                                         
                                          fluidRow(
-                                             column(5, actionButton("fitbtn", "Fit model",  width = 130,
+                                             column(4, actionButton("fitbtn", "Fit model",  width = 130,
                                                                     title = "Fit spatially explicit capture-recapture model to estimate density and update Results")),
-                                             column(6, actionButton("appendbtn", "Add to summary",  width = 130,
-                                                                    title = "Append new analysis to Summary table"))
+                                             column(4, actionButton("appendbtn", "Add to summary",  width = 130,
+                                                                    title = "Append new analysis to Summary table")),
+                                             column(4, helpText(HTML("F11 to toggle fullscreen")))
                                          ),
                                          
                                          br(),
                                          fluidRow(
-                                             column(5, actionButton("resetbtn", "Reset all", width = 130, 
+                                             column(4, actionButton("resetbtn", "Reset all", width = 130, 
                                                                     title = "Reset all inputs to initial values")),
-                                             column(6, bookmarkButton(width = 130)) 
+                                             column(4, bookmarkButton(width = 130)) 
                                          ),
                                          br(),
-                                         fluidRow(
-                                             column(7, helpText(HTML("F11 to toggle fullscreen")))
-                                         ),
                                          fluidRow(
                                              column(11, textInput("title", "", value = "", 
                                                                   placeholder = "label for Summary")))
@@ -248,19 +245,23 @@ ui <- function(request) {
                                                                            max = 1000,
                                                                            value = 32,
                                                                            step = 1,
-                                                                           width = 180),
-                                                              radioButtons("maskshapebtn", label = "Shape",
-                                                                           choices = c("Rectangular", "Trap buffer"), 
-                                                                           selected = "Trap buffer", inline = TRUE)
+                                                                           width = 180)
                                                        ),
                                                        column(6,
                                                               br(),
                                                               actionButton("suggestbuffer", "Suggest width", width = 130,
                                                                            title = "Based on either fitted model or RPSV"))
+                                                   ),
+                                                   fluidRow(
+                                                        column(12, 
+                                                               radioButtons("maskshapebtn", label = "Shape",
+                                                                           choices = c("Rectangular", "Trap buffer"), 
+                                                                           selected = "Trap buffer", inline = TRUE)
+                                                        )
                                                    )
                                          ),
                                          wellPanel(class = "mypanel", 
-                                         br(),
+                                                   br(),
                                                    div(style="height: 80px;",
                                                        fileInput("habpolyfilename", "Mask polygon file(s)",
                                                                  accept = c('.shp','.dbf','.sbn','.sbx',
@@ -268,19 +269,20 @@ ui <- function(request) {
                                                                  multiple = TRUE)),
                                                    uiOutput("habitatfile"),
                                                    fluidRow(
-                                                       column(10, div(style="height: 20px;",
-                                                                      checkboxInput("polygonbox", "Clip to polygon(s)", value = TRUE, width = 180)),
+                                                       column(10, 
+                                                              checkboxInput("polygonbox", "Clip to polygon(s)", value = TRUE),
                                                               radioButtons("includeexcludebtn", label = "",
                                                                            choices = c("Include", "Exclude"), 
-                                                                           selected = "Include", inline = TRUE))
+                                                                           selected = "Include", inline = TRUE)
+                                                       )
                                                    )
                                          )
                                   ),
                                   column(4, plotOutput("maskPlot"),
-                                         fluidRow(
+                                         conditionalPanel ("output.trapsUploaded", fluidRow(
                                           column(3, offset = 1, checkboxInput("dotsbox", "dots", value = FALSE, width = 180)),
-                                          column(2, offset = 1, checkboxInput("xpdbox", "xpd", value = TRUE, width = 180))
-                                          )   
+                                          column(2, offset = 1, checkboxInput("xpdbox", "xpd", value = FALSE, width = 180))
+                                          ))   
                                          ),
                                   column(3, 
                                          h2("Summary"),
@@ -291,7 +293,6 @@ ui <- function(request) {
                                   )
                               )
                      ),
-                     
                                           
                      tabPanel("Summary",
                               br(),
@@ -336,13 +337,15 @@ ui <- function(request) {
                                              column(6,
                                                     conditionalPanel("output.selectingfields == 'TRUE'",
                                                                      checkboxGroupInput("fields2", "",
-                                                                                        choices = c("distribution", "model", "detectfn", 
+                                                                                        choices = c("likelihood", "distribution", "model", "detectfn", 
                                                                                                     "fitfunction", "npar", "logLik", "AIC",
-                                                                                                    "D", "lambda0", "sigma", "k", "proctime"
+                                                                                                    "D", "se.D", "RSE.D", "lambda0", "se.lambda0", "sigma", "se.sigma",
+                                                                                                    "k", "proctime"
                                                                                         ),
-                                                                                        selected = c("distribution", "model", "detectfn", 
+                                                                                        selected = c("likelihood", "distribution", "model", "detectfn",
                                                                                                      "fitfunction", "npar", "logLik", "AIC",
-                                                                                                     "D", "lambda0", "sigma", "k", "proctime"
+                                                                                                     "D", "se.D", "RSE.D", "lambda0", "se.lambda0", "sigma", "se.sigma",
+                                                                                                     "k", "proctime"
                                                                                         )
                                                                      )
                                                     )
@@ -352,7 +355,6 @@ ui <- function(request) {
                                   ),
                                   column(9, 
                                          # h2("Results"),
-                                         #                                         div(tableOutput("summarytable"), style = "width:800px; overflow-x: scroll; font-size:80%")
                                          div(tableOutput("summarytable"), style = "width:800px; overflow-x: scroll")
                                   )
                               )
@@ -378,6 +380,12 @@ ui <- function(request) {
                                                        column(12, selectInput("method", "Maximization method",
                                                                    choices = c("Newton-Raphson", "Nelder-Mead", "none"),
                                                                    selected = "Newton-Raphson", width=160))
+                                                   )
+                                         ),
+                                         h2("Summary"),
+                                         wellPanel(class = "mypanel",
+                                                   fluidRow(
+                                                       column(12, numericInput("dec", "Decimal places", min = 0, max = 8, value = 4, width=160))
                                                    )
                                          )
                                   ),
@@ -498,13 +506,14 @@ server <- function(input, output, session) {
     desc <- packageDescription("secr")
     summaryfields <- c("date", "time", "note", "traps", "captures", 
                        "ndetectors", "noccasions", "usagepct", "maskbuffer", "masknrow", "maskspace",
-                       "distribution", "model", 
+                       "likelihood", "distribution", "model", 
                        "fitfunction", "detectfn", "npar", "logLik", "AIC",
-                       "D", "lambda0", "sigma", "k", "proctime"
+                       "D", "se.D", "RSE.D", "lambda0", "se.lambda0", "sigma", "se.sigma", 
+                       "k", "proctime"
                        )
     
     fieldgroup1 <- 1:11
-    fieldgroup2 <- 12:23
+    fieldgroup2 <- 12:28
 
     showNotification(paste("secr", desc$Version, desc$Date),
                      closeButton = FALSE, type = "message", duration = seconds)
@@ -512,6 +521,12 @@ server <- function(input, output, session) {
      output$multisession <- renderText('false')
      outputOptions(output, "selectingfields", suspendWhenHidden = FALSE)
      outputOptions(output, "multisession", suspendWhenHidden = FALSE)
+
+     output$trapsUploaded <- reactive({
+         return(!is.null(readtrapfile()))
+     })
+     outputOptions(output, "trapsUploaded", suspendWhenHidden=FALSE)
+
      
     ##############################################################################
     
@@ -915,6 +930,7 @@ server <- function(input, output, session) {
             maskbuffer = input$buffer,
             masknrow = masknrow()[sess],
             maskspace = round(maskspace()[sess], 1),
+            likelihood = input$likelihoodbtn,
             distribution = input$distributionbtn,
             model = modelstring(), # input$model,
             detectfn = input$detectfnbtn,
@@ -922,9 +938,9 @@ server <- function(input, output, session) {
             npar = NA,
             logLik = NA,
             AIC = NA,
-            D = NA,
-            lambda0 = NA,
-            sigma = NA,
+            D = NA, se.D = NA, RSE.D = NA,
+            lambda0 = NA, se.lambda0 = NA,
+            sigma = NA, se.sigma = NA,
             k = NA,
             proctime = NA
         )
@@ -935,10 +951,15 @@ server <- function(input, output, session) {
             df$logLik <- fitsum$AICtable$logLik
             df$AIC <- fitsum$AICtable$AIC
             df$D <- density()
+            df$se.D <- se.density()
+            df$RSE.D <- se.density() / density()
             df$lambda0 <- lambda0()
+            df$se.lambda0 <- se.lambda0()
             df$sigma <- sigma()
-            df$k <- if (input$detectfnbtn=="HHN") round(density()^0.5 * sigma() / 100,3) else NA
+            df$se.sigma <- se.sigma()
+            df$k <- if (input$detectfnbtn=="HHN") density()^0.5 * sigma() / 100 else NA
             df$proctime <- fitrv$value$proctime
+            df[,18:28] <- round(df[,18:28], input$dec)
         }
             
         sumrv$value <- rbind (sumrv$value, df)
@@ -1823,10 +1844,18 @@ server <- function(input, output, session) {
     ##############################################################################
 
     derivedresult <- reactive({
-        progress <- Progress$new(session, min = 1, max = 15)
-        on.exit(progress$close())
-        progress$set(message = 'Computing derived estimates ...', detail = '')
-        derived(fitrv$value)
+        if (input$packagebtn == "openCR.fit") {
+             showNotification("no derived method for openCR closed models",
+                             type = "warning", id = "noderived", duration = seconds)
+         
+            NULL
+            }
+        else {
+            progress <- Progress$new(session, min = 1, max = 15)
+            on.exit(progress$close())
+            progress$set(message = 'Computing derived estimates ...', detail = '')
+            derived(fitrv$value, distribution = tolower(input$distributionbtn))
+        }
     })
     
     newdata <- reactive({
@@ -1842,25 +1871,56 @@ server <- function(input, output, session) {
     })
     
     density <- reactive( {
-        if (is.null(fitrv$value) || input$likelihoodbtn != "Full" || !inherits(fitrv$value, c("secr", "openCR"))) {
+        if (!inherits(fitrv$value, c("secr", "openCR"))) {
             NA
         }
         else {
             newd <- newdata()[1,,drop = FALSE]
-            if (input$packagebtn == 'secr.fit') {
-                D <- predict(fitrv$value, newdata = newd)['D', 'estimate']
+            if (input$likelihoodbtn == "Full") {
+                if (input$packagebtn == 'secr.fit') {
+                    D <- predict(fitrv$value, newdata = newd)['D', 'estimate']
+                }
+                else {
+                    D <- predict(fitrv$value, newdata = newd)[['superD']][1,'estimate']
+                }
             }
             else {
-                D <- predict(fitrv$value, newdata = newd)[['superD']][1,'estimate']
+                if (input$packagebtn == 'secr.fit') {
+                    D <- derivedresult()['D', 'estimate']
+                }
+                else {
+                    D <- NA ## derivedresult()['superD','estimate']
+                }
+                
             }
-            
             D
-            
-            # ## return density in animals / hectare
-            # if (input$areaunit == "ha")
-            #     D
-            # else
-            #     D / 100  ## per sq. km
+        }
+    })
+    ##############################################################################
+    se.density <- reactive( {
+        if (!inherits(fitrv$value, c("secr", "openCR"))) {
+            NA
+        }
+        else {
+            newd <- newdata()[1,,drop = FALSE]
+            if (input$likelihoodbtn == "Full") {
+                if (input$packagebtn == 'secr.fit') {
+                    se.D <- predict(fitrv$value, newdata = newd)['D', 'SE.estimate']
+                }
+                else {
+                    se.D <- predict(fitrv$value, newdata = newd)[['superD']][1,'SE.estimate']
+                }
+            }
+            else {
+                if (input$packagebtn == 'secr.fit') {
+                    se.D <- derivedresult()['D', 'SE.estimate']
+                }
+                else {
+                    se.D <- NA ## derivedresult()['superD','SE.estimate']
+                }
+                
+            }
+            se.D
         }
     })
     ##############################################################################
@@ -1878,6 +1938,18 @@ server <- function(input, output, session) {
         }
     })
     
+    se.lambda0 <- reactive({
+        if (!inherits(fitrv$value, c("secr", "openCR")))
+            NA
+        else {
+            if (input$packagebtn == 'secr.fit')
+                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['lambda0','SE.estimate']
+                # detectpar(fitrv$value)[['lambda0']]
+            else
+                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$lambda0[1,'SE.estimate']
+        }
+    })
+    
     sigma <- reactive ({
         if (!inherits(fitrv$value, c("secr", "openCR")))
             NA
@@ -1887,6 +1959,18 @@ server <- function(input, output, session) {
                 # detectpar(fitrv$value)[['sigma']]
             else 
                 predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$sigma[1,'estimate'] 
+        }
+    })
+    
+    se.sigma <- reactive ({
+        if (!inherits(fitrv$value, c("secr", "openCR")))
+            NA
+        else {
+            if (input$packagebtn == 'secr.fit')
+                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['sigma','SE.estimate']
+                # detectpar(fitrv$value)[['sigma']]
+            else 
+                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$sigma[1,'SE.estimate'] 
         }
     })
     
@@ -1976,7 +2060,7 @@ server <- function(input, output, session) {
         par(mar=c(2,2,2,2), xaxs='i', yaxs='i', xpd = input$xpdbox)
         
         plot (core, border = input$buffer, gridlines = FALSE)
-        plot (mask(), add = TRUE, col = grey(0.9), dots = input$dotsbox)
+        plot (mask(), add = TRUE, col = grey(0.94 - input$dotsbox/5), dots = input$dotsbox)
         plot (core, add = TRUE)
         
         if (!is.null(poly()) && input$polygonbox) {
