@@ -283,7 +283,8 @@ ui <- function(request) {
                                   column(4, plotOutput("maskPlot"),
                                          conditionalPanel ("output.trapsUploaded", fluidRow(
                                           column(3, offset = 1, checkboxInput("dotsbox", "dots", value = FALSE, width = 180)),
-                                          column(2, offset = 1, checkboxInput("xpdbox", "xpd", value = FALSE, width = 180))
+                                          column(3, offset = 1, checkboxInput("xpdbox", "xpd", value = FALSE, width = 180)),
+                                          column(4, checkboxInput("maskedge2", "show mask edge", value = FALSE))
                                           ))   
                                          ),
                                   column(3, 
@@ -2121,6 +2122,10 @@ server <- function(input, output, session) {
         if (!is.null(poly()) && input$polygonbox) {
             sp::plot(poly(), add = TRUE)
         }
+        if (input$maskedge2) {
+            plotMaskEdge(mask(), add = TRUE)
+        }
+
         if (!input$xpdbox)
             box()
     })
