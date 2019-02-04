@@ -88,10 +88,6 @@ ui <- function(request) {
                                                    ),
                                                    fluidRow(
                                                        column(12, textInput("otherargs", "", value = "", placeholder = "other args e.g., details"))
-                                                   ),
-                                                   fluidRow(
-                                                       column(12, radioButtons("resultsbtn", label = "Results", 
-                                                                               inline = TRUE, choices = c("summary", "derived")))
                                                    )
                                          ),
                                          
@@ -119,6 +115,12 @@ ui <- function(request) {
                                   
                                   column (6, # style='padding:0px;',
                                           h2("Results"),
+                                                   fluidRow(
+                                                       column(5, radioButtons("resultsbtn", label = "", 
+                                                                               inline = TRUE, choices = c("summary", "derived", "other"))),
+                                                       column(5, textInput("otherfunction", label="", placeholder = "e.g., vcov(fit)")),
+                                                       conditionalPanel("output.modelFitted", column(2, br(), downloadLink("savebtn", "Save fit")))
+                                                   ),
                                           
                                           fluidRow(
                                               column(12, 
@@ -487,11 +489,15 @@ ui <- function(request) {
                               h5(paste("This Shiny application provides an interface to the R package 'secr', version", 
                                        packageDescription("secr")$Version), "."),
                               br(),
+                              h5("Copyright 2019 Murray Efford"),
+                              "The application is released under the ",
+                              a("GNU General Public License Version 3.0", href="https://www.gnu.org/licenses/gpl-3.0.txt", target="_blank"), br(),
+                              br(),
                               h5("For further information see "), 
                               a("www.otago.ac.nz/density", href="https://www.otago.ac.nz/density", target="_blank"), br(),
-                              a("CRAN.R-project.org/package=secr", href="https://CRAN.R-project.org/package=secr", target="_blank"),
-                              br(), br(),
-                              
+                              a("CRAN.R-project.org/package=secr", href="https://CRAN.R-project.org/package=secr", target="_blank"), br(),
+                              a("https://github.com/MurrayEfford/secrapp", href="https://github.com/MurrayEfford/secrapp", target="_blank"), br(),
+                              br(),
                               h5("Citation"),
                               h5("[The preferred citation for this package is not finalised]")
                      )
@@ -527,7 +533,13 @@ server <- function(input, output, session) {
      output$trapsUploaded <- reactive({
          return(!is.null(readtrapfile()))
      })
+     
+     output$modelFitted <- reactive({
+         return(!is.null(fitrv$value))
+     })
+     
      outputOptions(output, "trapsUploaded", suspendWhenHidden=FALSE)
+     outputOptions(output, "modelFitted", suspendWhenHidden=FALSE)
 
      
     ##############################################################################
@@ -1105,6 +1117,7 @@ server <- function(input, output, session) {
             if (input$packagebtn == "openCR.fit") {
                 args$type <- type
                 args$distribution <-  tolower(input$distributionbtn)
+                args$details <- list(multinom = TRUE)
             }
             else if (input$packagebtn == "secr.fit") {
                 args$CL <- CL 
@@ -1761,7 +1774,6 @@ server <- function(input, output, session) {
     }
     
     output$resultsPrint <- renderPrint({
-        
         hideplotif (is.null(readtrapfile()), "Array")
         hideplotif (is.null(fitrv$value), "Detectfn")
         hideplotif (is.null(fitrv$value), "Pxy")
@@ -1794,7 +1806,26 @@ server <- function(input, output, session) {
             if (input$resultsbtn == "summary")
                 summary(fitrv$value)
             else if (input$resultsbtn == "derived") {
-                derivedresult()
+                if (input$packagebtn == "openCR.fit")
+                    cat("derived method not enabled for openCR\n")
+                else
+                    derivedresult()
+            }
+            else {
+                fncall <- input$otherfunction
+                if (fncall=="") cat("No function specified\n")
+                else {
+                    fncall <- gsub("fit", "fitrv$value", fncall)
+                    out <- try(eval(parse(text = fncall)))
+                    if (inherits(out, "try-error")) {
+                        err <- attr(out, 'condition')$message
+                        cat("Did not compute\n")
+                        err
+                    }
+                    else {
+                        out
+                    }
+                }
             }
         }
         else {
@@ -2215,6 +2246,13 @@ server <- function(input, output, session) {
         filename = "summary.rds",
         content = function(file) {
             saveRDS(sumrv$value, file)
+        }
+    )
+    
+    output$savebtn <- downloadHandler(
+        filename = "fit.rds",
+        content = function(file) {
+            saveRDS(fitrv$value, file)
         }
     )
     
