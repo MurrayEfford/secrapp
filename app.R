@@ -1233,6 +1233,7 @@ server <- function(input, output, session) {
             }
             else {
                 if (ms(ch)) {
+                    showNotification("multisession data - may cause problems", type = "warning", id = "mswarning", duration = seconds)
                     updateNumericInput(session, "animal", max = nrow(ch[[input$sess]]))
                      output$multisession <- renderText("true")
                 }
@@ -1456,8 +1457,13 @@ server <- function(input, output, session) {
 
     observeEvent(input$likelihoodbtn, ignoreInit = TRUE, {
         fitrv$value <- NULL
-        if (input$likelihoodbtn == "Full")
-            updateTextInput(session, "model", value = paste0("D~1, ", input$model))
+        ## drop or add density formula depending on full/conditional likelihood
+        if (input$likelihoodbtn == "Full") {
+            if (input$packagebtn == "secr.fit")
+                updateTextInput(session, "model", value = paste0("D~1, ", input$model))
+            else
+                updateTextInput(session, "model", value = paste0("superD~1, ", input$model))
+        }
         else {
             form <- strsplit(input$model, ",")[[1]]
             form <- form[!grepl("D", form)]
@@ -1481,6 +1487,20 @@ server <- function(input, output, session) {
 
     observeEvent(input$packagebtn, {
         fitrv$value <- NULL
+
+        ## toggle D/superD
+        if (input$likelihoodbtn == "Full") {
+            form <- strsplit(input$model, ",")[[1]]
+            form <- stringr::str_trim(form)
+            if (input$packagebtn == "secr.fit") {
+                    form <- gsub("superD", "D", form)
+            }
+            else {
+                form <- gsub("D", "superD", form)
+            }
+            newmodel <- paste(form, collapse = ", ")
+            updateTextInput(session, "model", value = newmodel)
+        }
     })
     ##############################################################################
 
@@ -1629,7 +1649,11 @@ server <- function(input, output, session) {
     
     observeEvent(input$fitbtn, ignoreInit = TRUE, {
         ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
-        if (!is.null(capthist())) {
+        if (is.null(capthist())) {
+             showNotification("load data",
+                             type = "warning", id = "nodata", duration = seconds)
+        }
+        else {
             progress <- Progress$new(session, min = 1, max = 15)
             on.exit(progress$close())
             progress$set(message = 'Fitting...',
@@ -1903,7 +1927,8 @@ server <- function(input, output, session) {
             progress <- Progress$new(session, min = 1, max = 15)
             on.exit(progress$close())
             progress$set(message = 'Computing derived estimates ...', detail = '')
-            derived(fitrv$value, distribution = tolower(input$distributionbtn))
+            der <- derived(fitrv$value, distribution = tolower(input$distributionbtn))
+            round(der, input$dec)
         }
     })
     
