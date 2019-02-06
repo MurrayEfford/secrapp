@@ -6,6 +6,10 @@ if (compareVersion(as.character(secrversion), '3.2.0') < 0)
          call. = FALSE)
 openCRversion <- packageVersion('openCR')
 
+# for transfer to secrdesign
+designurl <- "http://127.0.0.1:4429/"    ## temporarily use 4429 local
+#designurl <- "https://www.stats.otago.ac.nz/secrdesignapp/"   # secrdesignapp 1.2 and above reads parameters
+
 # requires package rgdal to read shapefiles
 # requires package sp for bbox and plot method for SpatialPolygons
 # requires package parallel for max cores in simulate options (distributed with base R)
@@ -105,7 +109,10 @@ ui <- function(request) {
                                          fluidRow(
                                              column(4, actionButton("resetbtn", "Reset all", width = 130, 
                                                                     title = "Reset all inputs to initial values")),
-                                             column(4, bookmarkButton(width = 130)) 
+                                             column(4, bookmarkButton(width = 130)),
+                                             
+                                             column(4, uiOutput("secrdesignurl"))  ## switch to secrdesign, with parameters
+                                                    
                                          ),
                                          br(),
                                          fluidRow(
@@ -560,6 +567,39 @@ server <- function(input, output, session) {
     
     ##############################################################################
     
+    output$secrdesignurl <- renderUI ({
+         parm <- c(
+             paste0("detectfnbtn=", input$detectfnbtn),
+             paste0("distributionbtn=", input$distributionbtn),
+             paste0("detector=", input$detector)
+         )
+         
+         if (!is.null(input$trapfilename)) {
+             parm <- c(parm,
+                       #paste0("trapfilename=", input$trapfilename),
+                       paste0("trapargs=", input$trapargs))
+         }
+
+         if (!is.null(input$captfilename)) {
+             parm <- c(parm,
+                       paste0("noccasions=", as.character(noccasions())))
+         }
+         
+         
+         if (!is.null(fitrv$value)) {
+             parm <- c(parm,
+                       paste0("D=", as.character(round(density(), input$dec))),
+                       paste0("lambda0=", as.character(round(lambda0(), input$dec))),
+                       paste0("sigma=", as.character(round(sigma(), input$dec))))
+         }
+         
+         parm <- paste(parm, collapse = "&")
+         # open secrdesignapp in a new tab, with parameters from secrapp
+         # designurl is set at top of this file
+         tags$a(href =  paste0(designurl, "?", parm), "Switch to secrdesign", target="_blank")  
+     })
+     ##############################################################################
+     
     output$persqkm <- renderUI({
         ## display density in animals/km^2
         Dkm <- density() * 100
@@ -954,9 +994,13 @@ server <- function(input, output, session) {
             npar = NA,
             logLik = NA,
             AIC = NA,
-            D = NA, se.D = NA, RSE.D = NA,
-            lambda0 = NA, se.lambda0 = NA,
-            sigma = NA, se.sigma = NA,
+            D = NA, 
+            se.D = NA, 
+            RSE.D = NA,
+            lambda0 = NA, 
+            se.lambda0 = NA,
+            sigma = NA, 
+            se.sigma = NA,
             k = NA,
             proctime = NA
         )
@@ -973,9 +1017,12 @@ server <- function(input, output, session) {
             df$se.lambda0 <- se.lambda0()
             df$sigma <- sigma()
             df$se.sigma <- se.sigma()
-            df$k <- if (input$detectfnbtn=="HHN") density()^0.5 * sigma() / 100 else NA
+            if (input$detectfnbtn=="HHN")
+                df$k <- density()^0.5 * sigma() / 100
+            else 
+                df$k <- NA*1  # force numeric NA
             df$proctime <- fitrv$value$proctime
-            df[,20:30] <- round(df[,20:30], input$dec)
+            df[,20:30] <- ifelse (sapply(df[,20:30], is.numeric), round(df[,20:30], input$dec), df[,20:30])
         }
             
         sumrv$value <- rbind (sumrv$value, df)
