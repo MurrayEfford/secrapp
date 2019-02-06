@@ -1861,7 +1861,7 @@ server <- function(input, output, session) {
     
     output$maskPrint <- renderPrint({
         if (is.null(mask()))
-            cat("No mask yet - load trap file\n")
+            cat("No mask yet - load trap file on main screen\n")
         else 
             summary(mask())
     })
