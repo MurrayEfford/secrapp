@@ -568,6 +568,10 @@ server <- function(input, output, session) {
     ##############################################################################
     
     output$secrdesignurl <- renderUI ({
+        
+        # only show after model fitted
+        req(fitrv$value)
+        
          parm <- c(
              paste0("detectfnbtn=", input$detectfnbtn),
              paste0("distributionbtn=", input$distributionbtn),
@@ -584,7 +588,6 @@ server <- function(input, output, session) {
              parm <- c(parm,
                        paste0("noccasions=", as.character(noccasions())))
          }
-         
          
          if (!is.null(fitrv$value)) {
              parm <- c(parm,
