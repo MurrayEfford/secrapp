@@ -1,7 +1,7 @@
 ---
 title: "secr app 1.0"
 author: "Murray Efford"
-date: '2019-02-01'
+date: '2019-02-08'
 output:
   pdf_document:
     toc: yes
@@ -13,7 +13,7 @@ output:
 
 # An interactive app for spatially explicit capture--recapture
 
-## Murray Efford 2019-02-01
+## Murray Efford 2019-02-08
 
 # Contents
   [Introduction](#introduction)  
@@ -30,7 +30,13 @@ output:
 
 This Shiny application is an interactive interface to parts of the R package **secr** ([Efford 2019a](#references)). It fits simple single-session models. The current source code is available from https://GitHub.com/MurrayEfford/secrapp.
 
-Tip: on small displays, running your browser in full-screen mode will avoid the need to scroll down (often F11 will get you there; otherwise try the options menu).
+Documentation of **secr** is available at www.otago.ac.nz/density. For example:
+
+<a href="https://www.otago.ac.nz/density/pdfs/secr-manual.pdf"; target="_blank";>secr-manual.pdf</a>   (details of each function)  
+<a href="https://www.otago.ac.nz/density/pdfs/secr-datainput.pdf"; target="_blank";>secr-datainput.pdf</a>  
+<a href="https://www.otago.ac.nz/density/pdfs/secr-overview.pdf"; target="_blank";>secr-overview.pdf</a>
+
+TIP: on small displays, running your browser in full-screen mode will avoid the need to scroll down (often F11 will get you there; otherwise try the options menu).
 
 # Main screen  <a name="main"></a>
 
@@ -42,7 +48,7 @@ Tip: on small displays, running your browser in full-screen mode will avoid the 
 
 The detector layout is input from a text file. The file typically should have three columns (trapID, x, y) with no headers. Optional arguments separated by commas may be used to customise input (e.g., `skip`, which is passed through `read.traps` to `read.table`). 
 
-Options for <u>detector type</u>  follow **secr** ([Efford (2019b)](#references)): "multi" refers to a multi-catch trap; "proximity" to binary proximity detectors, and "count" to detectors that yield integer counts. Counts are assumed to be Poisson-distributed.
+Options for <u>detector type</u>  follow **secr** ([Efford (2019a)](#references)): "multi" refers to a multi-catch trap; "proximity" to binary proximity detectors, and "count" to detectors that yield integer counts. Counts are assumed to be Poisson-distributed.
 
 ### Captures
 
@@ -92,11 +98,11 @@ The <u>Distribution</u> radio button toggles between two models for the number o
   </tr>
   <tr>
     <td>Add to summary</td>
-    <td>Transfer results to summary table[Not working]</td>
+    <td>Transfer results to summary table</td>
   </tr>
   <tr>
     <td>Reset all</td>
-    <td>Reset all input options to defaults (except file inputs)</td>
+    <td>Reset all input options to defaults</td>
   </tr>
   <tr>
     <td>Bookmark</td>
@@ -105,30 +111,33 @@ The <u>Distribution</u> radio button toggles between two models for the number o
 </table> 
 
 <br>
+The option 'Switch to secrdesign' appears once a model has been fitted. This opens 'secrdesignapp' on the Otago University server in a new browser window. Settings and parameter estimates are transferred automatically (from secrdesignapp 1.2 expected late in February 2019). Detector locations are not transferred; they should be provided either by selecting the file in secrdesignapp, or by the usual options (Grid, Line, Region).
 
 ## Results  <a name="results"></a>
 
 *Values in the Results window are updated automatically when the inputs change.*
 
-Results vary depending on the inputs
+The default results vary depending on the inputs
 
 * summary of detector layout only
 * summary of capthist object (detector layout + detections)
 * summary of fitted model
 
+Once a model has been fitted it is possible (with secr.fit) to select the table of `derived` estimates. Another summary function may also be entered by the user after selecting 'Other'; it should use the argument `fit`, meaning the fitted model.
+
 ## Tabbed plots
 
 *Plots update automatically. Any plot may be saved by right-clicking on the image.*
-
-[NOT ALL PLOTS ARE WORKING 2019-02-01]
 
 ### Array
 
 A plot of the current detector layout. Detections are overplotted if they have been uploaded.
 
+By default, the locations of one animal are highlighted. Suppress this by selecting animal '0'.
+
 ### Detectfn   <a name="detectfnplot"></a>
 
-Fitted detection function on the hazard scale
+Fitted detection function on the hazard and probability scales.
 
 ### Popn
 
@@ -144,7 +153,7 @@ Two styles of plot are offered (see Options | Power plot)
 
 #### Power for test of null hypothesis 
 
-Probability of detecting a change in density in a 2-survey comparison as a function of effect size for a given expected \(\small \mbox{RSE}(\hat D)\). See [Appendix 1](#appendix1) for the computation method.
+Probability of detecting a change in density in a 2-survey comparison as a function of effect size for a given expected \(\small \mbox{RSE}(\hat D)\). See the Appendix to Help in secrdesignapp for the computation method.
 
 Effect size is the ratio of final density \(\small D_2\) to initial density \(\small D_1\) expressed as a percentage. The alpha level is specified in Options (default \(\small \alpha = 0.05\)). 
 
@@ -159,6 +168,8 @@ As an alternative to conventional power analysis we can construct intervals for 
 ----------------------------------------------------
 
 # Habitat mask  <a name="habitatmask"></a>
+
+There is no facility at present for adding mask covariates or reading mask points from a file.
 
 ----------------------------------------------------
 
@@ -188,24 +199,6 @@ This is a known bug that cannot be addressed immediately. It is avoided by savin
 
 At least .shp, .dbf and .shx.
 
-## No exclusion option for habitat mask
-
-A systematic or random array defined with a Region polygon may exclude sites that lie within other polygons (Options | Detector array | Excluded region). How is an exclusion applied to the habitat mask? Unfortunately the **secr** function `make.mask` accepts only one polygon input, although this may represent either habitat or non-habitat. To combine habitat (inclusion) and non-habitat (exclusion) polygons you will first need to use GIS software (e.g., the `gDifference` function in the R package **rgeos**) and save the result as a single SpatialPolygons object (e.g., as an .rds file).
-
-```{r, eval = FALSE}
-library(rgdal)
-library(rgos)
-setwd('d:/density secr 3.2/secrdesignapp')
-region <- rgdal::readOGR(dsn = 'OVforest.shp')
-# coordinates from text file
-coord <- read.table('excltest.txt')   # read boundary coordinates
-excluded <- secr:::boundarytoSP(coord)  # convert to SpatialPolygons
-newpoly <- gDifference (region, excluded)
-saveRDS(newpoly, file = 'newpoly.RDS')
-```
-
-The RDS file may then be used in Habitat mask.
-
 # Bookmarking  <a name="bookmark"></a>
 
 Bookmarking creates a URL that allows you to take up your session where you left off. 
@@ -226,41 +219,13 @@ Borchers, D. L. and Efford, M. G. (2008) Spatially explicit
    maximum likelihood methods for capture--recapture
    studies. *Biometrics* **64**, 377--385.
    
-Efford, M. G. (2018) openCR: Open population capture--recapture models. R package version 1.3.2. https://CRAN.R-project.org/package=openCR
+Efford, M. G. (2019a) secr: Spatially explicit capture--recapture models. R package version 3.2.0. https://CRAN.R-project.org/package=secr
 
-Efford, M. G. (2019a) secrdesign: Sampling design for spatially explicit
-  capture--recapture. R package version 2.5.7.
+Efford, M. G. (2019b) secrdesign: Sampling design for spatially explicit capture--recapture. R package version 2.5.7.
   https://CRAN.R-project.org/package=secrdesign
 
-Efford, M. G. (2019b) secr: Spatially explicit capture--recapture models. R package version 3.2.0. https://CRAN.R-project.org/package=secr
-
-Efford, M. G. (2019c) Non-circular home ranges and the estimation of population density. *Ecology* (in press).
+Efford, M. G. (2019c) openCR: Open population capture--recapture models. R package version 1.3.4. https://CRAN.R-project.org/package=openCR
 
 ----------------------------------------------------
 
-# Appendix 1. Power calculation for comparison of two density estimates <a name="appendix1"></a>
-
-We want to predict the power of a comparison between two independent surveys as a function of the effect size (\( \small D_{21}\) = final density as fraction of initial density) and the predicted precision of the estimates, expressed as relative standard error RSE. The power calculation assumes log-normal errors in both the initial and final surveys. Log-normal errors are natural for estimates of density (we use a log link function for maximising the likelihood, and rely on symmetrical Wald intervals on the log scale).
-
-For a log normal distribution the variance on the log scale is \( \small \sigma^2 = \log (1 + \mbox{CV}^2) \) where CV is the coefficient of variation on the arithmetic scale (equivalent here to RSE).
-
-The mean \(\mu\) on the log scale is related to the mean \(m\) on the arithmetic scale by \( \small \mu = \log \frac{m}{\sqrt { 1 + \mbox{CV}^2}} \).
-
-We conduct a \(z\)-test on the log scale. The effect size is \( \small \mu_2 - \mu_1 \). In general we must allow for differing RSE in the two surveys, which affects both the effect size and its variance, as follows.
-
-$$ \small \mu_2 - \mu_1 = \log \frac{m_2}{\sqrt {1 + \mbox{CV}_2^2}} - \log \frac{m_1}{\sqrt {1 + \mbox{CV}_1^2}}. $$
-This reduces to 
-$$ \small \mu_2 - \mu_1 = \log \frac{m_2}{m_1} + \log \frac{\sqrt {1 + \mbox{CV}_1^2}}{\sqrt {1 + \mbox{CV}_2^2}}. $$
-For equal CV the second term drops out.
-
-The variance of the effect on the log scale is approximated by the sum of the respective variances:
-
-$$ \small \sigma_{21}^2 = \log(1 + \mbox{CV}_1^2) + \log(1 + \mbox{CV}_2^2).$$
-The standardised difference on the log scale \( \frac{\mu_2 - \mu_1}{\sigma_{21}} \) is compared to a standard normal variate at the desired alpha level.
-
-In our application we replace \( \small m_2 / m_1 \) by \( \small D_{21}\) and \( \small \mbox{CV}_1 \) by RSE. 
-
-To adjust for density-dependent RSE we assume that a difference in RSE between surveys is inversely proportional to the square root of \( \small D_{21} \) (this follows the logic of the rule-of-thumb in which both \(n\) and \(r\) scale with density). Thus \( \small \mbox{CV}_2 = \mbox{RSE} / \sqrt{D_{21}} \).
-
---------------------------------------------------------------
 [secrdesign-Enrm.pdf]: http://www.otago.ac.nz/density/pdfs/secrdesign-tools.pdf
