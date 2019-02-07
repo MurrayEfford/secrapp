@@ -4,9 +4,7 @@ secrapp performs simple spatially explicit capture-recapture analyses using the 
 
 There is very limited support for multisession data and elaborate models: these are best avoided.
 
-Documentation is in progress: the Help is incomplete and may be misleading.
-
-To run secrapp on your own machine
+To run secrapp on your own machine, install packages **shiny**, **shinyjs**, **secr** and **openCR**. Then paste this code into an R session:
 
 ```r
 library(shiny)
