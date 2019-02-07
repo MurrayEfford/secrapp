@@ -2,7 +2,9 @@
 
 secrapp performs simple spatially explicit capture-recapture analyses using the R packages [secr](https://CRAN.R-project.org/package=secr) and [openCR](https://CRAN.R-project.org/package=openCR). See the Help tab for details.
 
-THE APPLICATION IS UNDER DEVELOPMENT AND NOT YET FUNCTIONAL 2019-01-31
+There is very limited support for multisession data and elaborate models: these are best avoided.
+
+Documentation is in progress: the Help is incomplete and may be misleading.
 
 To run secrapp on your own machine
 
