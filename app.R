@@ -1,4 +1,5 @@
 library(openCR)
+library(shinyjs)
 
 secrversion <- packageVersion('secr')
 if (compareVersion(as.character(secrversion), '3.2.0') < 0)
@@ -28,6 +29,7 @@ ui <- function(request) {
         title = "secr app 1.0",
         includeCSS("secrstyle.css"),
         withMathJax(),
+        useShinyjs(),
         tags$head(tags$style(".mypanel{margin-top:5px; margin-bottom:10px; padding-bottom: 5px;}")),
         tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 250px; background: ghostwhite;}")),
         tags$head(tags$style("#maskPrint{color:blue; font-size:12px; background: ghostwhite;}")),
@@ -47,9 +49,9 @@ ui <- function(request) {
                                                                   div(style="height: 80px;",
                                                                       # trick from Felipe Gerard 2019-01 to allow reset
                                                                       # https://stackoverflow.com/questions/44203728/how-to-reset-a-value-of-fileinput-in-shiny
-                                                                      uiOutput('trapfile_ui')),
-                                                                      # fileInput("trapfilename", "Trap layout",   # Detector layout file
-                                                                      #           accept = "text/plain")),
+                                                                      # uiOutput('trapfile_ui')),
+                                                                      fileInput("trapfilename", "Trap layout",   # Detector layout file
+                                                                                 accept = "text/plain")),
                                                                   helpText(HTML(paste0("trapID, X, Y"))),
                                                                   textInput("trapargs", "",
                                                                             value = "", placeholder = "other args e.g., skip = 1"),
@@ -61,10 +63,10 @@ ui <- function(request) {
                                               column(6, 
                                                      wellPanel(class = "mypanel", 
                                                                   div(style="height: 80px;",
-                                                                      uiOutput('captfile_ui')),
-                                                                      # fileInput("captfilename", "Captures",
-                                                                      #           accept = c(".csv", ".txt", ".rdata", 
-                                                                      #                      ".rda", ".rds"))),
+                                                                      # uiOutput('captfile_ui')),
+                                                                      fileInput("captfilename", "Captures",
+                                                                                accept = c(".csv", ".txt", ".rdata",
+                                                                                           ".rda", ".rds"))),
                                                                   uiOutput("captfilehelp"),
                                                                   
                                                                   textInput("captargs", "",
@@ -272,7 +274,7 @@ ui <- function(request) {
                                          wellPanel(class = "mypanel", 
                                                    br(),
                                                    div(style="height: 80px;",
-                                                       fileInput("habpolyfilename", "Mask polygon file(s)",
+                                                       fileInput("polyfilename", "Mask polygon file(s)",
                                                                  accept = c('.shp','.dbf','.sbn','.sbx',
                                                                             '.shx',".prj", ".txt", ".rdata", ".rda", ".rds"), 
                                                                  multiple = TRUE)),
@@ -539,7 +541,7 @@ server <- function(input, output, session) {
      outputOptions(output, "multisession", suspendWhenHidden = FALSE)
 
      output$trapsUploaded <- reactive({
-         return(!is.null(readtrapfile()))
+         return(!is.null(traprv$data))
      })
      
      output$modelFitted <- reactive({
@@ -634,6 +636,7 @@ server <- function(input, output, session) {
          helptext <- "Session, ID, Occasion, X, Y"
         helpText(HTML(helptext))
     })                                                                  
+    ##############################################################################
      
     output$shapefile <- renderUI({
         helptext <- ""
@@ -657,18 +660,18 @@ server <- function(input, output, session) {
     
     output$habitatfile <- renderUI({
         helptext <- ""
-        if (!is.null(input$habpolyfilename)) {
-            pos <- grep(".shp", tolower(input$habpolyfilename[,1]))
+        if (!is.null(input$polyfilename)) {
+            pos <- grep(".shp", tolower(input$polyfilename[,1]))
             if (length(pos)>0)
-                helptext <- paste0(input$habpolyfilename[pos,1])
-            pos <- grep(".rda", tolower(input$habpolyfilename[,1]))  # .rda, .rdata
+                helptext <- paste0(input$polyfilename[pos,1])
+            pos <- grep(".rda", tolower(input$polyfilename[,1]))  # .rda, .rdata
             if (length(pos)>0) {
-                objlist <- load(input$habpolyfilename[1,4])
+                objlist <- load(input$polyfilename[1,4])
                 helptext <- paste0(objlist[1])
             }
-            pos <- grep(".rds", tolower(input$habpolyfilename[,1])) 
+            pos <- grep(".rds", tolower(input$polyfilename[,1])) 
             if (length(pos)>0) {
-                helptext <- paste0(input$habpolyfilename[pos,1])
+                helptext <- paste0(input$polyfilename[pos,1])
             }
         }
         helpText(HTML(helptext))
@@ -695,10 +698,11 @@ server <- function(input, output, session) {
         }
         
     })
+    ##############################################################################
     
     output$xycoord <- renderUI({
         xy <- c(input$arrayClick$x, input$arrayClick$y)
-        tmpgrid <- isolate(detectorarray())
+        tmpgrid <- isolate(traprv$data)
         if (is.null(xy)) 
             helpText("")
         else {
@@ -713,24 +717,8 @@ server <- function(input, output, session) {
             helpText(HTML(paste(id, paste(round(xy), collapse = ", "))))
         }
     })
-    
-    output$trapfile_ui <- renderUI({
-        input$resetbtn ## Create a dependency with the reset button
-        fileInput("trapfilename", "Trap layout",   # Detector layout file
-                  accept = "text/plain")
-    })
-
-    output$captfile_ui <- renderUI({
-        input$resetbtn ## Create a dependency with the reset button
-        fileInput("captfilename", "Captures",
-                  accept = c(".csv", ".txt", ".rdata", 
-                             ".rda", ".rds"))
-    })
-    
-                                                                          
-
-    
     ##############################################################################
+    
     ## miscellaneous functions
     
     ## plotpower    
@@ -757,7 +745,8 @@ server <- function(input, output, session) {
         out <- out[out != ""]
         if (length(out)==0) "~1" else paste0(out, collapse = ", ")
     }
-    
+    ##############################################################################
+
     areastr <- function (area) {
         if (area<1000) 
             dec <- 2
@@ -975,12 +964,13 @@ server <- function(input, output, session) {
 
     addtosummary <- function() {
         ## input$fields is character vector of selected fields
+        
         df <- data.frame(
             date = format(Sys.time(), "%Y-%m-%d"),
             time = format(Sys.time(), "%H:%M:%S"),
             note = input$title,
-            traps = if (is.null(input$trapfilename)) "" else input$trapfilename$name[1],
-            captures = if (is.null(input$captfilename)) "" else input$captfilename$name[1],
+            traps = if (is.null(traprv$data)) "" else input$trapfilename$name[1],
+            captures = if (is.null(captrv$data)) "" else input$captfilename$name[1],
             ndetectors = ndetectors()[input$sess],
             noccasions = noccasions()[input$sess],
             usagepct = usagepct()[input$sess],
@@ -1029,7 +1019,7 @@ server <- function(input, output, session) {
         }
             
         sumrv$value <- rbind (sumrv$value, df)
-        rownames(sumrv$value) <- paste0("Fit", 1:nrow(sumrv$value))
+        rownames(sumrv$value) <- paste0("Analysis", 1:nrow(sumrv$value))
     }
     ##############################################################################
     
@@ -1074,7 +1064,7 @@ server <- function(input, output, session) {
         # returns the R code needed to generate the specified array, 
         # as a character value
         code <- ""  
-        if (!is.null(detectorarray())) {
+        if (!is.null(traprv$data)) {
             #     args <- input$args
             #     if (args != "")
             #         args <- paste0(", ", args)
@@ -1107,9 +1097,9 @@ server <- function(input, output, session) {
         polycode <- ""
         polyhabitat <- ""
         
-        if (input$polygonbox && !is.null(input$habpolyfilename)) { 
+        if (input$polygonbox && !is.null(input$polyfilename)) { 
             polyhabitat <- input$includeexcludebtn == "Include"
-            polycode <- getSPcode(input$habpolyfilename, "poly", input$polygonbox)
+            polycode <- getSPcode(input$polyfilename, "poly", input$polygonbox)
         }
         paste0(polycode,
                "mask <- make.mask (", arrayname, 
@@ -1188,93 +1178,198 @@ server <- function(input, output, session) {
     ##############################################################################
 
     maskOK <- function () {
-        if (!is.null(poly()) && !is.null(detectorarray())) {
-            sum(pointsInPolygon(detectorarray(), poly())) > 0
+        if (!input$polygonbox || is.null(polyrv$data) || is.null(traprv$data)) {
+            TRUE
         }
-        else TRUE
+        else {
+            sum(pointsInPolygon(traprv$data, polyrv$data)) > 0
+        }
     }
     ##############################################################################
     
+    ## Modal dialogue to confirm fitting if it might take a long time
+    OKModal <- function(time) {
+        modalDialog(
+            paste("Fitting is predicted to take ", round(time,1), " minutes"),
+            size = "s",
+            easyClose = TRUE,
+            footer = tagList(
+                modalButton("Cancel"),
+                actionButton("okbtn", "Continue")
+            )
+        )
+    }
+    ##############################################################################
+    
+    # readtrapfile <- function () {
+    #     inFile <- input$trapfilename
+    #     trps <- NULL
+    #     if (!is.null(inFile)) {
+    #         filename <- input$trapfilename[1,"datapath"]
+    #         if (is.null(filename))
+    #             stop("provide valid filename")
+    #         args <- input$trapargs
+    #         if (args != "")
+    #             args <- paste0(", ", args)
+    #         readtrapscall <- paste0("read.traps (filename, detector = input$detector", args, ")")
+    #         trps <- try(eval(parse(text = readtrapscall)))
+    #         if (!inherits(trps, "traps")) {
+    #             showNotification("invalid trap file or arguments; try again",
+    #                              type = "error", id = "badarray", duration = seconds)
+    #         }
+    #     }    
+    #     trps
+    # }
+    # ##############################################################################
+
+    # readcaptfile <- function () {
+    #     inFile <- input$captfilename
+    #     captdf <- NULL
+    #     if (!is.null(inFile)) {
+    #         filename <- input$captfilename[1,"datapath"]
+    #         if (is.null(filename))
+    #             stop("provide valid filename")
+    #         args <- input$captargs
+    #         if (args != "")
+    #             args <- paste0(", ", args)
+    #         readcaptcall <- paste0("read.table (filename", args, ")")
+    #         captdf <- try(eval(parse(text = readcaptcall)))
+    #         if (!inherits(captdf, "data.frame")) {
+    #             showNotification("invalid capture file or arguments; try again",
+    #                              type = "error", id = "badcapt", duration = seconds)
+    #             captdf <- NULL
+    #         }
+    #     }    
+    #     captdf
+    # }
+    # ##############################################################################
     
     ## reactive
-    
-    ## invalidateOutputs
-    ## array
-    ## poly
-    ## region
-    ## mask
-    ## pop
-    ## Pxy
-    ## nrm
-    ## validspacing
-    
+
+    # capthist 
+    # density 
+    # derivedresult 
+    # detectorarray
+    # invalidateOutputs 
+    # lambda0 
+    # mask 
+    # masknrow 
+    # maskspace 
+    # n 
+    # ndetectors
+    # newdata 
+    # noccasions 
+    # nsessions 
+    # poly 
+    # pop
+    # r 
+    # RSE
+    # se.density 
+    # se.lambda0 
+    # se.sigma 
+    # sigma 
+    # usagepct 
+
     ##############################################################################
     
-    invalidateOutputs <- reactive({
-        pxyrv$value <- NULL
-        # updateNumericInput(session, "D", step = 10^trunc(log10(density()/50)))
-    })
+    ## using advice of Joe Cheng 2018-03-23 to allow resetting of fileInputs
+    ## https://stackoverflow.com/questions/49344468/resetting-fileinput-in-shiny-app
     
-    ##############################################################################
-    
-    readtrapfile <- function () {
-        inFile <- input$trapfilename
-        trps <- NULL
-        if (!is.null(inFile)) {
-            filename <- input$trapfilename[1,"datapath"]
-            if (is.null(filename))
-                stop("provide valid filename")
-            args <- input$trapargs
-            if (args != "")
-                args <- paste0(", ", args)
-            readtrapscall <- paste0("read.traps (filename, detector = input$detector", args, ")")
-            trps <- try(eval(parse(text = readtrapscall)))
-            if (!inherits(trps, "traps")) {
-                showNotification("invalid trap file or arguments; try again",
-                                 type = "error", id = "badarray", duration = seconds)
-            }
-        }    
-        trps
-    }
-    
-    detectorarray <- reactive(
-        {
-            pxyrv$value <- NULL
-            removeNotification("badarray")
-            readtrapfile()
-        }
+    captrv <- reactiveValues(
+        data = NULL,
+        clear = FALSE
     )
+    
+    traprv <- reactiveValues(
+        data = NULL,
+        clear = FALSE
+    )
+    
+    polyrv <- reactiveValues(
+        data = NULL,
+        clear = FALSE
+    )
+
     ##############################################################################
 
-    readcaptfile <- function () {
-        inFile <- input$captfilename
-        captdf <- NULL
-        if (!is.null(inFile)) {
-            filename <- input$captfilename[1,"datapath"]
-            if (is.null(filename))
-                stop("provide valid filename")
-            args <- input$captargs
-            if (args != "")
-                args <- paste0(", ", args)
-            readcaptcall <- paste0("read.table (filename", args, ")")
-            captdf <- try(eval(parse(text = readcaptcall)))
-            if (!inherits(captdf, "data.frame")) {
-                showNotification("invalid capture file or arguments; try again",
-                                 type = "error", id = "badcapt", duration = seconds)
-                captdf <- NULL
-            }
-        }    
-        captdf
-    }
+    ## read trap file
+    observe({
+        req(input$trapfilename)
+        req(!traprv$clear)
+        filename <- input$trapfilename[1,"datapath"]
+        if (is.null(filename))
+            stop("provide valid filename")
+        args <- input$trapargs
+        if (args != "")
+            args <- paste0(", ", args)
+        readtrapcall <-  paste0("read.traps (filename, detector = input$detector", args, ")")
+        traprv$data <- try(eval(parse(text = readtrapcall)))
+        if (!inherits(traprv$data, "traps")) {
+            showNotification("invalid trap file or arguments; try again",
+                             type = "error", id = "badtrap", duration = seconds)
+            traprv$data <- NULL
+        }
+    })
+    ##############################################################################
+    
+    ## read capture file
+    observe({
+        req(input$captfilename)
+        req(!captrv$clear)
+        filename <- input$captfilename[1,"datapath"]
+        if (is.null(filename))
+            stop("provide valid filename")
+        args <- input$captargs
+        if (args != "")
+            args <- paste0(", ", args)
+        readcaptcall <- paste0("read.table (filename", args, ")")
+        captrv$data <- try(eval(parse(text = readcaptcall)))
+        if (!inherits(captrv$data, "data.frame")) {
+            showNotification("invalid capture file or arguments; try again",
+                             type = "error", id = "badcapt", duration = seconds)
+            captrv$data <- NULL
+        }
+    })
+    ##############################################################################
+
+    ## read mask polygon file
+    observe({
+        req(input$polyfilename)
+        req(!polyrv$clear)
+        filename <- input$polyfilename[1,"datapath"]
+        
+        polyrv$data <- readpolygon(input$polyfilename)
+        
+        if (!inherits(polyrv$data, "SpatialPolygons")) {
+            showNotification("invalid polygon file; try again",
+                             type = "error", id = "badpoly", duration = seconds)
+            polyrv$data <- NULL
+        }
+    })
+    ##############################################################################
+
+    observeEvent(input$trapfilename, {
+        traprv$clear <- FALSE
+    }, priority = 1000)
+    
+    observeEvent(input$captfilename, {
+        captrv$clear <- FALSE
+    }, priority = 1000)
+    
+    
+    observeEvent(input$polyfilename, {
+        polyrv$clear <- FALSE
+    }, priority = 1000)
+    
+    ##############################################################################
     
     capthist <- reactive( {
-        if (is.null(readtrapfile()) || is.null(readcaptfile())) {
+        if (is.null(traprv$data) || is.null(captrv$data)) {
             updateNumericInput(session, "animal", max = 0)
             NULL
         }
         else {
-            captdf <- readcaptfile()
-            ch <- try(suppressWarnings(make.capthist(captdf, readtrapfile(), fmt = input$fmt))) 
+            ch <- try(suppressWarnings(make.capthist(captrv$data, traprv$data, fmt = input$fmt))) 
             if (inherits(ch, 'try-error')) {
                 showNotification("invalid capture file or arguments; try again",
                                  type = "error", id = "badcapt", duration = seconds)
@@ -1283,7 +1378,8 @@ server <- function(input, output, session) {
             }
             else {
                 if (ms(ch)) {
-                    showNotification("multisession data - may cause problems", type = "warning", id = "mswarning", duration = seconds)
+                    showNotification("multisession data - may cause problems", 
+                                     type = "warning", id = "mswarning", duration = seconds)
                     updateNumericInput(session, "animal", max = nrow(ch[[input$sess]]))
                      output$multisession <- renderText("true")
                 }
@@ -1296,63 +1392,112 @@ server <- function(input, output, session) {
             ch
         }
     })
+    ##############################################################################
 
-    nsessions <- reactive({
-        ## used to control conditional display of session index input
-        if (is.null(capthist())) {
-            NULL
+    density <- reactive( {
+        if (!inherits(fitrv$value, c("secr", "openCR"))) {
+            NA
         }
-        else {    
-            if (ms(capthist())) {
-               
-                length(capthist())
+        else {
+            newd <- newdata()[1,,drop = FALSE]
+            if (input$likelihoodbtn == "Full") {
+                if (input$packagebtn == 'secr.fit') {
+                    D <- predict(fitrv$value, newdata = newd)['D', 'estimate']
+                }
+                else {
+                    D <- predict(fitrv$value, newdata = newd)[['superD']][1,'estimate']
+                }
             }
             else {
-               
-                1
+                if (input$packagebtn == 'secr.fit') {
+                    if (nsessions()==1)
+                        D <- derivedresult()['D', 'estimate']
+                    else
+                        D <- derivedresult()[[input$sess]]['D', 'estimate']
+                }
+                else {
+                    D <- NA ## derivedresult()['superD','estimate']
+                }
+                
             }
+            D
         }
     })
-    
-    noccasions <- reactive( {
-        if (ms(capthist()))
-            sapply(capthist(), ncol)
-        else
-            ncol(capthist())
-        })
-    
-    ndetectors <- reactive ({
-        if (ms(capthist()))
-            sapply(capthist(), function(x) dim(x)[3])
-        else
-            dim(capthist())[3]
-        
+    ##############################################################################
+
+    derivedresult <- reactive({
+        if (input$packagebtn == "openCR.fit") {
+             showNotification("no derived method for openCR closed models",
+                             type = "warning", id = "noderived", duration = seconds)
+         
+            NULL
+            }
+        else {
+            progress <- Progress$new(session, min = 1, max = 15)
+            on.exit(progress$close())
+            progress$set(message = 'Computing derived estimates ...', detail = '')
+            der <- derived(fitrv$value, distribution = tolower(input$distributionbtn))
+            round(der, input$dec)
+        }
+    })
+    ##############################################################################
+
+    # detectorarray <- reactive(
+    #     {
+    #         pxyrv$value <- NULL
+    #         traprv$data
+    #     }
+    # )
+    ##############################################################################
+
+    invalidateOutputs <- reactive({
+        pxyrv$value <- NULL
+        # updateNumericInput(session, "D", step = 10^trunc(log10(density()/50)))
     })
     
-    n <- reactive ({
-        if (ms(capthist()))
-            sum(sapply(capthist(), nrow))
-        else
-            nrow(capthist())
-    })
+    ##############################################################################
     
-    r <- reactive ({
-        if (ms(capthist()))
-            sum(sapply(capthist(), sum)) - n()
-        else
-            sum(capthist()) - n()
-    })
-    
-    usagepct <- reactive ({
-        trps <- detectorarray()
-        uprob <- function(x) if (is.null(usage(x))) 1 else sum(usage(x) / length(usage(x)))
-        if (is.null(trps))
+    lambda0 <- reactive({
+        if (!inherits(fitrv$value, c("secr", "openCR")))
             NA
-        else if (ms(trps))
-            100*sapply(trps, uprob)
-        else
-            100*uprob(trps)
+        else {
+            if (input$packagebtn == 'secr.fit')
+                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['lambda0','estimate']
+                # detectpar(fitrv$value)[['lambda0']]
+            else
+                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$lambda0[1,'estimate']
+        }
     })
+    ##############################################################################
+    
+    mask <- reactive( {
+        pxyrv$value <- NULL
+        if (is.null(traprv$data))
+            NULL
+        else {
+            if (!maskOK()) showNotification("no detectors in habitat polygon(s)",
+                                            type = "warning", id = "notrapsinpoly",
+                                            duration = seconds)
+            msk <- make.mask (traprv$data,
+                              buffer = input$buffer,
+                              nx = input$habnx,
+                              type = if (input$maskshapebtn=='Rectangular') 'traprect' else 'trapbuffer',
+                              poly = if (input$polygonbox) polyrv$data else NULL,
+                              poly.habitat = input$includeexcludebtn == "Include",
+                              keep.poly = FALSE)
+            if (nrow(msk) > 10000) {
+                showNotification(paste0(nrow(msk), " mask rows is excessive; reduce nx"),
+                                            type = "warning", id = "maskrows",
+                                            duration = seconds)
+            }
+            else {
+                removeNotification(id = "maskrows")
+            }
+            msk
+        }
+    }
+    )
+    ##############################################################################
     
     masknrow <- reactive ({
         msk <- mask()
@@ -1363,6 +1508,7 @@ server <- function(input, output, session) {
         else
             nrow(msk)
     })
+    ##############################################################################
     
     maskspace <- reactive ({
         msk <- mask()
@@ -1373,43 +1519,75 @@ server <- function(input, output, session) {
         else
             spacing(msk)
     })
-    
-    poly <- reactive( {
-        if (input$polygonbox) {
-            readpolygon(input$habpolyfilename)
-        }
-        else {
-            NULL
-        }
-    }
-    )
+    ##############################################################################
+
+    n <- reactive ({
+        if (is.null(capthist()))
+            NA
+        else if (ms(capthist()))
+            sum(sapply(capthist(), nrow))
+        else
+            nrow(capthist())
+    })
+    ##############################################################################
+
+    ndetectors <- reactive ({
+        if (is.null(traprv$data))
+            NA
+        else if (is.null(capthist()))
+            nrow(traprv$data)
+        else if (ms(capthist()))
+            sapply(capthist(), function(x) dim(x)[3])
+        else
+            dim(capthist())[3]
+        
+    })
     ##############################################################################
     
-    mask <- reactive( {
-        pxyrv$value <- NULL
-        if (is.null(detectorarray()))
-            NULL
+    newdata <- reactive({
+        if (is.null(fitrv$value))
+            NULL   ## no model
         else {
-            if (!maskOK()) showNotification("no detectors in habitat polygon(s)",
-                                            type = "warning", id = "notrapsinpoly",
-                                            duration = seconds)
-            msk <- make.mask (detectorarray(),
-                              buffer = input$buffer,
-                              nx = input$habnx,
-                              type = if (input$maskshapebtn=='Rectangular') 'traprect' else 'trapbuffer',
-                              poly = poly(),
-                              poly.habitat = input$includeexcludebtn == "Include",
-                              keep.poly = FALSE)
-            msk
+            if (input$packagebtn == "secr.fit")
+                secr.make.newdata(fitrv$value, all.levels = TRUE)
+            else {
+                openCR.make.newdata(fitrv$value, all.levels = TRUE)
+            }
         }
-    }
-    )
+    })
+    ##############################################################################
+    
+    noccasions <- reactive( {
+        if (is.null(capthist()))
+            NA
+        else if (ms(capthist()))
+            sapply(capthist(), ncol)
+        else
+            ncol(capthist())
+        })
+    ##############################################################################
+    
+    nsessions <- reactive({
+        ## used to control conditional display of session index input
+        if (is.null(capthist())) {
+            NULL
+        }
+        else {    
+            if (ms(capthist())) {
+                length(capthist())
+            }
+            else {
+               
+                1
+            }
+        }
+    })
     ##############################################################################
     
     pop <- reactive(
         {
             poprv$v
-            core <- detectorarray()
+            core <- traprv$data
             if (is.null(core) || (density() == 0) || is.na(density())) {
                 return (NULL)
             }
@@ -1438,62 +1616,149 @@ server <- function(input, output, session) {
         }
     )
     ##############################################################################
+
+    r <- reactive ({
+        if (is.null(capthist()))
+            NA
+        else if (ms(capthist()))
+            sum(sapply(capthist(), sum)) - n()
+        else
+            sum(capthist()) - n()
+    })
+    ##############################################################################
     
+    RSE <- reactive ({
+        if (!inherits(fitrv$value, c("secr", "openCR")) || (input$likelihoodbtn != "Full") )
+            return (NULL)
+        else {
+            if (input$packagebtn == 'secr.fit')
+                V <- vcov(fitrv$value)['D','D']   ## FAILS IF HAVE JUST SWITCHED BUTTON
+            else
+                V <- vcov(fitrv$value)['superD','superD']
+            sqrt(exp(V)-1) * 100
+        }
+    })
+    ##############################################################################
+
+    se.density <- reactive( {
+        if (!inherits(fitrv$value, c("secr", "openCR"))) {
+            NA
+        }
+        else {
+            newd <- newdata()[1,,drop = FALSE]
+            if (input$likelihoodbtn == "Full") {
+                if (input$packagebtn == 'secr.fit') {
+                    se.D <- predict(fitrv$value, newdata = newd)['D', 'SE.estimate']
+                }
+                else {
+                    se.D <- predict(fitrv$value, newdata = newd)[['superD']][1,'SE.estimate']
+                }
+            }
+            else {
+                if (input$packagebtn == 'secr.fit') {
+                    if (nsessions()==1)
+                        se.D <- derivedresult()['D', 'SE.estimate']
+                    else
+                        se.D <- derivedresult()[[input$sess]]['D', 'SE.estimate']
+                        
+                }
+                else {
+                    se.D <- NA ## derivedresult()['superD','SE.estimate']
+                }
+                
+            }
+            se.D
+        }
+    })
+    ##############################################################################
+
+    se.lambda0 <- reactive({
+        if (!inherits(fitrv$value, c("secr", "openCR")))
+            NA
+        else {
+            if (input$packagebtn == 'secr.fit')
+                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['lambda0','SE.estimate']
+                # detectpar(fitrv$value)[['lambda0']]
+            else
+                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$lambda0[1,'SE.estimate']
+        }
+    })
+    ##############################################################################
+    
+    se.sigma <- reactive ({
+        if (!inherits(fitrv$value, c("secr", "openCR")))
+            NA
+        else {
+            if (input$packagebtn == 'secr.fit')
+                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['sigma','SE.estimate']
+                # detectpar(fitrv$value)[['sigma']]
+            else 
+                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$sigma[1,'SE.estimate'] 
+        }
+    })
+    ##############################################################################
+    
+    sigma <- reactive ({
+        if (!inherits(fitrv$value, c("secr", "openCR")))
+            NA
+        else {
+            if (input$packagebtn == 'secr.fit')
+                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['sigma','estimate']
+                # detectpar(fitrv$value)[['sigma']]
+            else 
+                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$sigma[1,'estimate'] 
+        }
+    })
+    ##############################################################################
+    
+    usagepct <- reactive ({
+        trps <- traprv$data
+        uprob <- function(x) if (is.null(usage(x))) 1 else sum(usage(x) / length(usage(x)))
+        if (is.null(trps))
+            NA
+        else if (ms(trps))
+            100*sapply(trps, uprob)
+        else
+            100*uprob(trps)
+    })
+    ##############################################################################
+
     ## reactiveValues
     
-    ## simrv, rotrv, RSErv, pxyrv : logical
-    ## sumrv : summary table
-    ## poprv
-    ## manualroute
-    
-    ##############################################################################
-    
-    RSErv <- reactiveValues(current = FALSE, value = NULL, adjRSE = NULL)
-    pxyrv <- reactiveValues(current = FALSE, xy = NULL, value = NULL)
-    poprv <- reactiveValues(v = 0)  # used to invalidate and re-plot popn
     arrrv <- reactiveValues(v = 0)  # used to invalidate and re-plot detectorarray
     current <- reactiveValues(unit = "ha")
-    selecting <- reactiveValues(v=FALSE)
-    sumrv <- reactiveValues(
-        value = read.csv(text = paste(summaryfields, collapse = ", "))
-    )
     fitrv <- reactiveValues(value = NULL)
-    ##############################################################################
-    
-    ## observe
-    
-    ##############################################################################
-    
-    ## Modal dialogue to confirm simulation if it might take a long time
-    
-    OKModal <- function(time) {
-        modalDialog(
-            paste("Fitting is predicted to take ", round(time,1), " minutes"),
-            size = "s",
-            easyClose = TRUE,
-            footer = tagList(
-                modalButton("Cancel"),
-                actionButton("okbtn", "Continue")
-            )
-        )
-    }
+    poprv <- reactiveValues(v = 0)  # used to invalidate and re-plot popn
+    pxyrv <- reactiveValues(current = FALSE, xy = NULL, value = NULL)
+    RSErv <- reactiveValues(current = FALSE, value = NULL, adjRSE = NULL)
+    selecting <- reactiveValues(v=FALSE)
+    sumrv <- reactiveValues(value = read.csv(text = paste(summaryfields, collapse = ", ")))
     
     ##############################################################################
     
     ## observeEvent
-    
-    # resetbtn
-    # CFslider
-    # fitbtn
-    # okbtn
-    # clearallbtn
-    # clearlastbtn
-    # arrayinput
-    # click
-    # arrayclick
-    # pxyclick
+
+    # alpha
     # appendbtn
     # areaunit
+    # CIclick
+    # clearallbtn
+    # clearlastbtn
+    # detectfnbtn
+    # distributionbtn
+    # fitbtn
+    # likelihoodbtn
+    # model
+    # okbtn
+    # otherargs
+    # packagebtn
+    # pxyclick
+    # randompopbtn
+    # resetbtn
+    # selectallbtn
+    # selectfieldsbtn
+    # selectnonebtn
+    # suggestbuffer
     
     ## Invalidate results when model specification changes
     # likelihoodbtn
@@ -1505,6 +1770,103 @@ server <- function(input, output, session) {
 
     ##############################################################################
 
+    observeEvent(input$alpha, {
+        updateCheckboxInput(session, "powertype", label = paste0(
+            round(100 *(1-input$alpha), 1), "% CI"))
+    })
+    ##############################################################################
+
+    observeEvent(input$appendbtn, {
+        if (!is.null(traprv$data))
+            addtosummary()
+    })
+    ##############################################################################
+
+    observeEvent(input$areaunit, ignoreInit = TRUE, {
+        new.unit <- isolate(input$areaunit)
+         if (new.unit != current$unit) {
+            if (new.unit=="ha") {
+                newD <- isolate(input$D)/100
+            }
+            else {
+                newD <- isolate(input$D)*100
+            }
+            updateNumericInput(session, "D", paste0("D (animals / ", new.unit, ")"), value = newD)
+            current$unit <- new.unit
+        }
+    })
+    ##############################################################################
+
+    observeEvent(input$CIclick, {
+        invalidateOutputs()
+        if (input$powertype) {
+            updateNumericInput(session, "xpos", value = round(input$CIclick$x))
+        }
+        else {
+        }
+    })
+    ##############################################################################
+
+    observeEvent(input$clearallbtn, {
+        sumrv$value <- sumrv$value[0,]
+    }   )
+    
+    ##############################################################################
+    
+    observeEvent(input$clearlastbtn, {
+        if (nrow(sumrv$value)>0)
+            sumrv$value <- sumrv$value[-nrow(sumrv$value),]
+    }   )
+    
+    ##############################################################################
+    
+    observeEvent(input$detectfnbtn, {
+        fitrv$value <- NULL
+    })
+    ##############################################################################
+
+    observeEvent(input$distributionbtn, {
+        fitrv$value <- NULL
+    })
+    ##############################################################################
+
+    observeEvent(input$fitbtn, ignoreInit = TRUE, {
+        ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
+        if (is.null(capthist())) {
+             showNotification("load data",
+                             type = "warning", id = "nodata", duration = seconds)
+        }
+        else {
+            progress <- Progress$new(session, min = 1, max = 15)
+            on.exit(progress$close())
+            progress$set(message = 'Fitting...',
+                         detail = '')
+            methodfactor <- 1 + ((input$method != "none") * 4)
+            functionfactor <- switch(input$packagebtn, secr.fit = 4, openCR.fit = 1, 0.1)
+            detectorfactor <- switch(input$detector, proximity = 1, single = 0.6, multi = 0.6, count = 4)
+           
+            if (ms(capthist())) {
+                nm <- if (ms(mask())) nrow(mask()[[1]]) else nrow(mask())
+                nt <- if (ms(traprv$data)) nrow(traprv$data[[1]]) else nrow(traprv$data)
+                time <- nm * nt / 4.5e9 * ## blocked 2019-01-14 nrepeats() * 
+                    noccasions()[1] * length(capthist()) *
+                    methodfactor * functionfactor * detectorfactor
+            }
+            else {
+                time <- nrow(mask()) * nrow(traprv$data) / 4.5e9 * ## blocked 2019-01-14 nrepeats() * 
+                    noccasions() * 
+                    methodfactor * functionfactor * detectorfactor
+            }
+            if (time > 0.2)
+                showModal(OKModal(time))
+            else {
+                fitmodel()
+            }
+        }
+    })
+    
+    ##############################################################################
+    
     observeEvent(input$likelihoodbtn, ignoreInit = TRUE, {
         fitrv$value <- NULL
         ## drop or add density formula depending on full/conditional likelihood
@@ -1525,12 +1887,20 @@ server <- function(input, output, session) {
     })
     ##############################################################################
 
-    observeEvent(input$detectfnbtn, {
+    observeEvent(input$model, {
         fitrv$value <- NULL
     })
     ##############################################################################
 
-    observeEvent(input$distributionbtn, {
+    observeEvent(input$okbtn, {
+        ## user happy: proceed with long simulation
+        removeModal()
+        fitmodel()
+    })
+    
+    ##############################################################################
+
+    observeEvent(input$otherargs, {
         fitrv$value <- NULL
     })
     ##############################################################################
@@ -1554,21 +1924,38 @@ server <- function(input, output, session) {
     })
     ##############################################################################
 
-    observeEvent(input$model, {
-        fitrv$value <- NULL
+    observeEvent(input$pxyclick, {
+        invalidateOutputs()
+        trps <- traprv$data
+        
+        border <- border(input$pxyborder)
+
+        xy <- c(input$pxyclick$x, input$pxyclick$y)
+        if ((xy[2] < (min(trps$y) - border)) ||
+            (xy[2] > (max(trps$y) + border)) ||
+            (xy[1] < (min(trps$x) - border)) ||
+            (xy[1] > (max(trps$x) + border)) ) {
+            pxyrv$value <- NULL
+        }
+        else {
+            Pxy <- pdot (xy, trps,
+                         detectfn = input$detectfnbtn,
+                         detectpar = list(lambda0 = lambda0(), sigma = sigma()),
+                         noccasions = noccasions()[input$sess])
+            pxyrv$xy <-xy
+            pxyrv$value <- Pxy}
     })
     ##############################################################################
 
-    observeEvent(input$otherargs, {
-        fitrv$value <- NULL
+    observeEvent(input$randompopbtn, ignoreInit = TRUE, {
+        # invalidates pop when button pressed
+        poprv$v <- poprv$v + 1
     })
+    
     ##############################################################################
 
     observeEvent(input$resetbtn, {
         
-        ## DOES NOT RESET FILE INPUTS
-        ## SEE E.G. https://groups.google.com/forum/#!topic/shiny-discuss/HbTa4v612FA
-
         current$unit <- "ha"
         fitrv$value <- NULL
         
@@ -1590,28 +1977,43 @@ server <- function(input, output, session) {
         updateRadioButtons(session, "distributionbtn", selected = "Poisson")
         updateRadioButtons(session, "likelihoodbtn", selected = "Full")
         updateRadioButtons(session, "packagebtn", selected = "secr.fit")
+
+        updateTextInput(session, "model", 
+                        value = "D~1, lambda0~1, sigma~1", placeholder = "")
+        updateTextInput(session, "otherargs", 
+                        value = "", placeholder = "other args e.g., details")
         
-        ## general
+        ## Actions
         updateTextInput(session, "title", "", value = "",
                         placeholder = "label for Summary")
-        updateCheckboxInput(session, "autorefresh", value = TRUE)
+        updateTextInput(session, "otherfunction", 
+                        value = "", placeholder = "e.g., vcov(fit)")
+
+        
+        ## Results
+        updateRadioButtons(session, "resultsbtn", selected = "summary")
+
+        ## Array plot
+        updateCheckboxInput(session, "tracks", value = FALSE)
+        updateCheckboxInput(session, "varycol", value = FALSE)
+        updateNumericInput(session, "animal", value = 1)
+        updateNumericInput(session, "sess", value = 1)
 
         ## pop plot
         updateCheckboxInput(session, "showHRbox", "Display 95% home range", value = FALSE)
         updateCheckboxInput(session, "showmaskbox", "Display mask", value = FALSE)
         updateCheckboxInput(session, "onlymaskbox", "Restrict to mask", value = TRUE)
 
+        ## pxy plot
+        updateCheckboxInput(session, "maskedge", value = FALSE)
+
         ## power plot
         updateCheckboxInput(session, "adjustRSEbox", value = TRUE)
         updateCheckboxInput(session, "powertype", "95% CI", value = TRUE)
         updateNumericInput(session, "xpos", value = 0)
 
-        ## options
+        ## Habitat mask
 
-        ## detector array
-        updateRadioButtons(session, "areaunit", selected = "ha")
-
-        ## habitat
         updateNumericInput(session, "buffer", value = 100)
         updateNumericInput(session, "habnx", value = 32)
         updateRadioButtons(session, "maskshapebtn", selected = "Trap buffer")
@@ -1619,6 +2021,24 @@ server <- function(input, output, session) {
         updateCheckboxInput(session, "exclusionbox", value = TRUE)
         updateRadioButtons(session, "includeexcludebtn", selected = "Include")
 
+        updateCheckboxInput(session, "dotsbox", value = FALSE)
+        updateCheckboxInput(session, "xpdbox", value = FALSE)
+        updateCheckboxInput(session, "maskedge2", value = FALSE)
+
+        ## Summary
+
+        # safer to leave this for manual reset using Summary page buttons        
+        # updateCheckboxGroupInput(session, "fields1", selected = summaryfields[fieldgroup1])
+        # updateCheckboxGroupInput(session, "fields2", selected = summaryfields[fieldgroup2])
+        # sumrv$value <- sumrv$value[0,]
+        
+        ## Options
+
+        ## detector array
+        updateRadioButtons(session, "areaunit", selected = "ha")
+
+        updateNumericInput(session, "dec", value = 4)
+        
         ## array plot
         updateCheckboxInput(session, "entireregionbox", value = TRUE)
         updateCheckboxInput(session, "snaptodetector", value = FALSE)
@@ -1630,9 +2050,6 @@ server <- function(input, output, session) {
         updateCheckboxInput(session, "pxyfillbox", value = TRUE)
         updateCheckboxInput(session, "pxyframebox", value = FALSE)
         updateCheckboxInput(session, "pxylabelbox", value = TRUE)
-
-        updateSliderInput(session, "CFslider", value = 1.0)
-        updateCheckboxInput(session, "updateCFbox", value = TRUE)
 
         updateRadioButtons(session, "powerplotbtn", selected = "Null hypothesis power")
 
@@ -1646,37 +2063,44 @@ server <- function(input, output, session) {
         updateNumericInput(session, "byR", value = 0.2)
         updateNumericInput(session, "simbyR", value = 0.4)
         invalidateOutputs()
-    })
-    
-    ##############################################################################
-    
-    observeEvent(input$CFslider, {
-        rotrv$current <- FALSE
-    })
-    ##############################################################################
-    
-    observeEvent(input$areaunit, ignoreInit = TRUE, {
-        new.unit <- isolate(input$areaunit)
-         if (new.unit != current$unit) {
-            if (new.unit=="ha") {
-                newD <- isolate(input$D)/100
-            }
-            else {
-                newD <- isolate(input$D)*100
-            }
-            updateNumericInput(session, "D", paste0("D (animals / ", new.unit, ")"), value = newD)
-            current$unit <- new.unit
-        }
-    })
+        
+        traprv$data <- NULL
+        traprv$clear <- TRUE
+        reset('trapfilename')
 
-    observeEvent(input$alpha, {
-        updateCheckboxInput(session, "powertype", label = paste0(
-            round(100 *(1-input$alpha), 1), "% CI"))
-    })
+        captrv$data <- NULL
+        captrv$clear <- TRUE
+        reset('captfilename')
+        
+        polyrv$data <- NULL
+        polyrv$clear <- TRUE
+        reset('polyfilename')
+        
+    }, priority = 1000)
     
     ##############################################################################
 
-        observeEvent(input$suggestbuffer, ignoreInit = TRUE, {
+
+    observeEvent(input$selectallbtn, {
+        updateCheckboxGroupInput(session, "fields1", selected = summaryfields[fieldgroup1])
+        updateCheckboxGroupInput(session, "fields2", selected = summaryfields[fieldgroup2])
+    }   )
+    ##############################################################################
+
+    observeEvent(input$selectfieldsbtn, {
+        selecting$v <- ! selecting$v
+        output$selectingfields <- renderText(selecting$v)
+            
+    }   )
+    ##############################################################################
+    
+    observeEvent(input$selectnonebtn, {
+        updateCheckboxGroupInput(session, "fields1", selected = "")
+        updateCheckboxGroupInput(session, "fields2", selected = "")
+    }   )
+    ##############################################################################
+
+    observeEvent(input$suggestbuffer, ignoreInit = TRUE, {
         ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
                ch <- capthist()
         if (!is.null(ch)) {
@@ -1695,161 +2119,32 @@ server <- function(input, output, session) {
 
             updateNumericInput(session, "buffer", value = round(buff))
         }
-        })
-    
-    observeEvent(input$fitbtn, ignoreInit = TRUE, {
-        ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
-        if (is.null(capthist())) {
-             showNotification("load data",
-                             type = "warning", id = "nodata", duration = seconds)
-        }
-        else {
-            progress <- Progress$new(session, min = 1, max = 15)
-            on.exit(progress$close())
-            progress$set(message = 'Fitting...',
-                         detail = '')
-            methodfactor <- 1 + ((input$method != "none") * 4)
-            functionfactor <- switch(input$packagebtn, secr.fit = 4, openCR.fit = 1, 0.1)
-            detectorfactor <- switch(input$detector, proximity = 1, single = 0.6, multi = 0.6, count = 4)
-           
-            if (ms(capthist())) {
-                nm <- if (ms(mask())) nrow(mask()[[1]]) else nrow(mask())
-                nt <- if (ms(detectorarray())) nrow(detectorarray()[[1]]) else nrow(detectorarray())
-                time <- nm * nt / 4.5e9 * ## blocked 2019-01-14 nrepeats() * 
-                    noccasions()[1] * length(capthist()) *
-                    methodfactor * functionfactor * detectorfactor
-            }
-            else {
-                time <- nrow(mask()) * nrow(detectorarray()) / 4.5e9 * ## blocked 2019-01-14 nrepeats() * 
-                    noccasions() * 
-                    methodfactor * functionfactor * detectorfactor
-            }
-            if (time > 0.2)
-                showModal(OKModal(time))
-            else {
-                fitmodel()
-            }
-        }
     })
-    
-    ##############################################################################
-    
-    observeEvent(input$okbtn, {
-        ## user happy: proceed with long simulation
-        removeModal()
-        fitmodel()
-    })
-    
     ##############################################################################
 
-    observeEvent(input$randompopbtn, ignoreInit = TRUE, {
-        # invalidates pop when button pressed
-        poprv$v <- poprv$v + 1
-    })
-    
-    ##############################################################################
-
-    observeEvent(input$selectfieldsbtn, {
-        selecting$v <- ! selecting$v
-        output$selectingfields <- renderText(selecting$v)
-            
-    }   )
-    
-    observeEvent(input$selectallbtn, {
-        updateCheckboxGroupInput(session, "fields1", selected = summaryfields[fieldgroup1])
-        updateCheckboxGroupInput(session, "fields2", selected = summaryfields[fieldgroup2])
-    }   )
-    
-    observeEvent(input$selectnonebtn, {
-        updateCheckboxGroupInput(session, "fields1", selected = "")
-        updateCheckboxGroupInput(session, "fields2", selected = "")
-    }   )
-    
-    ##############################################################################
-    observeEvent(input$clearallbtn, {
-        sumrv$value <- sumrv$value[0,]
-    }   )
-    
-    ##############################################################################
-    
-    observeEvent(input$clearlastbtn, {
-        if (nrow(sumrv$value)>0)
-            sumrv$value <- sumrv$value[-nrow(sumrv$value),]
-    }   )
-    
-    ##############################################################################
-    
-    observeEvent(input$pxyclick, {
-        invalidateOutputs()
-        trps <- detectorarray()
-        
-        border <- border(input$pxyborder)
-
-        xy <- c(input$pxyclick$x, input$pxyclick$y)
-        if ((xy[2] < (min(trps$y) - border)) ||
-            (xy[2] > (max(trps$y) + border)) ||
-            (xy[1] < (min(trps$x) - border)) ||
-            (xy[1] > (max(trps$x) + border)) ) {
-            pxyrv$value <- NULL
-        }
-        else {
-            Pxy <- pdot (xy, trps,
-                         detectfn = input$detectfnbtn,
-                         detectpar = list(lambda0 = lambda0(), sigma = sigma()),
-                         noccasions = noccasions()[input$sess])
-            pxyrv$xy <-xy
-            pxyrv$value <- Pxy}
-    })
-    
-    ##############################################################################
-    
-    observeEvent(input$CIclick, {
-        invalidateOutputs()
-        if (input$powertype) {
-            updateNumericInput(session, "xpos", value = round(input$CIclick$x))
-        }
-        else {
-        }
-    })
-    
-    ##############################################################################
-    
-    observeEvent(input$appendbtn, {
-        if (!is.null(detectorarray()))
-            addtosummary()
-    })
-    
-    ##############################################################################
-
-    # observeEvent(input$summarybtn, {
-    #     ap <- isolate(input$appendbox)
-    #     filename <- isolate(input$savefilename)
-    #     ex <- file.exists(filename)
-    #     write.table(sumrv$value[c(input$fields1, input$fields2),],
-    #                 append = ap & ex,
-    #                 file = filename,
-    #                 col.names = !ap | !ex,
-    #                 row.names = FALSE,
-    #                 quote = FALSE)
-    # }
-    # )
-    # ##############################################################################
-    # 
     ## renderText
     
+    # maskPrint
     # resultsPrint 
     
     ##############################################################################
     
-    hideplotif <- function (condition, tab) {
-        if (condition)
-            hideTab(inputId = "plottabs", target = tab)
+    output$maskPrint <- renderPrint({
+        if (is.null(mask()))
+            cat("No mask yet - load trap file on main screen\n")
         else 
-            showTab(inputId = "plottabs", target = tab)
-    }
+            summary(mask())
+    })
+    ##############################################################################
     
     output$resultsPrint <- renderPrint({
-        hideplotif (is.null(readtrapfile()), "Array")
+        hideplotif <- function (condition, tab) {
+            if (condition)
+                hideTab(inputId = "plottabs", target = tab)
+            else 
+                showTab(inputId = "plottabs", target = tab)
+        }
+        hideplotif (is.null(traprv$data), "Array")
         hideplotif (is.null(fitrv$value), "Detectfn")
         hideplotif (is.null(fitrv$value), "Pxy")
         hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != "Full"), "Popn")
@@ -1871,10 +2166,10 @@ server <- function(input, output, session) {
                           max = maxRSE,
                           value = rse,
                           step = 0.1)
-        if (is.null(readtrapfile()))
+        if (is.null(traprv$data))
             cat("No data loaded\n")
         else if (is.null(capthist()))
-            summary(readtrapfile())
+            summary(traprv$data)
         else if (is.null(fitrv$value))
             summary(capthist(), moves = TRUE)
         else if (inherits(fitrv$value, c("secr","openCR"))) {
@@ -1909,39 +2204,27 @@ server <- function(input, output, session) {
     })
     ##############################################################################
     
-    output$maskPrint <- renderPrint({
-        if (is.null(mask()))
-            cat("No mask yet - load trap file on main screen\n")
-        else 
-            summary(mask())
-    })
-    ##############################################################################
-    
     ## renderPlot
     
     ## arrayPlot
-    ## routePlot
     ## detnPlot
     ## popPlot
     ## pxyPlot
     ## powerPlot
-    ## RSEPlot
-    ## nrmPlot
-    ## costPlot
-    
+
     ##############################################################################
     
     output$arrayPlot <- renderPlot( { # height = 340, width = 340, {
-        if (ms(detectorarray()))
-            tmpgrid <- detectorarray()[[input$sess]]
+        if (ms(traprv$data))
+            tmpgrid <- traprv$data[[input$sess]]
         else 
-            tmpgrid <- detectorarray()
+            tmpgrid <- traprv$data
         if (is.null(tmpgrid)) return (NULL)
         par(mar = c(1,1,2,1), cex = 1.3, xpd = TRUE)
         plot (tmpgrid, border = border(1), bty='o', xaxs = 'i', yaxs = 'i',
                    gridlines = (input$gridlines != "None"), gridspace = as.numeric(input$gridlines))
         
-        if (!is.null(capthist())) {
+        if (inherits(capthist(), 'capthist')) {
             if (ms(capthist()))
                 ch <- capthist()[[input$sess]]
             else
@@ -1966,157 +2249,6 @@ server <- function(input, output, session) {
     })
     ##############################################################################
 
-    derivedresult <- reactive({
-        if (input$packagebtn == "openCR.fit") {
-             showNotification("no derived method for openCR closed models",
-                             type = "warning", id = "noderived", duration = seconds)
-         
-            NULL
-            }
-        else {
-            progress <- Progress$new(session, min = 1, max = 15)
-            on.exit(progress$close())
-            progress$set(message = 'Computing derived estimates ...', detail = '')
-            der <- derived(fitrv$value, distribution = tolower(input$distributionbtn))
-            round(der, input$dec)
-        }
-    })
-    
-    newdata <- reactive({
-        if (is.null(fitrv$value))
-            NULL   ## no model
-        else {
-            if (input$packagebtn == "secr.fit")
-                secr.make.newdata(fitrv$value, all.levels = TRUE)
-            else {
-                openCR.make.newdata(fitrv$value, all.levels = TRUE)
-            }
-        }
-    })
-    
-    density <- reactive( {
-        if (!inherits(fitrv$value, c("secr", "openCR"))) {
-            NA
-        }
-        else {
-            newd <- newdata()[1,,drop = FALSE]
-            if (input$likelihoodbtn == "Full") {
-                if (input$packagebtn == 'secr.fit') {
-                    D <- predict(fitrv$value, newdata = newd)['D', 'estimate']
-                }
-                else {
-                    D <- predict(fitrv$value, newdata = newd)[['superD']][1,'estimate']
-                }
-            }
-            else {
-                if (input$packagebtn == 'secr.fit') {
-                    if (nsessions()==1)
-                        D <- derivedresult()['D', 'estimate']
-                    else
-                        D <- derivedresult()[[input$sess]]['D', 'estimate']
-                }
-                else {
-                    D <- NA ## derivedresult()['superD','estimate']
-                }
-                
-            }
-            D
-        }
-    })
-    ##############################################################################
-    se.density <- reactive( {
-        if (!inherits(fitrv$value, c("secr", "openCR"))) {
-            NA
-        }
-        else {
-            newd <- newdata()[1,,drop = FALSE]
-            if (input$likelihoodbtn == "Full") {
-                if (input$packagebtn == 'secr.fit') {
-                    se.D <- predict(fitrv$value, newdata = newd)['D', 'SE.estimate']
-                }
-                else {
-                    se.D <- predict(fitrv$value, newdata = newd)[['superD']][1,'SE.estimate']
-                }
-            }
-            else {
-                if (input$packagebtn == 'secr.fit') {
-                    if (nsessions()==1)
-                        se.D <- derivedresult()['D', 'SE.estimate']
-                    else
-                        se.D <- derivedresult()[[input$sess]]['D', 'SE.estimate']
-                        
-                }
-                else {
-                    se.D <- NA ## derivedresult()['superD','SE.estimate']
-                }
-                
-            }
-            se.D
-        }
-    })
-    ##############################################################################
-
-
-    lambda0 <- reactive({
-        if (!inherits(fitrv$value, c("secr", "openCR")))
-            NA
-        else {
-            if (input$packagebtn == 'secr.fit')
-                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['lambda0','estimate']
-                # detectpar(fitrv$value)[['lambda0']]
-            else
-                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$lambda0[1,'estimate']
-        }
-    })
-    
-    se.lambda0 <- reactive({
-        if (!inherits(fitrv$value, c("secr", "openCR")))
-            NA
-        else {
-            if (input$packagebtn == 'secr.fit')
-                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['lambda0','SE.estimate']
-                # detectpar(fitrv$value)[['lambda0']]
-            else
-                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$lambda0[1,'SE.estimate']
-        }
-    })
-    
-    sigma <- reactive ({
-        if (!inherits(fitrv$value, c("secr", "openCR")))
-            NA
-        else {
-            if (input$packagebtn == 'secr.fit')
-                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['sigma','estimate']
-                # detectpar(fitrv$value)[['sigma']]
-            else 
-                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$sigma[1,'estimate'] 
-        }
-    })
-    
-    se.sigma <- reactive ({
-        if (!inherits(fitrv$value, c("secr", "openCR")))
-            NA
-        else {
-            if (input$packagebtn == 'secr.fit')
-                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['sigma','SE.estimate']
-                # detectpar(fitrv$value)[['sigma']]
-            else 
-                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$sigma[1,'SE.estimate'] 
-        }
-    })
-    
-    RSE <- reactive ({
-        if (!inherits(fitrv$value, c("secr", "openCR")) || (input$likelihoodbtn != "Full") )
-            return (NULL)
-        else {
-            if (input$packagebtn == 'secr.fit')
-                V <- vcov(fitrv$value)['D','D']   ## FAILS IF HAVE JUST SWITCHED BUTTON
-            else
-                V <- vcov(fitrv$value)['superD','superD']
-            sqrt(exp(V)-1) * 100
-        }
-    })
-    
     output$detnPlot <- renderPlot( height = 290, width = 400, {
         ## inp <- oS2()
         invalidateOutputs()
@@ -2148,7 +2280,7 @@ server <- function(input, output, session) {
     ##############################################################################
     
     output$popPlot <- renderPlot( height = 300, width = 380, {
-        core <- detectorarray()
+        core <- traprv$data
         if (is.null(core)) return (NULL)
         border <- input$buffer  # consistent with mask()
         tmppop <- pop()
@@ -2186,7 +2318,7 @@ server <- function(input, output, session) {
     ##############################################################################
     
     output$maskPlot <- renderPlot({
-        core <- detectorarray()
+        core <- traprv$data
         if (is.null(core)) return (NULL)
         par(mar=c(2,2,2,2), xaxs='i', yaxs='i', xpd = input$xpdbox)
         
@@ -2194,8 +2326,8 @@ server <- function(input, output, session) {
         plot (mask(), add = TRUE, col = grey(0.94 - input$dotsbox/5), dots = input$dotsbox)
         plot (core, add = TRUE)
         
-        if (!is.null(poly()) && input$polygonbox) {
-            sp::plot(poly(), add = TRUE)
+        if (!is.null(polyrv$data) && input$polygonbox) {
+            sp::plot(polyrv$data, add = TRUE)
         }
         if (input$maskedge2) {
             plotMaskEdge(mask(), add = TRUE)
@@ -2207,13 +2339,13 @@ server <- function(input, output, session) {
     ##############################################################################
     
     border <- function (multiple) {
-        spc <- spacing(detectorarray()) 
+        spc <- spacing(traprv$data) 
         if (is.null(spc) || is.na(spc)) spc <- sigma()
         multiple * spc
     }
     
     output$pxyPlot <- renderPlot( height = 300, width = 380, {
-        core <- detectorarray()
+        core <- traprv$data
         if (is.null(core)) return (NULL)
         invalidateOutputs()
         
@@ -2247,7 +2379,8 @@ server <- function(input, output, session) {
                      detectfn = input$detectfnbtn,
                      detectpar = list(sigma = sigma(), lambda0 = lambda0()),
                      noccasions = noccasions()[input$sess], drawlabels = drawlabels,
-                     binomN = NULL, levels = lev, poly = poly(), 
+                     binomN = NULL, levels = lev, 
+                     poly = if (input$polygonbox) polyrv$data else NULL, 
                      poly.habitat = input$includeexcludebtn == "Include",
                      plt = TRUE, add = TRUE,
                      col = col, fill = cols)
@@ -2362,7 +2495,7 @@ server <- function(input, output, session) {
     
     # Save extra values in state$values when we bookmark
     onBookmark(function(state) {
-        shp <- sapply(input$habpolyfilename, shpfile)
+        shp <- sapply(input$polyfilename, shpfile)
         if (any(shp)) {
             showNotification("ESRI shapefile will not be bookmarked", type = "error", id = "noshapefile")
         }
