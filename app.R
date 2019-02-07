@@ -413,7 +413,15 @@ ui <- function(request) {
                                                    fluidRow(
                                                        column(6, checkboxInput("entireregionbox", "Show entire region", value = TRUE, width = 160)),
                                                        column(5, checkboxInput("snaptodetector", "Snap to detector", value = FALSE, width = 160))
-                                                   )
+                                                   ),
+                                                   br(),
+                                                   fluidRow(
+                                                       column(6, numericInput("rad", "Radial displ. (m)", 
+                                                                               value = 5, min = 0, max = 5000, step = 1, width = 160)),
+                                                       column(6, numericInput("cex", "Point size (cex)", value = 1, 
+                                                                               min = 0.1, max = 5, step = 0.1, width = 160))
+                                                       )
+                                                   
                                          ),
                                          h2("Pxy contour plot"),
                                          wellPanel(class = "mypanel", 
@@ -2043,6 +2051,8 @@ server <- function(input, output, session) {
         updateCheckboxInput(session, "entireregionbox", value = TRUE)
         updateCheckboxInput(session, "snaptodetector", value = FALSE)
         updateRadioButtons(session, "gridlines", selected = "None")
+        updateNumericInput(session, "rad", value = 5)
+        updateNumericInput(session, "cex", value = 1)
 
         ## pxy plot
         updateNumericInput(session, "pxyborder", value = 3)
@@ -2221,7 +2231,7 @@ server <- function(input, output, session) {
             tmpgrid <- traprv$data
         if (is.null(tmpgrid)) return (NULL)
         par(mar = c(1,1,2,1), cex = 1.3, xpd = TRUE)
-        plot (tmpgrid, border = border(1), bty='o', xaxs = 'i', yaxs = 'i',
+        plot (tmpgrid, border = border(1), bty='o', xaxs = 'i', yaxs = 'i', detpar = list(cex = input$cex), 
                    gridlines = (input$gridlines != "None"), gridspace = as.numeric(input$gridlines))
         
         if (inherits(capthist(), 'capthist')) {
@@ -2229,7 +2239,8 @@ server <- function(input, output, session) {
                 ch <- capthist()[[input$sess]]
             else
                 ch <- capthist()
-            plot(ch, varycol = input$varycol, tracks = input$tracks, add = TRUE,
+            plot(ch, varycol = input$varycol, rad = input$rad, cappar = list(cex = input$cex), 
+                 tracks = input$tracks, add = TRUE, 
                  title = "", subtitle = "")
             if (nsessions()>1)
                 mtext(side=3, line = 1, paste0("Session : ", session(capthist())[input$sess]), col = 'blue')
@@ -2238,10 +2249,10 @@ server <- function(input, output, session) {
                 chi <- suppressWarnings(subset(ch, input$animal))
                 selectcol1 <- list(pch = 16, col = 'yellow', cex = 2.5, lwd = 1)
                 selectcol2 <- list(pch = 1, col = 'black', cex = 2.5, lwd = 1)
-                plot(chi, tracks = tracksi, add = TRUE, varycol = FALSE, 
+                plot(chi, tracks = tracksi, add = TRUE, varycol = FALSE, rad = input$rad, detpar = list(cex = input$cex), 
                      cappar = selectcol1, trkpar=list(col='yellow', lwd = 3),
                      title = "", subtitle = "")
-                plot(chi, tracks = tracksi, add = TRUE, varycol = FALSE, 
+                plot(chi, tracks = tracksi, add = TRUE, varycol = FALSE, rad = input$rad, detpar = list(cex = input$cex), 
                      cappar = selectcol2, trkpar=list(col='black', lwd = 1),
                      title = "", subtitle = "")
             }
