@@ -8,8 +8,8 @@ if (compareVersion(as.character(secrversion), '3.2.0') < 0)
 openCRversion <- packageVersion('openCR')
 
 # for transfer to secrdesign
-designurl <- "http://127.0.0.1:4429/"    ## temporarily use 4429 local
-#designurl <- "https://www.stats.otago.ac.nz/secrdesignapp/"   # secrdesignapp 1.2 and above reads parameters
+# designurl <- "http://127.0.0.1:4429/"    ## temporarily use 4429 local
+designurl <- "https://www.stats.otago.ac.nz/secrdesignapp/"   # secrdesignapp 1.2 and above reads parameters
 
 # requires package rgdal to read shapefiles
 # requires package sp for bbox and plot method for SpatialPolygons
