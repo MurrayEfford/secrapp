@@ -916,6 +916,61 @@ server <- function(input, output, session) {
     }
     ##############################################################################
 
+    # readpolygon <- function (fileupload) {
+    #     poly <- NULL
+    #     if (!is.null(fileupload) & is.data.frame(fileupload))
+    #     {
+    #         if (!file.exists(fileupload[1,4])) {
+    #             return(NULL)   ## protect against bad shapefile
+    #         }
+    #         ext <- tolower(tools::file_ext(fileupload[1,1]))
+    #         if (ext == "txt") {
+    #             coord <- read.table(fileupload[1,4])
+    #             poly <- secr:::boundarytoSP(coord[,1:2])
+    #         }
+    #         else if (ext %in% c("rdata", "rda", "rds")) {
+    #             if (ext == "rds") {
+    #                 obj <- readRDS(fileupload[1,4])
+    #             }
+    #             else {
+    #                 objlist <- load(fileupload[1,4])
+    #                 obj <- get(objlist[1])
+    #             }
+    #             if (is.matrix(obj))
+    #                 poly <- secr:::boundarytoSP(obj[,1:2])
+    #             else if (inherits(obj, "SpatialPolygons"))
+    #                 poly <- obj
+    #             else stop("unrecognised boundary object in ", objlist[1])
+    #         }
+    #         else {
+    #             ## not working on restore bookmark 2019-01-24
+    #             dsnname <- dirname(fileupload[1,4])
+    #             for ( i in 1:nrow(fileupload)) {
+    #                 file.rename(fileupload[i,4], paste0(dsnname,"/",fileupload[i,1]))
+    #             }
+    #             filename <- list.files(dsnname, pattern="*.shp", full.names=FALSE)
+    #             layername <- tools::file_path_sans_ext(basename(filename))
+    #             if (is.null(filename) || 
+    #                 !(any(grepl(".shp", fileupload[,1])) &&
+    #                   any(grepl(".dbf", fileupload[,1])) &&
+    #                   any(grepl(".shx", fileupload[,1])))) {
+    #                 showNotification("need shapefile components .shp, .dbf, .shx",
+    #                                  type = "error", id = "nofile", duration = seconds)
+    #             }
+    #             else  if (!requireNamespace("rgdal"))
+    #                 showNotification("need package rgdal to read shapefile", type = "error", id = "norgdal", duration = seconds)
+    #             else {
+    #                 removeNotification(id = "nofile")
+    #                 removeNotification(id = "norgdal")
+    #                 poly <- rgdal::readOGR(dsn = dsnname, layer = layername, verbose = FALSE)
+    #             }
+    #         }
+    #     }
+    #     poly   
+    # }
+    # ##############################################################################
+
+    ## patched in revised version from secrdesignapp 2019-02-11    
     readpolygon <- function (fileupload) {
         poly <- NULL
         if (!is.null(fileupload) & is.data.frame(fileupload))
@@ -943,15 +998,8 @@ server <- function(input, output, session) {
                 else stop("unrecognised boundary object in ", objlist[1])
             }
             else {
-                ## not working on restore bookmark 2019-01-24
-                dsnname <- dirname(fileupload[1,4])
-                for ( i in 1:nrow(fileupload)) {
-                    file.rename(fileupload[i,4], paste0(dsnname,"/",fileupload[i,1]))
-                }
-                filename <- list.files(dsnname, pattern="*.shp", full.names=FALSE)
-                layername <- tools::file_path_sans_ext(basename(filename))
-                if (is.null(filename) || 
-                    !(any(grepl(".shp", fileupload[,1])) &&
+
+                if (!(any(grepl(".shp", fileupload[,1])) &&
                       any(grepl(".dbf", fileupload[,1])) &&
                       any(grepl(".shx", fileupload[,1])))) {
                     showNotification("need shapefile components .shp, .dbf, .shx",
@@ -962,13 +1010,21 @@ server <- function(input, output, session) {
                 else {
                     removeNotification(id = "nofile")
                     removeNotification(id = "norgdal")
-                    poly <- rgdal::readOGR(dsn = dsnname, layer = layername, verbose = FALSE)
+                    ## not working on restore bookmark 2019-01-24
+                    dsnname <- dirname(fileupload[1,4])
+                    ## make temp copy with uniform layername
+                    file.copy(from = fileupload[,4], 
+                              to = paste0(dsnname, "/temp.", tools::file_ext(fileupload[,4])),     
+                              overwrite = TRUE)
+                    layername <- "temp"
+                    poly <- rgdal::readOGR(dsn = dsnname, layer = layername)
                 }
             }
         }
         poly   
     }
     ##############################################################################
+
 
     addtosummary <- function() {
         ## input$fields is character vector of selected fields
