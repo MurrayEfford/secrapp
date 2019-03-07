@@ -541,6 +541,10 @@ server <- function(input, output, session) {
     fieldgroup1 <- 1:13
     fieldgroup2 <- 14:30
 
+    ## for cycling through animals at one detector 2019-03-08
+    lasttrap <- 0
+    clickno <- 0
+    
     showNotification(paste("secr", desc$Version, desc$Date),
                      closeButton = FALSE, type = "message", duration = seconds)
      output$selectingfields <- renderText('false')
@@ -714,8 +718,20 @@ server <- function(input, output, session) {
         if (is.null(xy)) 
             helpText("")
         else {
+            nearest <- nearesttrap(xy, tmpgrid)
+            #-----------------------------------------------------
+            ## machinery to cycle through animals at this detector
+            if (lasttrap != nearest) clickno <<- 0
+            clickno <<- clickno + 1
+            lasttrap <<- nearest
+            at.xy <- apply(capthist()[,,nearest, drop = FALSE],1,sum)
+            at.xy <- which(at.xy>0)
+            clickno <<- ((clickno-1) %% length(at.xy)) + 1
+            #-----------------------------------------------------
+            if (length(at.xy)>0) {
+                updateNumericInput(session, "animal", value = as.numeric(at.xy[clickno]))
+            }
             if (input$snaptodetector) {
-                nearest <- nearesttrap(xy, tmpgrid)
                 xy <- tmpgrid[nearest,]
                 id <- paste0(rownames(tmpgrid)[nearest], ":")
             }
