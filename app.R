@@ -703,12 +703,19 @@ server <- function(input, output, session) {
         if(is.na(input$animal) || input$animal<=0 || is.null(nsessions()))
             helpText("")
         else {
-            if (nsessions()>1)
-                helpText(paste("ID", rownames(capthist()[[input$sess]])[input$animal]))
-            else
-                helpText(paste("ID", rownames(capthist())[input$animal]))
+            if (nsessions()>1) {
+                ch <- capthist()[[input$sess]]
+            }    
+            else {
+                ch <- capthist()
+            }
+            
+            covar <- covariates(ch)[input$animal,,drop = FALSE]
+            if (length(covar)>0)
+                covar <- paste(lapply(1:length(covar), function(i) 
+                    paste(names(covar)[i], as.character(covar[[i]]))), collapse = ', ')
+            helpText(paste("ID", rownames(ch)[input$animal], ' ', covar))
         }
-        
     })
     ##############################################################################
     
@@ -2248,13 +2255,18 @@ server <- function(input, output, session) {
                           max = maxRSE,
                           value = rse,
                           step = 0.1)
-        if (is.null(traprv$data))
+        disable("resultsbtn")  ## shinyjs
+        if (is.null(traprv$data)) {
             cat("No data loaded\n")
-        else if (is.null(capthist()))
+        }
+        else if (is.null(capthist())) {
             summary(traprv$data)
-        else if (is.null(fitrv$value))
+        }
+        else if (is.null(fitrv$value)) {
             summary(capthist(), moves = TRUE)
+        }
         else if (inherits(fitrv$value, c("secr","openCR"))) {
+            enable("resultsbtn")    ## shinyjs
             if (input$resultsbtn == "summary")
                 summary(fitrv$value)
             else if (input$resultsbtn == "derived") {
