@@ -191,10 +191,6 @@ The table may be downloaded as a comma-separated text file or in the RDS format 
 
 Here are some known pitfalls
 
-## Bookmark fails with shapefile polygons
-
-This is a known bug that cannot be addressed immediately. It is avoided by saving SpatialPolygons as .rds or .rdata files.
-
 ## Components of a shapefile must be selected and uploaded together
 
 At least .shp, .dbf and .shx.

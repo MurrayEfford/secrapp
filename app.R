@@ -1944,6 +1944,10 @@ server <- function(input, output, session) {
                     noccasions() * 
                     methodfactor * functionfactor * detectorfactor
             }
+            ## 2019-03-13 add safety margin for server
+            ## does not yet use nrow(capthist)?
+            ## need more comprehensive empirical approximation
+            time <- time * 2
             if (time > 0.2)
                 showModal(OKModal(time))
             else {
