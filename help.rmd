@@ -1,7 +1,7 @@
 ---
 title: "secr app 1.0"
 author: "Murray Efford"
-date: '2019-02-08'
+date: '2019-11-05'
 output:
   pdf_document:
     toc: yes
@@ -13,7 +13,7 @@ output:
 
 # An interactive app for spatially explicit capture--recapture
 
-## Murray Efford 2019-02-08
+## Murray Efford 2019-11-05
 
 # Contents
   [Introduction](#introduction)  
@@ -73,10 +73,6 @@ Detections ('captures') of known individuals are also input from a text file. Tw
   <tr>
     <td>Distribution</td>
     <td>distribution of number detected \(n\)</td>
-  </tr>
-  <tr>
-    <td>Function</td>
-    <td>choose between functions used to fit model (packages secr and openCR)</td>
   </tr>
 </table> 
 
@@ -215,12 +211,10 @@ Borchers, D. L. and Efford, M. G. (2008) Spatially explicit
    maximum likelihood methods for capture--recapture
    studies. *Biometrics* **64**, 377--385.
    
-Efford, M. G. (2019a) secr: Spatially explicit capture--recapture models. R package version 3.2.0. https://CRAN.R-project.org/package=secr
+Efford, M. G. (2019a) secr: Spatially explicit capture--recapture models. R package version 4.0.1. https://CRAN.R-project.org/package=secr
 
 Efford, M. G. (2019b) secrdesign: Sampling design for spatially explicit capture--recapture. R package version 2.5.7.
   https://CRAN.R-project.org/package=secrdesign
-
-Efford, M. G. (2019c) openCR: Open population capture--recapture models. R package version 1.3.4. https://CRAN.R-project.org/package=openCR
 
 ----------------------------------------------------
 

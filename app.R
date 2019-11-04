@@ -1,11 +1,11 @@
-library(openCR)
+# 2019-11-05 secr only (openCR removed)
+library(secr)
 library(shinyjs)
 
 secrversion <- packageVersion('secr')
 if (compareVersion(as.character(secrversion), '3.2.0') < 0)
     stop("secrapp 1.0 requires secr version 3.2.0 or later",
          call. = FALSE)
-openCRversion <- packageVersion('openCR')
 
 # for transfer to secrdesign
 # designurl <- "http://127.0.0.1:4429/"    ## temporarily use 4429 local
@@ -80,14 +80,12 @@ ui <- function(request) {
                                           h2("Model"),
                                           wellPanel(class = "mypanel", 
                                                    fluidRow(
-                                                       column(3, radioButtons("detectfnbtn", "Detectfn",
+                                                       column(4, radioButtons("detectfnbtn", "Detectfn",
                                                                              choices = c("HHN","HEX"),
                                                                              selected = "HHN")),
-                                                       column(3, radioButtons("likelihoodbtn", "Likelihood", choices = c("Full", "Conditional"))),
-                                                       column(3, radioButtons("distributionbtn", label = "Distribution of n",
-                                                                              choices = c("Poisson", "Binomial"))),
-                                                       column(3, radioButtons("packagebtn", label = "Function", 
-                                                                              choices = c("secr.fit", "openCR.fit")))
+                                                       column(4, radioButtons("likelihoodbtn", "Likelihood", choices = c("Full", "Conditional"))),
+                                                       column(4, radioButtons("distributionbtn", label = "Distribution of n",
+                                                                              choices = c("Poisson", "Binomial")))
                                                    ),
                                                    fluidRow(
                                                        column(12, textInput("model", "", value = "D~1, lambda0~1, sigma~1"))
@@ -1101,9 +1099,9 @@ server <- function(input, output, session) {
             k = NA,
             proctime = NA
         )
-        if (inherits(fitrv$value, c("secr", "openCR"))) {
+        if (inherits(fitrv$value, "secr")) {
             fitsum <- summary(fitrv$value)
-            df$fitfunction <- input$packagebtn
+            df$fitfunction <- "secr.fit"
             df$npar <- fitsum$AICtable$npar
             df$logLik <- fitsum$AICtable$logLik
             df$AIC <- fitsum$AICtable$AIC
@@ -1266,17 +1264,11 @@ server <- function(input, output, session) {
                            model = model,
                            detectfn = input$detectfnbtn),
                       otherargs)
-            if (input$packagebtn == "openCR.fit") {
-                args$type <- type
-                args$distribution <-  tolower(input$distributionbtn)
-                args$details <- list(multinom = TRUE)
-            }
-            else if (input$packagebtn == "secr.fit") {
-                args$CL <- CL 
-                args$details <- as.list(replace (args$details, "distribution", input$distributionbtn))
-            }
+            args$CL <- CL 
+            args$details <- as.list(replace (args$details, "distribution", input$distributionbtn))
             
-            isolate(fit <- try(do.call(input$packagebtn, args)))
+            
+            isolate(fit <- try(do.call("secr.fit", args)))
             if (inherits(fit, "try-error")) {
                 showNotification("model fit failed - check data, formulae and mask",
                                  type = "error", id = "nofit", duration = seconds)
@@ -1531,29 +1523,19 @@ server <- function(input, output, session) {
     ##############################################################################
 
     density <- reactive( {
-        if (!inherits(fitrv$value, c("secr", "openCR"))) {
+        if (!inherits(fitrv$value, "secr")) {
             NA
         }
         else {
             newd <- newdata()[1,,drop = FALSE]
             if (input$likelihoodbtn == "Full") {
-                if (input$packagebtn == 'secr.fit') {
-                    D <- predict(fitrv$value, newdata = newd)['D', 'estimate']
-                }
-                else {
-                    D <- predict(fitrv$value, newdata = newd)[['superD']][1,'estimate']
-                }
+                D <- predict(fitrv$value, newdata = newd)['D', 'estimate']
             }
             else {
-                if (input$packagebtn == 'secr.fit') {
-                    if (nsessions()==1)
-                        D <- derivedresult()['D', 'estimate']
-                    else
-                        D <- derivedresult()[[input$sess]]['D', 'estimate']
-                }
-                else {
-                    D <- NA ## derivedresult()['superD','estimate']
-                }
+                if (nsessions()==1)
+                    D <- derivedresult()['D', 'estimate']
+                else
+                    D <- derivedresult()[[input$sess]]['D', 'estimate']
                 
             }
             D
@@ -1562,19 +1544,11 @@ server <- function(input, output, session) {
     ##############################################################################
 
     derivedresult <- reactive({
-        if (input$packagebtn == "openCR.fit") {
-             showNotification("no derived method for openCR closed models",
-                             type = "warning", id = "noderived", duration = seconds)
-         
-            NULL
-            }
-        else {
-            progress <- Progress$new(session, min = 1, max = 15)
-            on.exit(progress$close())
-            progress$set(message = 'Computing derived estimates ...', detail = '')
-            der <- derived(fitrv$value, distribution = tolower(input$distributionbtn))
-            round(der, input$dec)
-        }
+        progress <- Progress$new(session, min = 1, max = 15)
+        on.exit(progress$close())
+        progress$set(message = 'Computing derived estimates ...', detail = '')
+        der <- derived(fitrv$value, distribution = tolower(input$distributionbtn))
+        round(der, input$dec)
     })
     ##############################################################################
 
@@ -1594,14 +1568,11 @@ server <- function(input, output, session) {
     ##############################################################################
     
     lambda0 <- reactive({
-        if (!inherits(fitrv$value, c("secr", "openCR")))
+        if (!inherits(fitrv$value, "secr"))
             NA
         else {
-            if (input$packagebtn == 'secr.fit')
-                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['lambda0','estimate']
-                # detectpar(fitrv$value)[['lambda0']]
-            else
-                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$lambda0[1,'estimate']
+            predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['lambda0','estimate']
+            # detectpar(fitrv$value)[['lambda0']]
         }
     })
     ##############################################################################
@@ -1691,11 +1662,7 @@ server <- function(input, output, session) {
         if (is.null(fitrv$value))
             NULL   ## no model
         else {
-            if (input$packagebtn == "secr.fit")
-                secr.make.newdata(fitrv$value, all.levels = TRUE)
-            else {
-                openCR.make.newdata(fitrv$value, all.levels = TRUE)
-            }
+            secr.make.newdata(fitrv$value, all.levels = TRUE)
         }
     })
     ##############################################################################
@@ -1771,43 +1738,30 @@ server <- function(input, output, session) {
     ##############################################################################
     
     RSE <- reactive ({
-        if (!inherits(fitrv$value, c("secr", "openCR")) || (input$likelihoodbtn != "Full") )
+        if (!inherits(fitrv$value, "secr") || (input$likelihoodbtn != "Full") )
             return (NULL)
         else {
-            if (input$packagebtn == 'secr.fit')
-                V <- vcov(fitrv$value)['D','D']   ## FAILS IF HAVE JUST SWITCHED BUTTON
-            else
-                V <- vcov(fitrv$value)['superD','superD']
+            V <- vcov(fitrv$value)['D','D']   ## FAILS IF HAVE JUST SWITCHED BUTTON
             sqrt(exp(V)-1) * 100
         }
     })
     ##############################################################################
 
     se.density <- reactive( {
-        if (!inherits(fitrv$value, c("secr", "openCR"))) {
+        if (!inherits(fitrv$value, "secr")) {
             NA
         }
         else {
             newd <- newdata()[1,,drop = FALSE]
             if (input$likelihoodbtn == "Full") {
-                if (input$packagebtn == 'secr.fit') {
-                    se.D <- predict(fitrv$value, newdata = newd)['D', 'SE.estimate']
-                }
-                else {
-                    se.D <- predict(fitrv$value, newdata = newd)[['superD']][1,'SE.estimate']
-                }
+                se.D <- predict(fitrv$value, newdata = newd)['D', 'SE.estimate']
             }
             else {
-                if (input$packagebtn == 'secr.fit') {
-                    if (nsessions()==1)
-                        se.D <- derivedresult()['D', 'SE.estimate']
-                    else
-                        se.D <- derivedresult()[[input$sess]]['D', 'SE.estimate']
-                        
-                }
-                else {
-                    se.D <- NA ## derivedresult()['superD','SE.estimate']
-                }
+                if (nsessions()==1)
+                    se.D <- derivedresult()['D', 'SE.estimate']
+                else
+                    se.D <- derivedresult()[[input$sess]]['D', 'SE.estimate']
+                
                 
             }
             se.D
@@ -1816,40 +1770,31 @@ server <- function(input, output, session) {
     ##############################################################################
 
     se.lambda0 <- reactive({
-        if (!inherits(fitrv$value, c("secr", "openCR")))
+        if (!inherits(fitrv$value, "secr"))
             NA
         else {
-            if (input$packagebtn == 'secr.fit')
-                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['lambda0','SE.estimate']
-                # detectpar(fitrv$value)[['lambda0']]
-            else
-                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$lambda0[1,'SE.estimate']
+            predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['lambda0','SE.estimate']
+            # detectpar(fitrv$value)[['lambda0']]
         }
     })
     ##############################################################################
     
     se.sigma <- reactive ({
-        if (!inherits(fitrv$value, c("secr", "openCR")))
+        if (!inherits(fitrv$value, "secr"))
             NA
         else {
-            if (input$packagebtn == 'secr.fit')
-                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['sigma','SE.estimate']
-                # detectpar(fitrv$value)[['sigma']]
-            else 
-                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$sigma[1,'SE.estimate'] 
+            predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['sigma','SE.estimate']
+            # detectpar(fitrv$value)[['sigma']]
         }
     })
     ##############################################################################
     
     sigma <- reactive ({
-        if (!inherits(fitrv$value, c("secr", "openCR")))
+        if (!inherits(fitrv$value, "secr"))
             NA
         else {
-            if (input$packagebtn == 'secr.fit')
-                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['sigma','estimate']
-                # detectpar(fitrv$value)[['sigma']]
-            else 
-                predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])$sigma[1,'estimate'] 
+            predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['sigma','estimate']
+            # detectpar(fitrv$value)[['sigma']]
         }
     })
     ##############################################################################
@@ -1894,7 +1839,6 @@ server <- function(input, output, session) {
     # model
     # okbtn
     # otherargs
-    # packagebtn
     # pxyclick
     # randompopbtn
     # resetbtn
@@ -1905,7 +1849,6 @@ server <- function(input, output, session) {
     
     ## Invalidate results when model specification changes
     # likelihoodbtn
-    # packagebtn
     # detectfnbtn
     # distributionbtn
     # model
@@ -1985,7 +1928,7 @@ server <- function(input, output, session) {
             progress$set(message = 'Fitting...',
                          detail = '')
             methodfactor <- 1 + ((input$method != "none") * 4)
-            functionfactor <- switch(input$packagebtn, secr.fit = 4, openCR.fit = 1, 0.1)
+            functionfactor <- 1  # was 4 for secr.fit 3.2
             detectorfactor <- switch(input$detector, proximity = 1, single = 0.6, multi = 0.6, count = 4)
            
             if (ms(capthist())) {
@@ -2018,10 +1961,7 @@ server <- function(input, output, session) {
         fitrv$value <- NULL
         ## drop or add density formula depending on full/conditional likelihood
         if (input$likelihoodbtn == "Full") {
-            if (input$packagebtn == "secr.fit")
-                updateTextInput(session, "model", value = paste0("D~1, ", input$model))
-            else
-                updateTextInput(session, "model", value = paste0("superD~1, ", input$model))
+            updateTextInput(session, "model", value = paste0("D~1, ", input$model))
         }
         else {
             form <- strsplit(input$model, ",")[[1]]
@@ -2052,23 +1992,23 @@ server <- function(input, output, session) {
     })
     ##############################################################################
 
-    observeEvent(input$packagebtn, {
-        fitrv$value <- NULL
-
-        ## toggle D/superD
-        if (input$likelihoodbtn == "Full") {
-            form <- strsplit(input$model, ",")[[1]]
-            form <- stringr::str_trim(form)
-            if (input$packagebtn == "secr.fit") {
-                    form <- gsub("superD", "D", form)
-            }
-            else {
-                form <- gsub("D", "superD", form)
-            }
-            newmodel <- paste(form, collapse = ", ")
-            updateTextInput(session, "model", value = newmodel)
-        }
-    })
+    # observeEvent(input$packagebtn, {
+    #     fitrv$value <- NULL
+    # 
+    #     ## toggle D/superD
+    #     if (input$likelihoodbtn == "Full") {
+    #         form <- strsplit(input$model, ",")[[1]]
+    #         form <- stringr::str_trim(form)
+    #         if (input$packagebtn == "secr.fit") {
+    #                 form <- gsub("superD", "D", form)
+    #         }
+    #         else {
+    #             form <- gsub("D", "superD", form)
+    #         }
+    #         newmodel <- paste(form, collapse = ", ")
+    #         updateTextInput(session, "model", value = newmodel)
+    #     }
+    # })
     ##############################################################################
 
     observeEvent(input$pxyclick, {
@@ -2123,8 +2063,7 @@ server <- function(input, output, session) {
         updateRadioButtons(session, "detectfnbtn", selected = "HHN")
         updateRadioButtons(session, "distributionbtn", selected = "Poisson")
         updateRadioButtons(session, "likelihoodbtn", selected = "Full")
-        updateRadioButtons(session, "packagebtn", selected = "secr.fit")
-
+        
         updateTextInput(session, "model", 
                         value = "D~1, lambda0~1, sigma~1", placeholder = "")
         updateTextInput(session, "otherargs", 
@@ -2260,7 +2199,7 @@ server <- function(input, output, session) {
             progress <- Progress$new(session, min = 1, max = 15)
             on.exit(progress$close())
             progress$set(message = 'Suggesting buffer width ...', detail = '')
-           if (is.null(fitrv$value) || input$packagebtn == "openCR.fit") {
+           if (is.null(fitrv$value)) {
                ch <- if (ms(ch)) ch[[1]] else ch
                buff <- suggest.buffer(ch, detectfn = input$detectfnbtn,
                                       detectpar=list(lambda0 = 0.3, sigma = RPSV(ch, CC = TRUE)),
@@ -2329,15 +2268,12 @@ server <- function(input, output, session) {
         else if (is.null(fitrv$value)) {
             summary(capthist(), moves = TRUE)
         }
-        else if (inherits(fitrv$value, c("secr","openCR"))) {
+        else if (inherits(fitrv$value, "secr")) {
             enable("resultsbtn")    ## shinyjs
             if (input$resultsbtn == "summary")
                 summary(fitrv$value)
             else if (input$resultsbtn == "derived") {
-                if (input$packagebtn == "openCR.fit")
-                    cat("derived method not enabled for openCR\n")
-                else
-                    derivedresult()
+                derivedresult()
             }
             else {
                 fncall <- input$otherfunction
