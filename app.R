@@ -1,10 +1,12 @@
 # 2019-11-05 secr only (openCR removed)
+# 2019-11-05 new timing (trial evaluation LL)
+
 library(secr)
 library(shinyjs)
 
 secrversion <- packageVersion('secr')
-if (compareVersion(as.character(secrversion), '3.2.0') < 0)
-    stop("secrapp 1.0 requires secr version 3.2.0 or later",
+if (compareVersion(as.character(secrversion), '4.0.1') < 0)
+    stop("secrapp 1.1 requires secr version 4.0.1 or later",
          call. = FALSE)
 
 # for transfer to secrdesign
@@ -26,18 +28,19 @@ seconds <- 6   ## default duration for showNotification()
 ui <- function(request) {
     
     fluidPage(
-        title = "secr app 1.0",
+        title = "secr app 1.1",
         includeCSS("secrstyle.css"),
         withMathJax(),
         useShinyjs(),
         tags$head(tags$style(".mypanel{margin-top:5px; margin-bottom:10px; padding-bottom: 5px;}")),
         tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 250px; background: ghostwhite;}")),
+        tags$head(tags$style("#codePrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 250px; background: ghostwhite;}")),
         tags$head(tags$style("#maskPrint{color:blue; font-size:12px; background: ghostwhite;}")),
-        tags$head(tags$style(type="text/css", "input.shiny-bound-input { font-size:14px; height:30px}")),
+        tags$head(tags$style(type="text/css", "input.shiny-bound-input { font-size:14px; height:30px; margin-top:0px; margin-bottom:2px; padding-top:0px; padding-bottom:0px;}")),
         br(),
         navlistPanel(id = "navlist", widths = c(2,10), well=TRUE,
                      
-                     "secr app 1.0",
+                     "secr app 1.1",
                      
                      tabPanel("Main screen",
                               fluidRow(
@@ -52,46 +55,71 @@ ui <- function(request) {
                                                                       # uiOutput('trapfile_ui')),
                                                                       fileInput("trapfilename", "Trap layout",   # Detector layout file
                                                                                  accept = "text/plain")),
-                                                                  helpText(HTML(paste0("trapID, X, Y"))),
-                                                                  textInput("trapargs", "",
-                                                                            value = "", placeholder = "other args e.g., skip = 1"),
-                                                               radioButtons("detector", "Detector type", inline = TRUE,
-                                                           choices = c("multi","proximity","count"),
-                                                           selected = "multi")
-                                                                  
-                                              )),
+                                                               # fluidRow(div(style="height: 25px;",
+                                                               #     column(12, 
+                                                               #         helpText(HTML(paste0("trapID, X, Y")))))
+                                                               # ),
+                                                               fluidRow(
+                                                                   column(12, radioButtons("detector", "Detector type", inline = TRUE,
+                                                                                           choices = c("multi","proximity","count"),
+                                                                                           selected = "multi"))
+                                                               ),
+                                                               fluidRow(
+                                                                   column(12, 
+                                                                          div(#style="height: 25px;",
+                                                                              textInput("trapcovnames", "Covariate names",
+                                                                                        value = "", placeholder = "e.g., traptype, habitat"))
+                                                                          )
+                                                               ),
+                                                               fluidRow(
+                                                                   column(12,
+                                                                          div(# style="height: 25px;",
+                                                                             textInput("trapargs", "Other arguments",value = "", placeholder = "e.g., skip = 1"))
+                                                                          )
+                                                               )
+                                                               
+                                                     )),
                                               column(6, 
                                                      wellPanel(class = "mypanel", 
-                                                                  div(style="height: 80px;",
-                                                                      # uiOutput('captfile_ui')),
-                                                                      fileInput("captfilename", "Captures",
-                                                                                accept = c(".csv", ".txt", ".rdata",
-                                                                                           ".rda", ".rds"))),
-                                                                  uiOutput("captfilehelp"),
-                                                                  
-                                                                  textInput("captargs", "",
-                                                                            value = "", placeholder = "other args e.g., skip = 1"),
-                                                               radioButtons("fmt", label = "Format", inline = TRUE,
-                                                                               choices = c("trapID", "XY"))
-                                                                  
+                                                               div(style="height: 80px;",
+                                                                   fileInput("captfilename", "Captures",
+                                                                             accept = c(".csv", ".txt", ".rdata",
+                                                                                        ".rda", ".rds"))),
+                                                               fluidRow(
+                                                                   column(12, radioButtons("fmt", label = "Format", inline = TRUE,
+                                                                                           choices = c("trapID", "XY")))),
+                                                               # uiOutput("captfilehelp"),
+                                                               fluidRow(
+                                                                   column(12, textInput("covnames", "Covariate names",
+                                                                                   value = "", placeholder = "e.g., sex"))
+                                                               ),
+                                                               fluidRow(
+                                                                   column(12,textInput("captargs", "Other arguments",
+                                                                                       value = "", placeholder = "e.g., skip = 1"))
+                                                               )
+                                                               
                                               )
                                               )
                                           ),
                                           h2("Model"),
                                           wellPanel(class = "mypanel", 
                                                    fluidRow(
-                                                       column(4, radioButtons("detectfnbtn", "Detectfn",
+                                                       column(3, radioButtons("detectfnbtn", "Detectfn",
                                                                              choices = c("HHN","HEX"),
                                                                              selected = "HHN")),
-                                                       column(4, radioButtons("likelihoodbtn", "Likelihood", choices = c("Full", "Conditional"))),
-                                                       column(4, radioButtons("distributionbtn", label = "Distribution of n",
-                                                                              choices = c("Poisson", "Binomial")))
+                                                       column(3, radioButtons("likelihoodbtn", "Likelihood", choices = c("Full", "Conditional"))),
+                                                       column(3, radioButtons("distributionbtn", label = "Distribution of n",
+                                                                              choices = c("Poisson", "Binomial"))),
+                                                       column(3, style="color:grey;",
+                                                              #tags$style("#hcovbox {color:grey; background-color:blue}"),
+                                                              selectInput("hcovbox", label = "Mixture hcov",
+                                                                              choices = c("none"), selected = "none", width=160))
                                                    ),
                                                    fluidRow(
                                                        column(12, textInput("model", "", value = "D~1, lambda0~1, sigma~1"))
                                                    ),
                                                    fluidRow(
-                                                       column(12, textInput("otherargs", "", value = "", placeholder = "other args e.g., details"))
+                                                       column(12, textInput("otherargs", "Other arguments", value = "", placeholder = "e.g., details = list(fastproximity = FALSE)"))
                                                    )
                                          ),
                                          
@@ -102,7 +130,7 @@ ui <- function(request) {
                                                                     title = "Fit spatially explicit capture-recapture model to estimate density and update Results")),
                                              column(4, actionButton("appendbtn", "Add to summary",  width = 130,
                                                                     title = "Append new analysis to Summary table")),
-                                             column(4, helpText(HTML("F11 to toggle fullscreen")))
+                                             column(4, helpText(HTML("F11 full screen")))
                                          ),
                                          
                                          br(),
@@ -131,7 +159,6 @@ ui <- function(request) {
                                           
                                           fluidRow(
                                               column(12, 
-                                                     
                                                      verbatimTextOutput("resultsPrint"))
                                           ),
                                           
@@ -140,6 +167,12 @@ ui <- function(request) {
                                                      br(),
                                                      tabsetPanel(type = "pills",
                                                                  id = "plottabs",
+                                                                 tabPanel("Code",
+                                                                          br(),
+                                                                          fluidRow(
+                                                                              column(12, verbatimTextOutput("codePrint"))
+                                                                          )
+                                                                 ),
                                                                  tabPanel("Array",
                                                                           br(),
                                                                           fluidRow(
@@ -156,40 +189,38 @@ ui <- function(request) {
                                                                                                      step = 1, value = 1)),
                                                                               column(2, br(), conditionalPanel("input.animal>0", uiOutput("uianimalID"))),
                                                                               column(2, conditionalPanel("output.multisession=='true'",
-                                                                                            numericInput("sess", "Session", min = 1, max = 2000, 
-                                                                                                     step = 1, value = 1)))
+                                                                                                         numericInput("sess", "Session", min = 1, max = 2000, 
+                                                                                                                      step = 1, value = 1)))
                                                                           )
                                                                  ),
                                                                  tabPanel("Detectfn", plotOutput("detnPlot", height = 320)),
-                                                                 tabPanel("Popn", 
-                                                                          plotOutput("popPlot", height = 320),
-                                                                          
-                                                                          fluidRow(
-                                                                              column(4, checkboxInput("showmaskbox", "Display mask",
-                                                                                                      value = FALSE,
-                                                                                                      width = 180),
-                                                                                     checkboxInput("onlymaskbox", "Restrict to mask",
-                                                                                                   value = TRUE,
-                                                                                                   width = 180)
-                                                                              ),
-                                                                              column(4, checkboxInput("showHRbox", "Display 95% HR",
-                                                                                                      value = FALSE,
-                                                                                                      width = 180),
-                                                                                     uiOutput('uipopN')),
-                                                                              column(4, actionButton("randompopbtn", "Randomize",
-                                                                                                     title = "Pick another realisation of the population")
-                                                                              )
-                                                                          )
-                                                                 ),
                                                                  tabPanel("Pxy",
                                                                           plotOutput("pxyPlot", height = 350, click = "pxyclick"),
-                                                                          #plotOutput("pxyPlot", click = "pxyclick"),
                                                                           helpText(HTML("p.(x) is the probability an animal at point x will be detected at least once")),
                                                                           fluidRow(
                                                                               column(3, checkboxInput("maskedge", "show mask edge", value = FALSE))
                                                                           )
                                                                  ),
                                                                  
+                                                                 tabPanel("Dxy", 
+                                                                          br(),
+                                                                          fluidRow(
+                                                                              column(9, style='padding:0px;', plotOutput("DPlot", click = "Dclick")),
+                                                                              column(3, br())
+                                                                              ), 
+                                                                          fluidRow(
+                                                                              column(9,helpText(HTML("D(x) is the modelled density at point x")))
+                                                                              ),
+                                                                          fluidRow(
+                                                                              column(2, checkboxInput("Dmaskedge", "mask edge", value = FALSE)),
+                                                                              column(2, checkboxInput("Dshowdetectors", "detectors", value = FALSE)),
+                                                                              column(2, checkboxInput("Dshowdetections", "detections", value = FALSE)),
+                                                                              column(2, checkboxInput("Dshowpopn", "realisation", value = FALSE),
+                                                                                     uiOutput('uipopN')),
+                                                                              column(4, checkboxInput("showHRbox", "95% HR", value = FALSE))
+                                                                          )
+                                                                 ),
+
                                                                  tabPanel("Power",
                                                                           fluidRow(
                                                                               column(11, plotOutput("powerPlot", height = 320, click = "CIclick"))
@@ -366,12 +397,12 @@ ui <- function(request) {
                                                     conditionalPanel("output.selectingfields == 'TRUE'",
                                                                      checkboxGroupInput("fields2", "",
                                                                                         choices = c("likelihood", "distribution", "model", "detectfn", 
-                                                                                                    "fitfunction", "npar", "logLik", "AIC",
+                                                                                                    "hcov", "npar", "logLik", "AIC",
                                                                                                     "D", "se.D", "RSE.D", "lambda0", "se.lambda0", "sigma", "se.sigma",
                                                                                                     "k", "proctime"
                                                                                         ),
                                                                                         selected = c("likelihood", "distribution", "model", "detectfn",
-                                                                                                     "fitfunction", "npar", "logLik", "AIC",
+                                                                                                     "hcov", "npar", "logLik", "AIC",
                                                                                                      "D", "se.D", "RSE.D", "lambda0", "se.lambda0", "sigma", "se.sigma",
                                                                                                      "k", "proctime"
                                                                                         )
@@ -516,7 +547,7 @@ ui <- function(request) {
                               withMathJax(includeMarkdown("help.rmd"))
                      ),
                      tabPanel("About",
-                              h2("secr app 1.0"), br(),
+                              h2("secr app 1.1"), br(),
                               
                               h5(paste("This Shiny application provides an interface to the R package 'secr', version", 
                                        packageDescription("secr")$Version), "."),
@@ -547,7 +578,7 @@ server <- function(input, output, session) {
     summaryfields <- c("date", "time", "note", "traps", "captures", "n", "r",
                        "ndetectors", "noccasions", "usagepct", "maskbuffer", "masknrow", "maskspace",
                        "likelihood", "distribution", "model", 
-                       "fitfunction", "detectfn", "npar", "logLik", "AIC",
+                       "hcov", "detectfn", "npar", "logLik", "AIC",
                        "D", "se.D", "RSE.D", "lambda0", "se.lambda0", "sigma", "se.sigma", 
                        "k", "proctime"
                        )
@@ -597,6 +628,17 @@ server <- function(input, output, session) {
     ##############################################################################
     
     output$secrdesignurl <- renderUI ({
+        if (is.null(fitrv$value) & !is.null(capthist())) {
+            LL <- try(fitmodel(LLonly = TRUE) )
+            if (is.null(LL) || inherits(LL, 'try-error')) {
+                NULL # tag$a(" ")
+            }
+            else {
+                expectedtime <- timefn(LL)/60
+                tags$a(paste0('Fit time ~', round(expectedtime,1), ' min'))
+            }
+        }
+        else {
         
         # only show after model fitted
         req(fitrv$value)
@@ -629,6 +671,7 @@ server <- function(input, output, session) {
          # open secrdesignapp in a new tab, with parameters from secrapp
          # designurl is set at top of this file
          tags$a(href =  paste0(designurl, "?", parm), "Switch to secrdesign", target="_blank")  
+        }
      })
      ##############################################################################
      
@@ -714,6 +757,14 @@ server <- function(input, output, session) {
             helpText(span(style="color:gray", HTML(paste0(round(as.numeric(input$gridlines)/1000,1), "-km grid"))))
     })
     
+     output$uipopN <- renderUI({
+         N <- nrow(pop())
+         if (is.null(pop()) || !input$Dshowpopn) 
+             helpText("") 
+         else 
+             helpText(HTML(paste0("N = ", N)))
+     })
+     
     output$uianimalID <- renderUI({
         if(is.na(input$animal) || input$animal<=0 || is.null(nsessions()))
             helpText("")
@@ -741,24 +792,27 @@ server <- function(input, output, session) {
             helpText("")
         else {
             nearest <- nearesttrap(xy, tmpgrid)
-            #-----------------------------------------------------
-            ## machinery to cycle through animals at this detector
-            if (lasttrap != nearest) clickno <<- 0
-            clickno <<- clickno + 1
-            lasttrap <<- nearest
-            at.xy <- apply(capthist()[,,nearest, drop = FALSE],1,sum)
-            at.xy <- which(at.xy>0)
-            clickno <<- ((clickno-1) %% length(at.xy)) + 1
-            #-----------------------------------------------------
-            if (length(at.xy)>0) {
-                updateNumericInput(session, "animal", value = as.numeric(at.xy[clickno]))
-            }
-            if (input$snaptodetector) {
-                xy <- tmpgrid[nearest,]
-                id <- paste0(rownames(tmpgrid)[nearest], ":")
+            id <- ""
+            if (!is.null(capthist())) {
+                #-----------------------------------------------------
+                ## machinery to cycle through animals at this detector
+                if (lasttrap != nearest) clickno <<- 0
+                clickno <<- clickno + 1
+                lasttrap <<- nearest
+                at.xy <- apply(capthist()[,,nearest, drop = FALSE],1,sum)
+                at.xy <- which(at.xy>0)
+                clickno <<- ((clickno-1) %% length(at.xy)) + 1
+                #-----------------------------------------------------
+                if (length(at.xy)>0) {
+                    updateNumericInput(session, "animal", value = as.numeric(at.xy[clickno]))
+                }
+                if (input$snaptodetector) {
+                    xy <- tmpgrid[nearest,]
+                    id <- paste0(rownames(tmpgrid)[nearest], ":")
+                }
             }
             else {
-                id <- ""
+                id <- paste0(rownames(tmpgrid)[nearest], ":")
             }
             helpText(HTML(paste(id, paste(round(xy), collapse = ", "))))
         }
@@ -782,10 +836,17 @@ server <- function(input, output, session) {
     ##############################################################################
     
     modelstring <- function () {
+        # fails with D~s(x,k=6) because of internal comma
         form <- strsplit(input$model, ",")[[1]]
         fn <- function(f) {
-            chf <- as.character(eval(parse(text=f)))
-            if (chf[3]=="1") "" else f
+            chf <- tryCatch(parse(text = f), error = function(e) NULL)
+            model <- eval(f)
+            if (is.null(model))
+                return ("")
+            else {
+                chf <- as.character(eval(chf))
+                if (chf[3]=="1") "" else f
+            }
         }
         out <- sapply(form, fn)
         out <- out[out != ""]
@@ -954,60 +1015,6 @@ server <- function(input, output, session) {
     }
     ##############################################################################
 
-    # readpolygon <- function (fileupload) {
-    #     poly <- NULL
-    #     if (!is.null(fileupload) & is.data.frame(fileupload))
-    #     {
-    #         if (!file.exists(fileupload[1,4])) {
-    #             return(NULL)   ## protect against bad shapefile
-    #         }
-    #         ext <- tolower(tools::file_ext(fileupload[1,1]))
-    #         if (ext == "txt") {
-    #             coord <- read.table(fileupload[1,4])
-    #             poly <- secr:::boundarytoSP(coord[,1:2])
-    #         }
-    #         else if (ext %in% c("rdata", "rda", "rds")) {
-    #             if (ext == "rds") {
-    #                 obj <- readRDS(fileupload[1,4])
-    #             }
-    #             else {
-    #                 objlist <- load(fileupload[1,4])
-    #                 obj <- get(objlist[1])
-    #             }
-    #             if (is.matrix(obj))
-    #                 poly <- secr:::boundarytoSP(obj[,1:2])
-    #             else if (inherits(obj, "SpatialPolygons"))
-    #                 poly <- obj
-    #             else stop("unrecognised boundary object in ", objlist[1])
-    #         }
-    #         else {
-    #             ## not working on restore bookmark 2019-01-24
-    #             dsnname <- dirname(fileupload[1,4])
-    #             for ( i in 1:nrow(fileupload)) {
-    #                 file.rename(fileupload[i,4], paste0(dsnname,"/",fileupload[i,1]))
-    #             }
-    #             filename <- list.files(dsnname, pattern="*.shp", full.names=FALSE)
-    #             layername <- tools::file_path_sans_ext(basename(filename))
-    #             if (is.null(filename) || 
-    #                 !(any(grepl(".shp", fileupload[,1])) &&
-    #                   any(grepl(".dbf", fileupload[,1])) &&
-    #                   any(grepl(".shx", fileupload[,1])))) {
-    #                 showNotification("need shapefile components .shp, .dbf, .shx",
-    #                                  type = "error", id = "nofile", duration = seconds)
-    #             }
-    #             else  if (!requireNamespace("rgdal"))
-    #                 showNotification("need package rgdal to read shapefile", type = "error", id = "norgdal", duration = seconds)
-    #             else {
-    #                 removeNotification(id = "nofile")
-    #                 removeNotification(id = "norgdal")
-    #                 poly <- rgdal::readOGR(dsn = dsnname, layer = layername, verbose = FALSE)
-    #             }
-    #         }
-    #     }
-    #     poly   
-    # }
-    # ##############################################################################
-
     ## patched in revised version from secrdesignapp 2019-02-11    
     readpolygon <- function (fileupload) {
         poly <- NULL
@@ -1083,9 +1090,9 @@ server <- function(input, output, session) {
             r = r(),
             likelihood = input$likelihoodbtn,
             distribution = input$distributionbtn,
-            model = modelstring(), # input$model,
+            model = input$model, # modelstring(),
             detectfn = input$detectfnbtn,
-            fitfunction = "",
+            hcov = "",
             npar = NA,
             logLik = NA,
             AIC = NA,
@@ -1101,7 +1108,7 @@ server <- function(input, output, session) {
         )
         if (inherits(fitrv$value, "secr")) {
             fitsum <- summary(fitrv$value)
-            df$fitfunction <- "secr.fit"
+            df$hcov <- fitsum$modeldetails[['hcov']]
             df$npar <- fitsum$AICtable$npar
             df$logLik <- fitsum$AICtable$logLik
             df$AIC <- fitsum$AICtable$AIC
@@ -1119,7 +1126,6 @@ server <- function(input, output, session) {
             df$proctime <- fitrv$value$proctime
             df[,20:30] <- ifelse (sapply(df[,20:30], is.numeric), round(df[,20:30], input$dec), df[,20:30])
         }
-            
         sumrv$value <- rbind (sumrv$value, df)
         rownames(sumrv$value) <- paste0("Analysis", 1:nrow(sumrv$value))
     }
@@ -1167,89 +1173,121 @@ server <- function(input, output, session) {
         # as a character value
         code <- ""  
         if (!is.null(traprv$data)) {
-            #     args <- input$args
-            #     if (args != "")
-            #         args <- paste0(", ", args)
-            #     code <- paste0("array <- read.traps ('", 
-            #                    input$trapfilename[1,"name"],
-            #                    "', detector = '", input$detector, "'", args, ")\n")
-            #     if (input$scalefactor != 1.0) {
-            #         code <- paste0(code, 
-            #                        "# optional scaling about centroid\n",
-            #                        "meanxy <- apply(array,2,mean)\n",
-            #                        "array[,1] <- (array[,1]- meanxy[1]) * ", input$scalefactor, " + meanxy[1]\n",
-            #                        "array[,2] <- (array[,2]- meanxy[2]) * ", input$scalefactor, " + meanxy[2]\n")
-            #         #"array[,] <- array[,] * ", input$scalefactor, "\n")
-            #     }
+            args <- input$trapargs
+            if (args != "")
+                args <- paste0(", ", args)
+            code <- paste0("array <- read.traps ('",
+                           input$trapfilename[1,"name"],
+                           "', detector = '", input$detector, "'", args, ")\n")
+            # if (input$scalefactor != 1.0) {
+            #     code <- paste0(code,
+            #                    "# optional scaling about centroid\n",
+            #                    "meanxy <- apply(array,2,mean)\n",
+            #                    "array[,1] <- (array[,1]- meanxy[1]) * ", input$scalefactor, " + meanxy[1]\n",
+            #                    "array[,2] <- (array[,2]- meanxy[2]) * ", input$scalefactor, " + meanxy[2]\n")
+            #     #"array[,] <- array[,] * ", input$scalefactor, "\n")
             # }
-            #     
-            # if (comment) {
-            #     tmp <- lapply(strsplit(code, "\n")[[1]], function(x) paste0("# ", x))
-            #     tmp$sep <- "\n"
-            #     code <- do.call(paste, tmp)
-            # }
+
+            if (comment) {
+                tmp <- lapply(strsplit(code, "\n")[[1]], function(x) paste0("# ", x))
+                tmp$sep <- "\n"
+                code <- do.call(paste, tmp)
+            }
         }
         code        
     }
     ##############################################################################
     
-    maskcode <- function (arrayname) {
+    maskcode <- function () {
         if (input$masktype == 'Build') {
-            
-            type <- if (input$maskshapebtn == 'Rectangular') 'traprect' else 'trapbuffer'
-            buffer <- as.character(round(input$buffer,2))
-            polycode <- ""
-            polyhabitat <- ""
-            
-            if (input$polygonbox && !is.null(input$polyfilename)) { 
-                polyhabitat <- input$includeexcludebtn == "Include"
-                polycode <- getSPcode(input$polyfilename, "poly", input$polygonbox)
+            if (is.null(traprv$data))
+                return("\n")
+            else {
+                type <- if (input$maskshapebtn == 'Rectangular') 'traprect' else 'trapbuffer'
+                buffer <- as.character(round(input$buffer,2))
+                polycode <- ""
+                polyhabitat <- ""
+                
+                if (input$polygonbox && !is.null(input$polyfilename)) { 
+                    polyhabitat <- input$includeexcludebtn == "Include"
+                    polycode <- getSPcode(input$polyfilename, "poly", input$polygonbox)
+                }
+                paste0(polycode,
+                       "mask <- make.mask (array",  
+                       ", buffer = ", buffer, 
+                       ", nx = ", input$habnx, 
+                       ", type = '", type, "'",  
+                       if (polycode == "") "" else ",\n    poly = poly",
+                       if (polycode == "") "" else ", poly.habitat = ", polyhabitat,
+                       ")\n")
             }
-            paste0(polycode,
-                   "mask <- make.mask (", arrayname, 
-                   ", buffer = ", buffer, 
-                   ", nx = ", input$habnx, 
-                   ", type = '", type, "'",  
-                   if (polycode == "") "" else ",\n    poly = poly",
-                   if (polycode == "") "" else ", poly.habitat = ", polyhabitat,
-                   ")\n")
         }
         else {
             if (!is.null(input$maskfilename))
-                paste0("mask <- read.mask ('", input$maskfilename[1,1], "')\n")
+                paste0("mask <- read.mask ('", input$maskfilename[1,1], "', header = TRUE)\n")
         }
+    }
+    ##############################################################################
+    
+    captcode <- function (comment = FALSE) {
+        # returns the R code needed to generate the specified array, 
+        # as a character value
+        code <- ""  
+        if (!is.null(captrv$data)) {
+            args <- input$captargs
+            if (args != "")
+                args <- paste0(", ", args)
+            fmt <- if (input$fmt=='XY') ", fmt = 'XY'" else ""
+                
+            code <- paste0("capt <- read.table('", input$captfilename[1,"name"], "'", args, ")\n",
+                           "ch <- make.capthist (capt, traps = array", fmt, ")\n")
+            # if (input$scalefactor != 1.0) {
+            #     code <- paste0(code,
+            #                    "# optional scaling about centroid\n",
+            #                    "meanxy <- apply(array,2,mean)\n",
+            #                    "array[,1] <- (array[,1]- meanxy[1]) * ", input$scalefactor, " + meanxy[1]\n",
+            #                    "array[,2] <- (array[,2]- meanxy[2]) * ", input$scalefactor, " + meanxy[2]\n")
+            #     #"array[,] <- array[,] * ", input$scalefactor, "\n")
+            # }
+            
+            if (comment) {
+                tmp <- lapply(strsplit(code, "\n")[[1]], function(x) paste0("# ", x))
+                tmp$sep <- "\n"
+                code <- do.call(paste, tmp)
+            }
+        }
+        code        
     }
     ##############################################################################
     
     fitcode <- function() {
         detfn <- input$detectfnbtn
         if (is.character(detfn)) detfn <- paste0("'", detfn, "'")
-        code <- ""
-        # code <- paste0(
-        #     "# R code to generate main results\n",
-        #     "library(secr)\n\n",
-        #     arraycode(),
-        #     "\n",
-        #     maskcode("array"),
-        #     "\n",
-        #     "ch <- read.capthist()\n",
-        #     "fit <- secr.fit(ch, mask = mask, detectfn = ", detfn, ")\n\n"
-        # )
+        CL <- if (input$likelihoodbtn == "Full") "" else ", CL = TRUE"
+        model <- paste0("model = list(", input$model, ")")
+        distn <- if (input$distributionbtn == "Poisson") "" else 
+            ",\n      details = list(distribution = 'binomial')"
+        code <- paste0(
+            "fit <- secr.fit(ch, mask = mask, detectfn = ", detfn, CL, ", \n", 
+            "      ", model, ", trace = FALSE", distn, ")\n"
+        )
         code
     }
     ##############################################################################
     
-    fitmodel <- function() {
+    timefn <- function(LL) attr(LL,'preptime') + attr(LL,'npar')^2 * attr(LL,'LLtime') * 10
+    
+    fitmodel <- function(LLonly = FALSE) {
         
-        if (input$likelihoodbtn == "Full") {
-            type <- "secrD"
-            CL <- FALSE
+        if (!LLonly) {
+            progress <- Progress$new(session, min = 1, max = 15)
+            on.exit(progress$close())
+            progress$set(message = 'Fitting...', detail = '')
         }
-        else {
-            type <- "secrCL"
-            CL <- TRUE
-        }
-        model <- eval(parse(text = paste0("list(", input$model, ")")))
+        CL <- input$likelihoodbtn != "Full"
+        f <- paste0("list(", input$model, ")")
+        f <- tryCatch(parse(text = f), error = function(e) NULL)
+        model <- eval(f)
 
         otherargs <- try(eval(parse(text = paste0("list(", input$otherargs, ")"))))
         if (inherits(otherargs, "try-error")) {
@@ -1266,8 +1304,11 @@ server <- function(input, output, session) {
                       otherargs)
             args$CL <- CL 
             args$details <- as.list(replace (args$details, "distribution", input$distributionbtn))
-            
-            
+            if (LLonly)
+                args$details <- as.list(replace (args$details, "LLonly", TRUE))
+            if (input$hcovbox != "none") {
+                args$hcov <- input$hcovbox
+            }
             isolate(fit <- try(do.call("secr.fit", args)))
             if (inherits(fit, "try-error")) {
                 showNotification("model fit failed - check data, formulae and mask",
@@ -1275,8 +1316,14 @@ server <- function(input, output, session) {
                 fit <- NULL
             }
         }
-        fitrv$value <- fit
-        addtosummary()
+        if (LLonly) {
+            return(fit)
+        }
+        else {
+            fitrv$value <- fit
+            fitrv$dsurf <- predictDsurface(fit)
+            addtosummary()
+        }
     }
     ##############################################################################
 
@@ -1291,9 +1338,9 @@ server <- function(input, output, session) {
     ##############################################################################
     
     ## Modal dialogue to confirm fitting if it might take a long time
-    OKModal <- function(time) {
+    OKModal <- function(expectedtime) {
         modalDialog(
-            paste("Fitting is predicted to take ", round(time,1), " minutes"),
+            paste("Fitting is predicted to take ", round(expectedtime,1), " minutes"),
             size = "s",
             easyClose = TRUE,
             footer = tagList(
@@ -1303,49 +1350,6 @@ server <- function(input, output, session) {
         )
     }
     ##############################################################################
-    
-    # readtrapfile <- function () {
-    #     inFile <- input$trapfilename
-    #     trps <- NULL
-    #     if (!is.null(inFile)) {
-    #         filename <- input$trapfilename[1,"datapath"]
-    #         if (is.null(filename))
-    #             stop("provide valid filename")
-    #         args <- input$trapargs
-    #         if (args != "")
-    #             args <- paste0(", ", args)
-    #         readtrapscall <- paste0("read.traps (filename, detector = input$detector", args, ")")
-    #         trps <- try(eval(parse(text = readtrapscall)))
-    #         if (!inherits(trps, "traps")) {
-    #             showNotification("invalid trap file or arguments; try again",
-    #                              type = "error", id = "badarray", duration = seconds)
-    #         }
-    #     }    
-    #     trps
-    # }
-    # ##############################################################################
-
-    # readcaptfile <- function () {
-    #     inFile <- input$captfilename
-    #     captdf <- NULL
-    #     if (!is.null(inFile)) {
-    #         filename <- input$captfilename[1,"datapath"]
-    #         if (is.null(filename))
-    #             stop("provide valid filename")
-    #         args <- input$captargs
-    #         if (args != "")
-    #             args <- paste0(", ", args)
-    #         readcaptcall <- paste0("read.table (filename", args, ")")
-    #         captdf <- try(eval(parse(text = readcaptcall)))
-    #         if (!inherits(captdf, "data.frame")) {
-    #             showNotification("invalid capture file or arguments; try again",
-    #                              type = "error", id = "badcapt", duration = seconds)
-    #             captdf <- NULL
-    #         }
-    #     }    
-    #     captdf
-    # }
-    # ##############################################################################
     
     ## reactive
 
@@ -1408,14 +1412,26 @@ server <- function(input, output, session) {
         if (is.null(filename))
             stop("provide valid filename")
         args <- input$trapargs
-        if (args != "")
+        covnames <- input$trapcovnames
+        if (args != "") {
             args <- paste0(", ", args)
+        }
+        if (covnames != "") {
+            nam <- strsplit(str_squish(covnames), '[ ,]')
+            covtext <- paste0("c(", paste(paste0("'", nam[[1]], "'"), collapse=","), ")")
+            args <- paste0(", covnames = ", covnames)
+        }
+            
         readtrapcall <-  paste0("read.traps (filename, detector = input$detector", args, ")")
-        traprv$data <- try(eval(parse(text = readtrapcall)))
-        if (!inherits(traprv$data, "traps")) {
+        temp <- try(eval(parse(text = readtrapcall)))
+        if (!inherits(temp, "traps")) {
             showNotification("invalid trap file or arguments; try again",
                              type = "error", id = "badtrap", duration = seconds)
             traprv$data <- NULL
+            #traprv$clear <- TRUE
+        }
+        else {
+            traprv$data <- temp
         }
     })
     ##############################################################################
@@ -1486,8 +1502,6 @@ server <- function(input, output, session) {
     observeEvent(input$maskfilename, {
         maskrv$clear <- FALSE
     }, priority = 1000)
-    ##############################################################################
-
 
     ##############################################################################
     
@@ -1497,7 +1511,7 @@ server <- function(input, output, session) {
             NULL
         }
         else {
-            ch <- try(suppressWarnings(make.capthist(captrv$data, traprv$data, fmt = input$fmt))) 
+            ch <- try(suppressWarnings(make.capthist(captrv$data, traprv$data, fmt = input$fmt, covnames = input$covnames))) 
             if (inherits(ch, 'try-error')) {
                 showNotification("invalid capture file or arguments; try again",
                                  type = "error", id = "badcapt", duration = seconds)
@@ -1516,6 +1530,8 @@ server <- function(input, output, session) {
                      output$multisession <- renderText("false")
                 }
                 updateNumericInput(session, "sess", max = length(ch))
+                updateSelectInput(session, "hcovbox", choices = c("none", names(covariates(ch))))
+                
             }
             ch
         }
@@ -1527,9 +1543,8 @@ server <- function(input, output, session) {
             NA
         }
         else {
-            newd <- newdata()[1,,drop = FALSE]
             if (input$likelihoodbtn == "Full") {
-                D <- predict(fitrv$value, newdata = newd)['D', 'estimate']
+                D <- predictparm('D', 'estimate')
             }
             else {
                 if (nsessions()==1)
@@ -1552,33 +1567,42 @@ server <- function(input, output, session) {
     })
     ##############################################################################
 
-    # detectorarray <- reactive(
-    #     {
-    #         pxyrv$value <- NULL
-    #         traprv$data
-    #     }
-    # )
-    ##############################################################################
-
     invalidateOutputs <- reactive({
         pxyrv$value <- NULL
+        Drv$value <- NULL
         # updateNumericInput(session, "D", step = 10^trunc(log10(density()/50)))
     })
     
     ##############################################################################
-    
-    lambda0 <- reactive({
+
+    predictparm <- function(parm = 'D', stat = 'estimate') {
         if (!inherits(fitrv$value, "secr"))
             NA
         else {
-            predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['lambda0','estimate']
-            # detectpar(fitrv$value)[['lambda0']]
+            pred <- predict(fitrv$value, newdata = newdata())
+            if (is.data.frame(pred)) {
+                pred[parm, stat]
+            }
+            else {
+                pred[[1]][parm,stat]
+            }
         }
+    }
+    ##############################################################################
+    
+    lambda0 <- reactive({
+        predictparm (parm = 'lambda0', stat = 'estimate') 
     })
+    
+    sigma <- reactive ({
+        predictparm (parm = 'sigma', stat = 'estimate') 
+    })
+    
     ##############################################################################
     
     mask <- reactive( {
         pxyrv$value <- NULL
+        Drv$value <- NULL
         if (input$masktype=="Build") {
             
             if (is.null(traprv$data))
@@ -1697,6 +1721,7 @@ server <- function(input, output, session) {
     pop <- reactive(
         {
             poprv$v
+            input$Dshowpopn
             core <- traprv$data
             if (is.null(core) || (density() == 0) || is.na(density())) {
                 return (NULL)
@@ -1708,21 +1733,11 @@ server <- function(input, output, session) {
             }
             else removeNotification("bigpop")
             Ndist <- if (input$distributionbtn == 'Poisson') 'poisson' else 'fixed'
-            if (input$onlymaskbox) {
-                if (nrow(mask())==0) {
-                    showNotification("incompatible mask",
-                                     type = "error", id = "badmask", duration = seconds)
-                    pop <- NULL
-                }
-                else {
-                    pop <- sim.popn (D = density(), core=mask(), model2D="IHP", Ndist = Ndist)
-                }
-            }
-            else { # rectangular area
-                pop <- sim.popn (D = density(), core=core, Ndist = Ndist,
-                                 buffer = input$buffer)
-            }
-            pop
+            
+            # dsurf <- predictDsurface(fitrv$value)
+            msk <- fitrv$value$mask
+            sim.popn (D = 'D.0', core=fitrv$dsurf, model2D="IHP", Ndist = Ndist)   # density()
+            
         }
     )
     ##############################################################################
@@ -1752,9 +1767,8 @@ server <- function(input, output, session) {
             NA
         }
         else {
-            newd <- newdata()[1,,drop = FALSE]
             if (input$likelihoodbtn == "Full") {
-                se.D <- predict(fitrv$value, newdata = newd)['D', 'SE.estimate']
+                se.D <- predictparm('D', 'SE.estimate')
             }
             else {
                 if (nsessions()==1)
@@ -1770,32 +1784,12 @@ server <- function(input, output, session) {
     ##############################################################################
 
     se.lambda0 <- reactive({
-        if (!inherits(fitrv$value, "secr"))
-            NA
-        else {
-            predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['lambda0','SE.estimate']
-            # detectpar(fitrv$value)[['lambda0']]
-        }
+        predictparm('lambda0','SE.estimate')
     })
     ##############################################################################
     
     se.sigma <- reactive ({
-        if (!inherits(fitrv$value, "secr"))
-            NA
-        else {
-            predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['sigma','SE.estimate']
-            # detectpar(fitrv$value)[['sigma']]
-        }
-    })
-    ##############################################################################
-    
-    sigma <- reactive ({
-        if (!inherits(fitrv$value, "secr"))
-            NA
-        else {
-            predict(fitrv$value, newdata = newdata()[1,,drop = FALSE])['sigma','estimate']
-            # detectpar(fitrv$value)[['sigma']]
-        }
+        predictparm('sigma','SE.estimate')
     })
     ##############################################################################
     
@@ -1818,6 +1812,7 @@ server <- function(input, output, session) {
     fitrv <- reactiveValues(value = NULL)
     poprv <- reactiveValues(v = 0)  # used to invalidate and re-plot popn
     pxyrv <- reactiveValues(current = FALSE, xy = NULL, value = NULL)
+    Drv <- reactiveValues(current = FALSE, xy = NULL, value = NULL)
     RSErv <- reactiveValues(current = FALSE, value = NULL, adjRSE = NULL)
     selecting <- reactiveValues(v=FALSE)
     sumrv <- reactiveValues(value = read.csv(text = paste(summaryfields, collapse = ", ")))
@@ -1840,6 +1835,7 @@ server <- function(input, output, session) {
     # okbtn
     # otherargs
     # pxyclick
+    # Dclick
     # randompopbtn
     # resetbtn
     # selectallbtn
@@ -1923,32 +1919,18 @@ server <- function(input, output, session) {
                              type = "warning", id = "nodata", duration = seconds)
         }
         else {
-            progress <- Progress$new(session, min = 1, max = 15)
-            on.exit(progress$close())
-            progress$set(message = 'Fitting...',
-                         detail = '')
-            methodfactor <- 1 + ((input$method != "none") * 4)
-            functionfactor <- 1  # was 4 for secr.fit 3.2
-            detectorfactor <- switch(input$detector, proximity = 1, single = 0.6, multi = 0.6, count = 4)
-           
-            if (ms(capthist())) {
-                nm <- if (ms(mask())) nrow(mask()[[1]]) else nrow(mask())
-                nt <- if (ms(traprv$data)) nrow(traprv$data[[1]]) else nrow(traprv$data)
-                time <- nm * nt / 4.5e9 * ## blocked 2019-01-14 nrepeats() * 
-                    noccasions()[1] * length(capthist()) *
-                    methodfactor * functionfactor * detectorfactor
+            # one likelihood
+            LL <- try(fitmodel(LLonly = TRUE) )
+            if (!inherits(LL, 'try-error')) {
+                expectedtime <- timefn(LL)/60
             }
-            else {
-                time <- nrow(mask()) * nrow(traprv$data) / 4.5e9 * ## blocked 2019-01-14 nrepeats() * 
-                    noccasions() * 
-                    methodfactor * functionfactor * detectorfactor
-            }
-            ## 2019-03-13 add safety margin for server
-            ## does not yet use nrow(capthist)?
-            ## need more comprehensive empirical approximation
-            time <- time * 2
-            if (time > 0.2)
-                showModal(OKModal(time))
+            if (expectedtime > timewarning)
+                if (expectedtime > timelimit) {
+                    showNotification("exceeds time limit")
+                }
+                else {
+                    showModal(OKModal(expectedtime))
+                }
             else {
                 fitmodel()
             }
@@ -1992,31 +1974,12 @@ server <- function(input, output, session) {
     })
     ##############################################################################
 
-    # observeEvent(input$packagebtn, {
-    #     fitrv$value <- NULL
-    # 
-    #     ## toggle D/superD
-    #     if (input$likelihoodbtn == "Full") {
-    #         form <- strsplit(input$model, ",")[[1]]
-    #         form <- stringr::str_trim(form)
-    #         if (input$packagebtn == "secr.fit") {
-    #                 form <- gsub("superD", "D", form)
-    #         }
-    #         else {
-    #             form <- gsub("D", "superD", form)
-    #         }
-    #         newmodel <- paste(form, collapse = ", ")
-    #         updateTextInput(session, "model", value = newmodel)
-    #     }
-    # })
-    ##############################################################################
-
     observeEvent(input$pxyclick, {
         invalidateOutputs()
         trps <- traprv$data
         
         border <- border(input$pxyborder)
-
+        
         xy <- c(input$pxyclick$x, input$pxyclick$y)
         if ((xy[2] < (min(trps$y) - border)) ||
             (xy[2] > (max(trps$y) + border)) ||
@@ -2032,8 +1995,23 @@ server <- function(input, output, session) {
             pxyrv$xy <-xy
             pxyrv$value <- Pxy}
     })
+    
     ##############################################################################
-
+    observeEvent(input$Dclick, {
+        invalidateOutputs()
+        #dsurf <- predictDsurface(fitrv$value)
+        Drv$xy <-c(input$Dclick$x, input$Dclick$y)
+        if (pointsInPolygon(Drv$xy, fitrv$dsurf)) {
+            maskrow <- nearesttrap(Drv$xy, mask())
+            cov <- 'D.0'
+            Drv$value <- covariates(fitrv$dsurf)[maskrow, cov, drop = FALSE]
+        }
+        else {
+            Drv$value <- NULL
+        }
+    })
+    ##############################################################################
+    
     observeEvent(input$randompopbtn, ignoreInit = TRUE, {
         # invalidates pop when button pressed
         poprv$v <- poprv$v + 1
@@ -2050,24 +2028,27 @@ server <- function(input, output, session) {
 
         ## Trap layout
         updateTextInput(session, "trapargs", 
-                        value = "", placeholder = "other args e.g., skip = 1")
+                        value = "Other arguments", placeholder = "e.g., skip = 1")
         updateRadioButtons(session, "detector", selected = "multi")
-
+        updateTextInput(session, "trapcovnames", value = "", placeholder = "e.g., traptype, habitat")
+        
         ## Captures
         updateTextInput(session, "captargs", 
-                        value = "", placeholder = "other args e.g., skip = 1")
+                        value = "Other arguments", placeholder = "e.g., skip = 1")
         updateRadioButtons(session, "fmt", selected = "trapID")
-
+        updateTextInput(session, "covnames", value = "", placeholder = "e.g., sex")
+        
         ## Model
         
         updateRadioButtons(session, "detectfnbtn", selected = "HHN")
         updateRadioButtons(session, "distributionbtn", selected = "Poisson")
         updateRadioButtons(session, "likelihoodbtn", selected = "Full")
-        
+        updateSelectInput(session, "hcovbox", choices = "none", selected = "none")
+
         updateTextInput(session, "model", 
                         value = "D~1, lambda0~1, sigma~1", placeholder = "")
         updateTextInput(session, "otherargs", 
-                        value = "", placeholder = "other args e.g., details")
+                        value = "Other arguments", placeholder = "e.g., details = list(fastproximity = FALSE)")
         
         ## Actions
         updateTextInput(session, "title", "", value = "",
@@ -2087,12 +2068,16 @@ server <- function(input, output, session) {
 
         ## pop plot
         updateCheckboxInput(session, "showHRbox", "Display 95% home range", value = FALSE)
-        updateCheckboxInput(session, "showmaskbox", "Display mask", value = FALSE)
-        updateCheckboxInput(session, "onlymaskbox", "Restrict to mask", value = TRUE)
 
         ## pxy plot
         updateCheckboxInput(session, "maskedge", value = FALSE)
-
+        
+        ## Density plot
+        updateCheckboxInput(session, "Dmaskedge", value = FALSE)
+        updateCheckboxInput(session, "Dshowdetectors", value = FALSE)
+        updateCheckboxInput(session, "Dshowdetections", value = FALSE)
+        updateCheckboxInput(session, "Dshowpopn", value = FALSE)
+        
         ## power plot
         updateCheckboxInput(session, "adjustRSEbox", value = TRUE)
         updateCheckboxInput(session, "powertype", "95% CI", value = FALSE)
@@ -2218,14 +2203,20 @@ server <- function(input, output, session) {
     
     # maskPrint
     # resultsPrint 
+    # codePrint 
     
     ##############################################################################
     
     output$maskPrint <- renderPrint({
-        if (is.null(mask()))
-            cat("No mask yet - load trap file on main screen\n")
-        else 
+        if (is.null(mask())) {
+            if (input$masktype == 'Build') 
+                cat("No mask yet - load trap file on main screen\n")
+            else 
+                cat("No mask yet - load mask file\n")
+        }
+        else {
             summary(mask())
+        }
     })
     ##############################################################################
     
@@ -2239,6 +2230,7 @@ server <- function(input, output, session) {
         hideplotif (is.null(traprv$data), "Array")
         hideplotif (is.null(fitrv$value), "Detectfn")
         hideplotif (is.null(fitrv$value), "Pxy")
+        hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != 'Full'), "Dxy")
         hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != "Full"), "Popn")
         hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != "Full"), "Power")
         rse <- RSE() 
@@ -2298,12 +2290,30 @@ server <- function(input, output, session) {
     })
     ##############################################################################
     
+    output$codePrint <- renderPrint({
+        cat("library(secr)\n")
+        if (!is.null(traprv$data)) {
+            cat("\n# input data\n")
+            cat(arraycode())
+        }
+        cat(captcode())
+        if (!is.null(capthist())) {
+            cat("summary(ch)\n")
+            cat("\n# fit model\n")
+            cat(maskcode())
+            cat(fitcode())
+            cat("summary(fit)\n")
+        }
+    })
+    ##############################################################################
+    
     ## renderPlot
     
     ## arrayPlot
     ## detnPlot
     ## popPlot
     ## pxyPlot
+    ## DPlot
     ## powerPlot
 
     ##############################################################################
@@ -2389,20 +2399,10 @@ server <- function(input, output, session) {
             par(mar=c(0,3,0,3), xaxs='i', yaxs='i', xpd = FALSE)
         }
         
-        if (input$showmaskbox) {
-            plot (core, border = border, gridlines = FALSE)
-            plot (mask(), add = TRUE, col = grey(0.9), dots=F)
-            if (n>0) plot(tmppop, add = TRUE, pch = 16, cex = 0.7, xpd = TRUE, frame = FALSE)
-            plot (core, add = TRUE)
-        }
-        else {
-            plot (core, border = border, gridlines = FALSE)
-            if (n>0) plot(tmppop, pch = 16, cex = 0.7, xpd = TRUE, add = TRUE, frame = FALSE)
-            plot (core, add = TRUE)
-            bbox <- sweep(apply(core, 2, range), MAR=1, STATS = c(-border,+border), FUN="+")
-            bbox <- expand.grid(data.frame(bbox))[c(1,2,4,3),]
-            polygon(bbox)
-        }
+        plot (core, border = border, gridlines = FALSE)
+        plot (mask(), add = TRUE, col = grey(0.9), dots=F)
+        if (n>0) plot(tmppop, add = TRUE, pch = 16, cex = 0.7, xpd = TRUE, frame = FALSE)
+        plot (core, add = TRUE)
         if (input$showHRbox & (n>0)) {
             # rad <- rep(2.45 * tmpsig, nrow(tmppop))
             rad <- secr::circular.r(p = 0.95, detectfn = input$detectfnbtn, sigma = tmpsig)
@@ -2521,6 +2521,46 @@ server <- function(input, output, session) {
     })
     ##############################################################################
     
+    output$DPlot <- renderPlot( {
+        invalidateOutputs()
+        par(mar=c(1,1,1,5))
+        if (input$likelihoodbtn!='CL' && !is.null(fitrv$value)) {
+            #dsurf <- predictDsurface(fitrv$value)
+            plot (fitrv$dsurf, border = 0, scale = 1, title="D(x)")
+            if (input$Dshowdetectors) {
+                plot(traprv$data, add = TRUE)
+            }
+            if (input$Dshowdetections) {
+                plot(capthist(), varycol = FALSE, add = TRUE)
+            }
+            if (!is.null(Drv$value)) {
+                xy <- Drv$xy
+                points(xy[1], xy[2], pch=16, cex=0.7)
+                offset <- (par()$usr[2] - par()$usr[1])/15
+                text(xy[1]+offset, xy[2], round(Drv$value,3), cex = 0.9, xpd = TRUE)
+            }
+            
+            if (input$Dmaskedge) {
+                plotMaskEdge(mask(), add = TRUE)
+            }
+            
+            if (input$Dshowpopn) {
+                tmppop <- pop()
+                n <- if (is.null(tmppop)) 0 else nrow(tmppop)
+                if (n>0) {
+                    plot(tmppop, add = TRUE, pch = 16, cex = 0.7, xpd = TRUE, frame = FALSE)
+                    if (input$showHRbox) {
+                        rad <- secr::circular.r(p = 0.95, detectfn = input$detectfnbtn, sigma = sigma())
+                        symbols(tmppop$x, tmppop$y, circles = rep(rad, n),
+                                inches = FALSE, fg = grey(0.7), add = TRUE, xpd = FALSE)
+                    }
+                }
+            }
+            
+        }
+    })
+    ##############################################################################
+    
     output$powerPlot <- renderPlot( height = 320, width = 360, {
         RSE <- input$RSEslider/100
         if (input$powertype) {    ## confidence interval
@@ -2542,7 +2582,6 @@ server <- function(input, output, session) {
                                testtype = input$testtype,
                                targetpower = input$target)
         }
-        ## text (110, 10, paste0("RSE = ", round(100*RSE,1), "%") )
     })
     ##############################################################################
     
@@ -2631,6 +2670,12 @@ server <- function(input, output, session) {
             showNotification("Cannot restore ESRI shapefile(s); re-select", type = "error", id = "noshapefile2")
         }
     })
+    ##############################################################################
+    ## global variables
+    
+    timewarning <- 0.2  ## minutes
+    timelimit <- 5.0    ## minutes
+
     ##############################################################################
 }
 
