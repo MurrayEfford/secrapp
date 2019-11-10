@@ -31,8 +31,8 @@ ui <- function(request) {
     fluidPage(
         title = "secr app 1.1",
         includeCSS("secrstyle.css"),
-        withMathJax(),
         useShinyjs(),
+        withMathJax(),
         tags$head(tags$style(".mypanel{margin-top:5px; margin-bottom:10px; padding-bottom: 5px;}")),
         tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 250px; background: ghostwhite;}")),
         tags$head(tags$style("#codePrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 250px; background: ghostwhite;}")),
@@ -112,7 +112,6 @@ ui <- function(request) {
                                                        column(3, radioButtons("distributionbtn", label = "Distribution of n",
                                                                               choices = c("Poisson", "Binomial"))),
                                                        column(3, style="color:grey;",
-                                                              #tags$style("#hcovbox {color:grey; background-color:blue}"),
                                                               selectInput("hcovbox", label = "Mixture hcov",
                                                                               choices = c("none"), selected = "none", width=160))
                                                    ),
@@ -1273,11 +1272,12 @@ server <- function(input, output, session) {
         detfn <- input$detectfnbtn
         if (is.character(detfn)) detfn <- paste0("'", detfn, "'")
         CL <- if (input$likelihoodbtn == "Full") "" else ", CL = TRUE"
+        hcov <- if(input$hcovbox == "none") "" else paste0(", hcov = '", input$hcovbox, "'")
         model <- paste0("model = list(", input$model, ")")
         distn <- if (input$distributionbtn == "Poisson") "" else 
             ",\n      details = list(distribution = 'binomial')"
         code <- paste0(
-            "fit <- secr.fit(ch, mask = mask, detectfn = ", detfn, CL, ", \n", 
+            "fit <- secr.fit(ch, mask = mask, detectfn = ", detfn, CL, hcov, ", \n", 
             "      ", model, ", trace = FALSE", distn, ")\n"
         )
         code
@@ -2338,7 +2338,6 @@ server <- function(input, output, session) {
     
     ## arrayPlot
     ## detnPlot
-    ## popPlot
     ## pxyPlot
     ## DPlot
     ## powerPlot
@@ -2407,34 +2406,6 @@ server <- function(input, output, session) {
             
             axis(4, at = -log(1 - p), label = p, xpd = FALSE, las = 1)
             mtext(side = 4, line = 3.7, "Detection probability")
-        }
-    })
-    ##############################################################################
-    
-    output$popPlot <- renderPlot( height = 300, width = 380, {
-        core <- traprv$data
-        if (is.null(core)) return (NULL)
-        border <- input$buffer  # consistent with mask()
-        tmppop <- pop()
-        n <- if (is.null(tmppop)) 0 else nrow(tmppop)
-        tmpsig <- sigma()
-        #par(mar=c(0,1,0,1))
-        if (input$pxyfillbox) {
-            par(mar=c(0,1,0,5)) # , xaxs='i', yaxs='i')
-        }
-        else {
-            par(mar=c(0,3,0,3), xaxs='i', yaxs='i', xpd = FALSE)
-        }
-        
-        plot (core, border = border, gridlines = FALSE)
-        plot (mask(), add = TRUE, col = grey(0.9), dots=F)
-        if (n>0) plot(tmppop, add = TRUE, pch = 16, cex = 0.7, xpd = TRUE, frame = FALSE)
-        plot (core, add = TRUE)
-        if (input$showHRbox & (n>0)) {
-            # rad <- rep(2.45 * tmpsig, nrow(tmppop))
-            rad <- secr::circular.r(p = 0.95, detectfn = input$detectfnbtn, sigma = tmpsig)
-            symbols(tmppop$x, tmppop$y, circles = rep(rad, n),
-                    inches = FALSE, fg = grey(0.7), add = TRUE, xpd = FALSE)
         }
     })
     ##############################################################################
@@ -2579,7 +2550,7 @@ server <- function(input, output, session) {
                     if (input$showHRbox) {
                         rad <- secr::circular.r(p = 0.95, detectfn = input$detectfnbtn, sigma = sigma())
                         symbols(tmppop$x, tmppop$y, circles = rep(rad, n),
-                                inches = FALSE, fg = grey(0.7), add = TRUE, xpd = FALSE)
+                                inches = FALSE, fg = grey(0.95), add = TRUE, xpd = FALSE)
                     }
                 }
             }
