@@ -1,19 +1,14 @@
 ---
-title: "secr app 1.0"
+title: "secr app 1.1"
 author: "Murray Efford"
-date: '2019-11-05'
+date: '2019-11-11'
 output:
-  pdf_document:
-    toc: yes
-    toc_depth: '2'
   html_document:
     toc: yes
     toc_depth: 2
 ---
 
 # An interactive app for spatially explicit capture--recapture
-
-## Murray Efford 2019-11-05
 
 # Contents
   [Introduction](#introduction)  
@@ -46,48 +41,66 @@ TIP: on small displays, running your browser in full-screen mode will avoid the 
 
 ### Trap layout
 
-The detector layout is input from a text file. The file typically should have three columns (trapID, x, y) with no headers. Optional arguments separated by commas may be used to customise input (e.g., `skip`, which is passed through `read.traps` to `read.table`). 
+The detector layout is input from a text file. The file typically should have three columns (trapID, x, y) with no headers. These may optionally be followed by binary usage codes (0/1), one per occasion. Columns after a '/' are interpreted as detector covariates. 
 
 Options for <u>detector type</u>  follow **secr** ([Efford (2019a)](#references)): "multi" refers to a multi-catch trap; "proximity" to binary proximity detectors, and "count" to detectors that yield integer counts. Counts are assumed to be Poisson-distributed.
 
+If detector covariates are included then one or more covariate names should be provided (without quotes, separated by commas).
+
+Optional arguments separated by commas may be used to customise input (e.g., `skip`, which is passed through `read.traps` to `read.table`). 
+
 ### Captures
 
-Detections ('captures') of known individuals are also input from a text file. Two formats are allowed, as in DENSITY or **secr**.
+Detections ('captures') of known individuals are also input from a text file. Two formats are allowed, as in DENSITY or **secr**; 'trapID' uses four columns (Session, AnimalID, Occasion, TrapID) and 'XY' uses five (Session, AnimalID, Occasion, X, Y). Supplementary columns are interpreted as individual covariates.
 
+If individual covariates are included then the correct number of covariate names should be provided (without quotes, separated by commas).
+
+Optional arguments separated by commas may be used to customise input (e.g., `skip`, which is passed to `read.table`). 
 
 ## Model
             
-<table style="width:50%">
+<table style="width:80%">
   <tr>
     <td> Detection function </td>
     <td> HHN &nbsp; hazard halfnormal &nbsp; \( \small \lambda(d) = -\lambda_0 \exp\{-d^2/(2\sigma^2)\} \) </td>
   </tr>
   <tr>
     <td> </td>
-    <td> HEX &nbsp; hazard negative exponential  &nbsp; \( \small \lambda(d) = -\lambda_0 \exp(-d/\sigma) \) </td>
+    <td> HEX &nbsp; hazard negative exponential  &nbsp; \( \small  \lambda(d) = -\lambda_0 \exp(-d/\sigma) \) </td>
   </tr>
   <tr>
     <td>Likelihood</td>
-    <td>maximize full likelihood or likelihood conditional on \(n\)</td>
+    <td>maximize full likelihood or likelihood conditional on \( \small n\)</td>
   </tr>
   <tr>
     <td>Distribution</td>
-    <td>distribution of number detected \(n\)</td>
+    <td>distribution of number detected \( \small n\)</td>
+  </tr>
+  <tr>
+    <td>Mixture hcov</td>
+    <td>name of covariate \( \small n\)</td>
   </tr>
 </table> 
 
 <br>
 
-Only two <u>detection functions</u> are supported: 'HHN' and 'HEX'. These relate an animal's hazard of detection at a particular detector on a particular sampling occasion (\(\lambda\)) to the distance \(\small d\) of the detector from its home-range centre. The corresponding probability of detection is \(\small g(d) = 1 - \exp \{ - \lambda(d)\}\).
+Only two <u>detection functions</u> are supported: 'HHN' and 'HEX'. These relate an animal's hazard of detection at a particular detector on a particular sampling occasion (\( \small \lambda\)) to the distance \( \small d\) of the detector from its home-range centre. The corresponding probability of detection is \( \small g(d) = 1 - \exp \{ - \lambda(d)\}\).
 
 <a name="distribution"></a>
 
 The <u>Distribution</u> radio button toggles between two models for the number of detected individuals $n$. The "Binomial" option corresponds to fixed number $N$ in the masked area and a binomial point process for the distribution of activity centres.  The "Poisson" option corresponds to Poisson $N$ and a Poisson point process for activity centres. 
 
+<a name="hcov"></a>
+
+The <u>Mixture hcov</u> select input allows the user to choose a variable defining a mixture class from among the individual covariates. This is passed to `secr.fit` as the argument 'hcov'. The covariate should take two values (e.g., 'F','M'); missing values are allowed. The mixing proportion is included in the model automatically when hcov is specified. To estimate mixture-specific values of a parameter include ~h2 in its formula (e.g., lambda0~h2). See <a href="https://www.otago.ac.nz/density/pdfs/secr-finitemixtures.pdf"; target="_blank";>secr-finitemixtures.pdf</a> for more.
+
+Other arguments separated by commas may be used to customise the call to `secr.fit`.
+
+Model formulae may be edited using pre-defined predictors or covariate names as described in <a href="https://www.otago.ac.nz/density/pdfs/secr-overview.pdf"; target="_blank";>secr-overview.pdf</a>. Time covariates ('timecov') and session covariates ('sessioncov') may be specified in 'Other arguments'. There is no provision for time-varying detector covariates.
 
 ## Actions
 
-<table style="width:40%">
+<table style="width:60%">
   <tr>
     <td>Fit model</td>
     <td>Fit closed-population SECR model</td>
@@ -107,7 +120,7 @@ The <u>Distribution</u> radio button toggles between two models for the number o
 </table> 
 
 <br>
-The option 'Switch to secrdesign' appears once a model has been fitted. This opens 'secrdesignapp' on the Otago University server in a new browser window. Settings and parameter estimates are transferred automatically (from secrdesignapp 1.2 expected late in February 2019). Detector locations are not transferred; they should be provided either by selecting the file in secrdesignapp, or by the usual options (Grid, Line, Region).
+The option 'Switch to secrdesign' appears once a model has been fitted. This opens 'secrdesignapp' on the Otago University server in a new browser window. Settings and parameter estimates are transferred automatically. Detector locations are not transferred; they should be provided either by selecting the file in secrdesignapp, or by the usual options (Grid, Line, Region).
 
 ## Results  <a name="results"></a>
 
@@ -121,9 +134,15 @@ The default results vary depending on the inputs
 
 Once a model has been fitted it is possible (with secr.fit) to select the table of `derived` estimates. Another summary function may also be entered by the user after selecting 'Other'; it should use the argument `fit`, meaning the fitted model.
 
-## Tabbed plots
+## Tabbed code and plots
 
 *Plots update automatically. Any plot may be saved by right-clicking on the image.*
+
+### Code
+
+R statements for the main operations. These expand once you browse to specific detector and capture files. 
+
+The statements may be copied and pasted into an R session. It is assumed that input files are in the current folder; you may need to change this with `setwd()`.
 
 ### Array
 
@@ -135,13 +154,18 @@ By default, the locations of one animal are highlighted. Suppress this by select
 
 Fitted detection function on the hazard and probability scales.
 
-### Popn
-
-One simulated realisation of a uniformly distributed population from the fitted model.
-
 ### Pxy
 
-Contours of the overall detection probability \(p_\cdot(\mathbf x)\) under the fitted model ('Pxy' is the label that has been used for this quantity in the Windows application Density).  Settings in Options toggle the display between filled and unfilled contour plots, and determine whether contours are labelled. The requested contour levels are 0.1, 0.2, ..., 0.9, but higher contours may be missing. Click on the plot to find the value at a point.
+Contours of the overall detection probability \( \small p_\cdot(\mathbf x)\) under the fitted model ('Pxy' is the label that has been used for this quantity in the Windows application Density).  Settings in Options toggle the display between filled and unfilled contour plots, and determine whether contours are labelled. The requested contour levels are 0.1, 0.2, ..., 0.9, but higher contours may be missing. Click on the plot to find the value at a point.
+
+### Dxy
+
+A plot of the fitted density model with various optional overlays:
+
+* detector locations (red crosses)
+* petal plot of detections
+* one simulated population from the fitted model
+* circles with 95% home range for each centre in the simulated population
 
 ### Power
 
@@ -149,13 +173,13 @@ Two styles of plot are offered (see Options | Power plot)
 
 #### Power for test of null hypothesis 
 
-Probability of detecting a change in density in a 2-survey comparison as a function of effect size for a given expected \(\small \mbox{RSE}(\hat D)\). See the Appendix to Help in secrdesignapp for the computation method.
+Probability of detecting a change in density in a 2-survey comparison as a function of effect size for a given expected \( \small \mbox{RSE}(\hat D)\). See Efford and Boulanger (2019) for the computation method.
 
-Effect size is the ratio of final density \(\small D_2\) to initial density \(\small D_1\) expressed as a percentage. The alpha level is specified in Options (default \(\small \alpha = 0.05\)). 
+Effect size is the ratio of final density \( \small D_2\) to initial density \( \small D_1\) expressed as a percentage. The alpha level is specified in Options (default \( \small \alpha = 0.05\)). 
 
 The curve is initially computed for the rule-of-thumb RSE from the current design. Use the slider to vary this. Especially, consider adding a safety margin for underestimation of RSE.
 
-The default method assumes that \(\small \mbox{RSE}(\hat D)\) is the same in the initial and final surveys. It is more likely that \(\small \mbox{RSE}(\hat D)\) will increase as density declines. An adjustment is applied to the final RSE when the 'Adjust RSE' box is ticked:  \(\small \mbox{RSE}(\hat D_2) =   \sqrt {D_1/D_2} \mbox{RSE}(\hat D_1) \).
+The default method assumes that \( \small \mbox{RSE}(\hat D)\) is the same in the initial and final surveys. It is more likely that \( \small \mbox{RSE}(\hat D)\) will increase as density declines. An adjustment is applied to the final RSE when the 'Adjust RSE' box is ticked:  \( \small \mbox{RSE}(\hat D_2) =   \sqrt {D_1/D_2} \mbox{RSE}(\hat D_1) \).
 
 #### Confidence interval for population change
 
@@ -165,7 +189,9 @@ As an alternative to conventional power analysis we can construct intervals for 
 
 # Habitat mask  <a name="habitatmask"></a>
 
-There is no facility at present for adding mask covariates or reading mask points from a file.
+Either construct a habitat mask from scratch ('Build') or read mask coordinates from a text file ('File'). 
+
+For file input there should be a header line. The first two columns ('x', 'y') are read as the x- and y-coordinates. Further columns are assumed to represent covariates and their names may be used in formulae for density (D).
 
 ----------------------------------------------------
 
@@ -199,7 +225,7 @@ Bookmarking can be tricky. When running from GitHub on a local machine your shou
 
 ```{r, eval = FALSE}
 library(shiny)
-runGitHub("secrdesignapp", "MurrayEfford", port = 8000, destdir = "d:/myworkingfolder")
+runGitHub("secrapp", "MurrayEfford", port = 8000, destdir = "d:/myworkingfolder")
 ```
 
 The port number is arbitrary. Bookmarks are stored in a subdirectory of destdir. The URL generated by pressing the Bookmark button may be entered into your browser once you have started a new session with the same 'port' and 'destdir'. This restores all input settings and the Summary table. Also consider setting `options(shiny.port = xxxx)`. The port used by a local bookmark is saved in the values.rds file of the bookmark; if you forget it, try `readRDS("values.rds")$port`.
@@ -207,15 +233,14 @@ The port number is arbitrary. Bookmarks are stored in a subdirectory of destdir.
 ----------------------------------------------------
 # References <a name="references"></a>
 
-Borchers, D. L. and Efford, M. G. (2008) Spatially explicit
-   maximum likelihood methods for capture--recapture
-   studies. *Biometrics* **64**, 377--385.
-   
+Borchers, D. L. and Efford, M. G. (2008) Spatially explicit maximum likelihood methods for capture--recapture studies. *Biometrics* **64**, 377--385.
+
 Efford, M. G. (2019a) secr: Spatially explicit capture--recapture models. R package version 4.0.1. https://CRAN.R-project.org/package=secr
 
 Efford, M. G. (2019b) secrdesign: Sampling design for spatially explicit capture--recapture. R package version 2.5.7.
   https://CRAN.R-project.org/package=secrdesign
 
+Efford, M. G. and Boulanger, J. (2019) Fast evaluation of study designs for spatially explicit capture--recapture. *Methods in Ecology and Evolution* **10**, 1529--1535.
 ----------------------------------------------------
 
 [secrdesign-Enrm.pdf]: http://www.otago.ac.nz/density/pdfs/secrdesign-tools.pdf
