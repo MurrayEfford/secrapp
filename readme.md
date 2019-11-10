@@ -1,17 +1,17 @@
-# secrapp 1.0
+# secrapp 1.1
 
-secrapp performs simple spatially explicit capture-recapture analyses using the R packages [secr](https://CRAN.R-project.org/package=secr) and [openCR](https://CRAN.R-project.org/package=openCR). See the Help tab for details.
+secrapp performs simple spatially explicit capture-recapture analyses using the R package [secr](https://CRAN.R-project.org/package=secr). See the Help tab for details.
 
 There is very limited support for multisession data and elaborate models: these are best avoided.
 
-To run secrapp on your own machine, install packages **shiny**, **shinyjs**, **secr** and **openCR**. Then paste this code into an R session:
+To run secrapp on your own machine, install packages **shiny**, **shinyjs**, **secr** and **stringr**. Then paste this code into an R session:
 
 ```r
 library(shiny)
 runGitHub("secrapp", "MurrayEfford")
 ```
 
-Version 1.0 requires secr >= 3.2.0 and openCR >= 1.3.2.
+Version 1.1 requires secr >= 4.0.1.
 
 ----
 
