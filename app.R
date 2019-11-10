@@ -3,6 +3,7 @@
 
 library(secr)
 library(shinyjs)
+library(stringr)
 
 secrversion <- packageVersion('secr')
 if (compareVersion(as.character(secrversion), '4.0.1') < 0)
@@ -1174,8 +1175,13 @@ server <- function(input, output, session) {
         code <- ""  
         if (!is.null(traprv$data)) {
             args <- input$trapargs
-            if (args != "")
+            if (args != "") {
                 args <- paste0(", ", args)
+            }
+            covnames <- getcovnames(input$trapcovnames, TRUE)
+            if (covnames != "") {
+                args <- paste0(args, ", covnames = ", covnames)
+            }
             code <- paste0("array <- read.traps ('",
                            input$trapfilename[1,"name"],
                            "', detector = '", input$detector, "'", args, ")\n")
@@ -1237,10 +1243,13 @@ server <- function(input, output, session) {
             args <- input$captargs
             if (args != "")
                 args <- paste0(", ", args)
+            covnames <- getcovnames(input$covnames, TRUE)
+            cov <- if (covnames == "") "" else paste0(", covnames = ", covnames)
+            
             fmt <- if (input$fmt=='XY') ", fmt = 'XY'" else ""
                 
             code <- paste0("capt <- read.table('", input$captfilename[1,"name"], "'", args, ")\n",
-                           "ch <- make.capthist (capt, traps = array", fmt, ")\n")
+                           "ch <- make.capthist (capt, traps = array", fmt, cov, ")\n")
             # if (input$scalefactor != 1.0) {
             #     code <- paste0(code,
             #                    "# optional scaling about centroid\n",
@@ -1404,6 +1413,24 @@ server <- function(input, output, session) {
 
     ##############################################################################
 
+    getcovnames <- function (cov, quote = FALSE) {
+        if (cov == "") {
+            NULL
+        }
+        else {
+            nam <- strsplit(str_squish(cov), '[ ,]')
+            cov <- nam[[1]]
+            if (quote) {
+                cov <- paste0("'", nam[[1]], "'")
+            }
+            if (length(nam[[1]])>1) {
+                cov <- paste(cov, collapse = ",")
+                cov <- paste0("c(", cov, ")")
+            }
+        }
+        cov
+    }
+    
     ## read trap file
     observe({
         req(input$trapfilename)
@@ -1412,13 +1439,11 @@ server <- function(input, output, session) {
         if (is.null(filename))
             stop("provide valid filename")
         args <- input$trapargs
-        covnames <- input$trapcovnames
         if (args != "") {
             args <- paste0(", ", args)
         }
+        covnames <- getcovnames(input$trapcovnames, TRUE)
         if (covnames != "") {
-            nam <- strsplit(str_squish(covnames), '[ ,]')
-            covtext <- paste0("c(", paste(paste0("'", nam[[1]], "'"), collapse=","), ")")
             args <- paste0(", covnames = ", covnames)
         }
             
@@ -1511,7 +1536,9 @@ server <- function(input, output, session) {
             NULL
         }
         else {
-            ch <- try(suppressWarnings(make.capthist(captrv$data, traprv$data, fmt = input$fmt, covnames = input$covnames))) 
+            ch <- try(suppressWarnings(make.capthist(captrv$data, traprv$data, 
+                                                     fmt = input$fmt, 
+                                                     covnames = getcovnames(input$covnames, FALSE)))) 
             if (inherits(ch, 'try-error')) {
                 showNotification("invalid capture file or arguments; try again",
                                  type = "error", id = "badcapt", duration = seconds)
