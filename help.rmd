@@ -58,7 +58,7 @@ If individual covariates are included then the correct number of covariate names
 Optional arguments separated by commas may be used to customise input (e.g., `skip`, which is passed to `read.table`). 
 
 ## Model
-            
+
 <table style="width:80%">
   <tr>
     <td> Detection function </td>
@@ -97,6 +97,10 @@ The <u>Mixture hcov</u> select input allows the user to choose a variable defini
 Other arguments separated by commas may be used to customise the call to `secr.fit`.
 
 Model formulae may be edited using pre-defined predictors or covariate names as described in <a href="https://www.otago.ac.nz/density/pdfs/secr-overview.pdf"; target="_blank";>secr-overview.pdf</a>. Time covariates ('timecov') and session covariates ('sessioncov') may be specified in 'Other arguments'. There is no provision for time-varying detector covariates.
+
+## Time limits
+
+The application is designed for small- to medium-sized models. An internal algorithm predicts the execution time by evaluating the likelihood once and making a simple extrapolation. When the predicted time exceeds a lower threshold ('timewarning', default 0.2 minutes) a dialog box asks the user for confirmation before proceeding. If the predicted time exceeds an upper threshold ('timelimit', default 5 minutes) then execution aborts, with a notification at the lower right of the screen. The thresholds may be changed in the R code of the app.R file (near the end).
 
 ## Actions
 
