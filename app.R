@@ -195,8 +195,14 @@ ui <- function(request) {
                                                                  ),
                                                                  tabPanel("Detectfn", plotOutput("detnPlot", height = 320)),
                                                                  tabPanel("Pxy",
-                                                                          plotOutput("pxyPlot", height = 350, click = "pxyclick"),
-                                                                          helpText(HTML("p.(x) is the probability an animal at point x will be detected at least once")),
+                                                                          br(),
+                                                                          fluidRow(
+                                                                              column(9, style='padding:0px;', plotOutput("pxyPlot", click = "pxyclick")),
+                                                                              column(3, br())
+                                                                          ),
+                                                                          fluidRow(
+                                                                              column(9, helpText(HTML("p.(x) is the probability an animal at point x will be detected at least once")))
+                                                                          ),
                                                                           fluidRow(
                                                                               column(3, checkboxInput("maskedge", "show mask edge", value = FALSE))
                                                                           )
@@ -848,6 +854,7 @@ server <- function(input, output, session) {
                 if (chf[3]=="1") "" else f
             }
         }
+        # out <- modellist()
         out <- sapply(form, fn)
         out <- out[out != ""]
         if (length(out)==0) "~1" else paste0(out, collapse = ", ")
@@ -1090,7 +1097,7 @@ server <- function(input, output, session) {
             r = r(),
             likelihood = input$likelihoodbtn,
             distribution = input$distributionbtn,
-            model = input$model, # modelstring(),
+            model =  input$model, # modelstring(), # 
             detectfn = input$detectfnbtn,
             hcov = "",
             npar = NA,
@@ -1286,6 +1293,12 @@ server <- function(input, output, session) {
     
     timefn <- function(LL) attr(LL,'preptime') + attr(LL,'npar')^2 * attr(LL,'LLtime') * 10
     
+    modellist <- function() {
+        f <- paste0("list(", input$model, ")")
+        f <- tryCatch(parse(text = f), error = function(e) NULL)
+        eval(f)
+    }
+    
     fitmodel <- function(LLonly = FALSE) {
         
         if (!LLonly) {
@@ -1294,9 +1307,11 @@ server <- function(input, output, session) {
             progress$set(message = 'Fitting...', detail = '')
         }
         CL <- input$likelihoodbtn != "Full"
-        f <- paste0("list(", input$model, ")")
-        f <- tryCatch(parse(text = f), error = function(e) NULL)
-        model <- eval(f)
+        
+        # f <- paste0("list(", input$model, ")")
+        # f <- tryCatch(parse(text = f), error = function(e) NULL)
+        # model <- eval(f)
+        model <- modellist()
 
         otherargs <- try(eval(parse(text = paste0("list(", input$otherargs, ")"))))
         if (inherits(otherargs, "try-error")) {
@@ -2055,13 +2070,13 @@ server <- function(input, output, session) {
 
         ## Trap layout
         updateTextInput(session, "trapargs", 
-                        value = "Other arguments", placeholder = "e.g., skip = 1")
+                        value = "", placeholder = "e.g., skip = 1")
         updateRadioButtons(session, "detector", selected = "multi")
         updateTextInput(session, "trapcovnames", value = "", placeholder = "e.g., traptype, habitat")
         
         ## Captures
         updateTextInput(session, "captargs", 
-                        value = "Other arguments", placeholder = "e.g., skip = 1")
+                        value = "", placeholder = "e.g., skip = 1")
         updateRadioButtons(session, "fmt", selected = "trapID")
         updateTextInput(session, "covnames", value = "", placeholder = "e.g., sex")
         
@@ -2075,7 +2090,7 @@ server <- function(input, output, session) {
         updateTextInput(session, "model", 
                         value = "D~1, lambda0~1, sigma~1", placeholder = "")
         updateTextInput(session, "otherargs", 
-                        value = "Other arguments", placeholder = "e.g., details = list(fastproximity = FALSE)")
+                        value = "", placeholder = "e.g., details = list(fastproximity = FALSE)")
         
         ## Actions
         updateTextInput(session, "title", "", value = "",
@@ -2458,7 +2473,7 @@ server <- function(input, output, session) {
         multiple * spc
     }
     
-    output$pxyPlot <- renderPlot( height = 300, width = 380, {
+    output$pxyPlot <- renderPlot({
         core <- traprv$data
         if (is.null(core)) return (NULL)
         invalidateOutputs()
@@ -2467,13 +2482,13 @@ server <- function(input, output, session) {
             cols <- terrain.colors(11)
             col <- cols[1]
             lev <- c(0.01, seq(0.1, 0.9, 0.1))
-            par(mar=c(0,1,0,5)) # , xaxs='i', yaxs='i')
+            par(mar=c(1,1,1,5)) # , xaxs='i', yaxs='i')
         }
         else {
             col <- "blue"
             cols <- NULL
             lev <- seq(0.1, 0.9, 0.1)
-            par(mar=c(0,3,0,3)) # , xaxs='i', yaxs='i')
+            par(mar=c(1,3,1,3)) # , xaxs='i', yaxs='i')
         }
         
         border <- border(input$pxyborder)
