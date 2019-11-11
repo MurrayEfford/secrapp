@@ -92,7 +92,7 @@ The <u>Distribution</u> radio button toggles between two models for the number o
 
 <a name="hcov"></a>
 
-The <u>Mixture hcov</u> select input allows the user to choose a variable defining a mixture class from among the individual covariates. This is passed to `secr.fit` as the argument 'hcov'. The covariate should take two values (e.g., 'F','M'); missing values are allowed. The mixing proportion is included in the model automatically when hcov is specified. To estimate mixture-specific values of a parameter include ~h2 in its formula (e.g., lambda0~h2). See <a href="https://www.otago.ac.nz/density/pdfs/secr-finitemixtures.pdf"; target="_blank";>secr-finitemixtures.pdf</a> for more.
+The <u>Mixture hcov</u> select input allows the user to choose a variable defining a mixture class from among the individual covariates. This is passed to `secr.fit` as the argument 'hcov'. The covariate should take two non-missing values (e.g., 'F','M'); missing values are allowed. The mixing proportion 'pmix' is included in the model automatically when hcov is specified. To estimate mixture-specific values of a parameter include ~h2 in its formula (e.g., lambda0~h2). See <a href="https://www.otago.ac.nz/density/pdfs/secr-finitemixtures.pdf"; target="_blank";>secr-finitemixtures.pdf</a> for more.
 
 Other arguments separated by commas may be used to customise the call to `secr.fit`.
 
