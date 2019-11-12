@@ -1997,7 +1997,41 @@ server <- function(input, output, session) {
         
     })
     ##############################################################################
-
+    
+    observeEvent(input$detector, ignoreInit = TRUE, {
+        fitrv$value <- NULL
+        traprv$value <- NULL
+        captrv$value <- NULL
+    })
+    ##############################################################################
+    
+    observeEvent(input$trapcovnames, ignoreInit = TRUE, {
+        fitrv$value <- NULL
+        traprv$value <- NULL
+        captrv$value <- NULL
+    })
+    ##############################################################################
+    
+    observeEvent(input$trapargs, ignoreInit = TRUE, {
+        fitrv$value <- NULL
+        traprv$value <- NULL
+        captrv$value <- NULL
+    })
+    
+    ##############################################################################
+    
+    observeEvent(input$covnames, ignoreInit = TRUE, {
+        fitrv$value <- NULL
+        captrv$value <- NULL
+    })
+    
+    observeEvent(input$captargs, ignoreInit = TRUE, {
+        fitrv$value <- NULL
+        captrv$value <- NULL
+    })
+    
+    ##############################################################################
+    
     observeEvent(input$model, {
         fitrv$value <- NULL
     })
