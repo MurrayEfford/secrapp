@@ -39,7 +39,7 @@ TIP: on small displays, running your browser in full-screen mode will avoid the 
 
 ## Data input
 
-### Trap layout
+### Detector layout
 
 The detector layout is input from a text file. The file typically should have three columns (trapID, x, y) with no headers. These may optionally be followed by binary usage codes (0/1), one per occasion. Columns after a '/' are interpreted as detector covariates. 
 
@@ -62,7 +62,23 @@ Optional arguments separated by commas may be used to customise input (e.g., `sk
 <table style="width:80%">
   <tr>
     <td> Detection function </td>
-    <td> HHN &nbsp; hazard halfnormal &nbsp; \( \small \lambda(d) = -\lambda_0 \exp\{-d^2/(2\sigma^2)\} \) </td>
+    <td> HN &nbsp; halfnormal &nbsp; \( \small g(d) = -g_0 \exp\{-d^2/(2\sigma^2)\} \) </td>
+  </tr>
+  <tr>
+    <td> </td>
+    <td> HR &nbsp; hazard rate  &nbsp; \( \small  g(d) = -g_0 (1 - \exp(-(d/\sigma)^{-z})) \) </td>
+  </tr>
+  <tr>
+    <td> </td>
+    <td> EX &nbsp; negative exponential  &nbsp; \( \small  g(d) = -g_0 \exp(-d/\sigma) \) </td>
+  </tr>
+  <tr>
+    <td> </td>
+    <td> HHN &nbsp; hazard halfnormal  &nbsp; \( \small  \lambda(d) = -\lambda_0 \exp(-d^2/(2\sigma^2)) \) </td>
+  </tr>
+  <tr>
+    <td> </td>
+    <td> HHR &nbsp; hazard hazard rate  &nbsp; \( \small  \lambda(d) = -\lambda_0 (1 - \exp(-(d/\sigma)^{-z})) \)  </td>
   </tr>
   <tr>
     <td> </td>
@@ -84,7 +100,8 @@ Optional arguments separated by commas may be used to customise input (e.g., `sk
 
 <br>
 
-Only two <u>detection functions</u> are supported: 'HHN' and 'HEX'. These relate an animal's hazard of detection at a particular detector on a particular sampling occasion (\( \small \lambda\)) to the distance \( \small d\) of the detector from its home-range centre. The corresponding probability of detection is \( \small g(d) = 1 - \exp \{ - \lambda(d)\}\).
+The supported <u>detection functions</u> are a subset of those allowed in **secr** (currently 'HN', 'HR', 'EX', 'HHN', 'HHR', 'HEX'). 
+These relate either the probability (g(d)) or hazard (\( \small \lambda\)) of detection at a particular detector on a particular sampling occasion  to the distance \( \small d\) of the detector from its home-range centre. The probability of detection is \( \small g(d) = 1 - \exp \{ - \lambda(d)\}\).
 
 <a name="distribution"></a>
 
@@ -136,7 +153,12 @@ The default results vary depending on the inputs
 * summary of capthist object (detector layout + detections)
 * summary of fitted model
 
-Once a model has been fitted it is possible (with secr.fit) to select the table of `derived` estimates. Another summary function may also be entered by the user after selecting 'Other'; it should use the argument `fit`, meaning the fitted model.
+Once a model has been fitted it is possible to select 
+
+* summary of fitted model
+* table(s) of estimates from `predict`
+* table of `derived` (Horvitz-Thompson) estimates
+* some other summary function that takes the fitted model as an argument.
 
 ## Tabbed code and plots
 

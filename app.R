@@ -54,7 +54,7 @@ ui <- function(request) {
                                                                       # trick from Felipe Gerard 2019-01 to allow reset
                                                                       # https://stackoverflow.com/questions/44203728/how-to-reset-a-value-of-fileinput-in-shiny
                                                                       # uiOutput('trapfile_ui')),
-                                                                      fileInput("trapfilename", "Trap layout",   # Detector layout file
+                                                                      fileInput("trapfilename", "Detector layout",   # Detector layout file
                                                                                  accept = "text/plain")),
                                                                # fluidRow(div(style="height: 25px;",
                                                                #     column(12, 
@@ -105,9 +105,9 @@ ui <- function(request) {
                                           h2("Model"),
                                           wellPanel(class = "mypanel", 
                                                    fluidRow(
-                                                       column(3, radioButtons("detectfnbtn", "Detectfn",
-                                                                             choices = c("HHN","HEX"),
-                                                                             selected = "HHN")),
+                                                       column(3, selectInput("detectfnbox", "Detectfn",
+                                                                              choices = c("HN", "HR", "EX","HHN", "HHR", "HEX", "HVP"),
+                                                                              selected = "HN")),
                                                        column(3, radioButtons("likelihoodbtn", "Likelihood", choices = c("Full", "Conditional"))),
                                                        column(3, radioButtons("distributionbtn", label = "Distribution of n",
                                                                               choices = c("Poisson", "Binomial"))),
@@ -116,7 +116,7 @@ ui <- function(request) {
                                                                               choices = c("none"), selected = "none", width=160))
                                                    ),
                                                    fluidRow(
-                                                       column(12, textInput("model", "", value = "D~1, lambda0~1, sigma~1"))
+                                                       column(12, textInput("model", "", value = "D~1, g0~1, sigma~1"))
                                                    ),
                                                    fluidRow(
                                                        column(12, textInput("otherargs", "Other arguments", value = "", placeholder = "e.g., details = list(fastproximity = FALSE)"))
@@ -152,7 +152,7 @@ ui <- function(request) {
                                           h2("Results"),
                                                    fluidRow(
                                                        column(5, radioButtons("resultsbtn", label = "", 
-                                                                               inline = TRUE, choices = c("summary", "derived", "other"))),
+                                                                               inline = TRUE, choices = c("summary", "predict", "derived", "other"))),
                                                        column(5, textInput("otherfunction", label="", placeholder = "e.g., vcov(fit)")),
                                                        conditionalPanel("output.modelFitted", column(2, br(), downloadLink("savebtn", "Save fit")))
                                                    ),
@@ -404,12 +404,13 @@ ui <- function(request) {
                                                                      checkboxGroupInput("fields2", "",
                                                                                         choices = c("likelihood", "distribution", "model", "detectfn", 
                                                                                                     "hcov", "npar", "logLik", "AIC",
-                                                                                                    "D", "se.D", "RSE.D", "lambda0", "se.lambda0", "sigma", "se.sigma",
+                                                                                                    "D", "se.D", "RSE.D", 
+                                                                                                    "g0", "se.g0", "sigma", "se.sigma",
                                                                                                     "k", "proctime"
                                                                                         ),
                                                                                         selected = c("likelihood", "distribution", "model", "detectfn",
                                                                                                      "hcov", "npar", "logLik", "AIC",
-                                                                                                     "D", "se.D", "RSE.D", "lambda0", "se.lambda0", "sigma", "se.sigma",
+                                                                                                     "D", "se.D", "RSE.D", "g0", "se.g0", "sigma", "se.sigma",
                                                                                                      "k", "proctime"
                                                                                         )
                                                                      )
@@ -585,7 +586,7 @@ server <- function(input, output, session) {
                        "ndetectors", "noccasions", "usagepct", "maskbuffer", "masknrow", "maskspace",
                        "likelihood", "distribution", "model", 
                        "hcov", "detectfn", "npar", "logLik", "AIC",
-                       "D", "se.D", "RSE.D", "lambda0", "se.lambda0", "sigma", "se.sigma", 
+                       "D", "se.D", "RSE.D", "g0", "se.g0", "sigma", "se.sigma", 
                        "k", "proctime"
                        )
     
@@ -650,7 +651,7 @@ server <- function(input, output, session) {
         req(fitrv$value)
         
          parm <- c(
-             paste0("detectfnbtn=", input$detectfnbtn),
+             paste0("detectfnbox=", input$detectfnbox),
              paste0("distributionbtn=", input$distributionbtn),
              paste0("detector=", input$detector)
          )
@@ -669,7 +670,7 @@ server <- function(input, output, session) {
          if (!is.null(fitrv$value)) {
              parm <- c(parm,
                        paste0("D=", as.character(round(density(), input$dec))),
-                       paste0("lambda0=", as.character(round(lambda0(), input$dec))),
+                       paste0(detectrv$value, "=", as.character(round(detect0(), input$dec))),
                        paste0("sigma=", as.character(round(sigma(), input$dec))))
          }
          
@@ -1098,7 +1099,7 @@ server <- function(input, output, session) {
             likelihood = input$likelihoodbtn,
             distribution = input$distributionbtn,
             model =  input$model, # modelstring(), # 
-            detectfn = input$detectfnbtn,
+            detectfn = input$detectfnbox,
             hcov = "",
             npar = NA,
             logLik = NA,
@@ -1106,8 +1107,8 @@ server <- function(input, output, session) {
             D = NA, 
             se.D = NA, 
             RSE.D = NA,
-            lambda0 = NA, 
-            se.lambda0 = NA,
+            detect0 = NA, 
+            se.detect0 = NA,
             sigma = NA, 
             se.sigma = NA,
             k = NA,
@@ -1122,11 +1123,11 @@ server <- function(input, output, session) {
             df$D <- density()
             df$se.D <- se.density()
             df$RSE.D <- se.density() / density()
-            df$lambda0 <- lambda0()
-            df$se.lambda0 <- se.lambda0()
+            df$detect0 <- detect0()
+            df$se.detect0 <- se.detect0()
             df$sigma <- sigma()
             df$se.sigma <- se.sigma()
-            if (input$detectfnbtn=="HHN")
+            if (input$detectfnbox=="HHN")
                 df$k <- density()^0.5 * sigma() / 100
             else 
                 df$k <- NA*1  # force numeric NA
@@ -1276,7 +1277,7 @@ server <- function(input, output, session) {
     ##############################################################################
     
     fitcode <- function() {
-        detfn <- input$detectfnbtn
+        detfn <- input$detectfnbox
         if (is.character(detfn)) detfn <- paste0("'", detfn, "'")
         CL <- if (input$likelihoodbtn == "Full") "" else ", CL = TRUE"
         hcov <- if(input$hcovbox == "none") "" else paste0(", hcov = '", input$hcovbox, "'")
@@ -1324,7 +1325,7 @@ server <- function(input, output, session) {
                            trace = FALSE,
                            mask = mask(), 
                            model = model,
-                           detectfn = input$detectfnbtn),
+                           detectfn = input$detectfnbox),
                       otherargs)
             args$CL <- CL 
             args$details <- as.list(replace (args$details, "distribution", input$distributionbtn))
@@ -1379,10 +1380,11 @@ server <- function(input, output, session) {
 
     # capthist 
     # density 
+    # predictresult 
     # derivedresult 
     # detectorarray
     # invalidateOutputs 
-    # lambda0 
+    # detect0 
     # mask 
     # masknrow 
     # maskspace 
@@ -1396,9 +1398,10 @@ server <- function(input, output, session) {
     # r 
     # RSE
     # se.density 
-    # se.lambda0 
+    # se.detect0 
     # se.sigma 
     # sigma 
+    # zw
     # usagepct 
 
     ##############################################################################
@@ -1425,7 +1428,7 @@ server <- function(input, output, session) {
         data = NULL,
         clear = FALSE
     )
-
+    
     ##############################################################################
 
     getcovnames <- function (cov, quote = FALSE) {
@@ -1599,7 +1602,26 @@ server <- function(input, output, session) {
         }
     })
     ##############################################################################
-
+    
+    detectrv <- reactive({
+        if (input$detectfnbox %in% c('HHN', 'HHR', 'HEX', 'HAN', 'HCG', 'HVP'))
+            detectrv$value <- 'lambda0'
+        else 
+            detectrv$value <- 'g0'
+    })
+    ##############################################################################
+    
+    predictresult <- reactive({
+        pred <- predict(fitrv$value, all.levels = TRUE)
+        roundpr <- function (pr) {pr[,-1] <- round(pr[,-1], input$dec); pr}
+        if (is.data.frame(pred))
+            pred <- roundpr(pred)
+        else 
+            pred <- lapply(pred, roundpr)
+        pred
+    })
+    ##############################################################################
+    
     derivedresult <- reactive({
         progress <- Progress$new(session, min = 1, max = 15)
         on.exit(progress$close())
@@ -1608,7 +1630,7 @@ server <- function(input, output, session) {
         round(der, input$dec)
     })
     ##############################################################################
-
+    
     invalidateOutputs <- reactive({
         pxyrv$value <- NULL
         Drv$value <- NULL
@@ -1632,13 +1654,22 @@ server <- function(input, output, session) {
     }
     ##############################################################################
     
-    lambda0 <- reactive({
-        predictparm (parm = 'lambda0', stat = 'estimate') 
+    detect0 <- reactive({
+        if (detectrv$value == 'lambda0')
+            predictparm (parm = 'lambda0', stat = 'estimate') 
+        else 
+            predictparm (parm = 'g0', stat = 'estimate') 
     })
     
     sigma <- reactive ({
         predictparm (parm = 'sigma', stat = 'estimate') 
     })
+    
+    zw <- reactive ({
+        predictparm (parm = 'z', stat = 'estimate') 
+    })
+    
+    
     
     ##############################################################################
     
@@ -1825,13 +1856,21 @@ server <- function(input, output, session) {
     })
     ##############################################################################
 
-    se.lambda0 <- reactive({
-        predictparm('lambda0','SE.estimate')
+    se.detect0 <- reactive({
+        if (detectrv$value == 'lambda0')
+            predictparm('lambda0','SE.estimate')
+        else 
+            predictparm('g0','SE.estimate')
     })
     ##############################################################################
     
     se.sigma <- reactive ({
         predictparm('sigma','SE.estimate')
+    })
+    ##############################################################################
+    
+    se.zw <- reactive ({
+        predictparm('z','SE.estimate')
     })
     ##############################################################################
     
@@ -1858,6 +1897,7 @@ server <- function(input, output, session) {
     RSErv <- reactiveValues(current = FALSE, value = NULL, adjRSE = NULL)
     selecting <- reactiveValues(v=FALSE)
     sumrv <- reactiveValues(value = read.csv(text = paste(summaryfields, collapse = ", ")))
+    detectrv <- reactiveValues(value='g0')
     
     ##############################################################################
     
@@ -1869,7 +1909,7 @@ server <- function(input, output, session) {
     # CIclick
     # clearallbtn
     # clearlastbtn
-    # detectfnbtn
+    # detectfnbox
     # distributionbtn
     # fitbtn
     # likelihoodbtn
@@ -1887,7 +1927,7 @@ server <- function(input, output, session) {
     
     ## Invalidate results when model specification changes
     # likelihoodbtn
-    # detectfnbtn
+    # detectfnbox
     # distributionbtn
     # model
     # otherarg
@@ -1944,7 +1984,7 @@ server <- function(input, output, session) {
     
     ##############################################################################
     
-    observeEvent(input$detectfnbtn, {
+    observeEvent(input$detectfnbox, {
         fitrv$value <- NULL
     })
     ##############################################################################
@@ -1995,6 +2035,39 @@ server <- function(input, output, session) {
             updateTextInput(session, "model", value = newmodel)
         }
         
+    })
+    ##############################################################################
+    
+    observeEvent(input$detectfnbox, ignoreInit = TRUE, {
+        fitrv$value <- NULL
+        if (input$detectfnbox %in% c('HHN', 'HHR', 'HEX', 'HAN', 'HCG', 'HVP'))
+            detectrv$value <- 'lambda0'
+        else 
+            detectrv$value <- 'g0'
+        ## switch detect0 name
+        form <- strsplit(input$model, ",")[[1]]
+        form <- stringr::str_trim(form)
+        ## find g0/lambda0
+        form <- gsub("g0~", "detect0~", form)
+        form <- gsub("lambda0~", "detect0~", form)
+        form <- gsub("detect0~", paste0(detectrv$value, "~"), form)
+        
+        usez <- input$detectfnbox %in% c('HR', 'CLN','CG','HHR','HCG','HVP')
+        zpos <- grep('z~', form)
+        if (usez && length(zpos)==0)
+            form <- c(form, 'z~1')
+        if (!usez && length(zpos)>0)
+            form <- form[-zpos]
+        
+        usew <- input$detectfnbox %in% c('WEX', 'ANN', 'HAN')
+        wpos <- grep('w~', form)
+        if (usew && length(wpos)==0)
+            form <- c(form, 'w~1')
+        if (!usew && length(wpos)>0)
+            form <- form[-wpos]
+        
+        newmodel <- paste(form, collapse = ", ")
+        updateTextInput(session, "model", value = newmodel)
     })
     ##############################################################################
     
@@ -2064,9 +2137,11 @@ server <- function(input, output, session) {
             pxyrv$value <- NULL
         }
         else {
+            detectparlist <- list(detect0(), sigma(), zw())
+            names(detectparlist) <- c(detectrv$value, 'sigma', 'z')
             Pxy <- pdot (xy, trps,
-                         detectfn = input$detectfnbtn,
-                         detectpar = list(lambda0 = lambda0(), sigma = sigma()),
+                         detectfn = input$detectfnbox,
+                         detectpar = detectparlist,
                          noccasions = noccasions()[input$sess])
             pxyrv$xy <-xy
             pxyrv$value <- Pxy}
@@ -2116,13 +2191,13 @@ server <- function(input, output, session) {
         
         ## Model
         
-        updateRadioButtons(session, "detectfnbtn", selected = "HHN")
+        updateSelectInput(session, "detectfnbox", selected = "HN")
         updateRadioButtons(session, "distributionbtn", selected = "Poisson")
         updateRadioButtons(session, "likelihoodbtn", selected = "Full")
         updateSelectInput(session, "hcovbox", choices = "none", selected = "none")
 
         updateTextInput(session, "model", 
-                        value = "D~1, lambda0~1, sigma~1", placeholder = "")
+                        value = "D~1, g0~1, sigma~1", placeholder = "")
         updateTextInput(session, "otherargs", 
                         value = "", placeholder = "e.g., details = list(fastproximity = FALSE)")
         
@@ -2131,7 +2206,6 @@ server <- function(input, output, session) {
                         placeholder = "label for Summary")
         updateTextInput(session, "otherfunction", 
                         value = "", placeholder = "e.g., vcov(fit)")
-
         
         ## Results
         updateRadioButtons(session, "resultsbtn", selected = "summary")
@@ -2228,6 +2302,8 @@ server <- function(input, output, session) {
         maskrv$data <- NULL
         maskrv$clear <- TRUE
         reset('maskfilename')
+        
+        detectrv$value <- 'g0'
 
     }, priority = 1000)
     
@@ -2262,8 +2338,10 @@ server <- function(input, output, session) {
             progress$set(message = 'Suggesting buffer width ...', detail = '')
            if (is.null(fitrv$value)) {
                ch <- if (ms(ch)) ch[[1]] else ch
-               buff <- suggest.buffer(ch, detectfn = input$detectfnbtn,
-                                      detectpar=list(lambda0 = 0.3, sigma = RPSV(ch, CC = TRUE)),
+               detectparlist <- list(0.3, RPSV(ch, CC = TRUE), 1)
+               names(detectparlist) <- c(detectrv$value, 'sigma', 'z')
+               buff <- suggest.buffer(ch, detectfn = input$detectfnbox,
+                                      detectpar = detectparlist,
                                       noccasions = noccasions()[1], RBtarget = 0.001)
            }
             else {
@@ -2340,6 +2418,9 @@ server <- function(input, output, session) {
             enable("resultsbtn")    ## shinyjs
             if (input$resultsbtn == "summary")
                 summary(fitrv$value)
+            else if (input$resultsbtn == "predict") {
+                predictresult()
+            }
             else if (input$resultsbtn == "derived") {
                 derivedresult()
             }
@@ -2432,29 +2513,38 @@ server <- function(input, output, session) {
     output$detnPlot <- renderPlot( height = 290, width = 400, {
         ## inp <- oS2()
         invalidateOutputs()
-        pars <- c(lambda0(), sigma())
+        pars <- c(detect0(), sigma(), zw())
         if (any(is.na(pars))) {
             return (NULL)
         }
         else {
             par(mar=c(4,5,2,5))
-            detectfnplot (detectfn = input$detectfnbtn,
+            detectfnplot (detectfn = input$detectfnbox,
                           pars = pars,
                           xval = 0:(3 * sigma()),
                           ylab = "",
                           hazard = TRUE,       ## 2017-08-28
-                          ylim = c(0, lambda0()*1.2),
+                          ylim = c(0, detect0()*1.2),
                           las=1, col = 'red', lwd = linewidth,
                           xaxs='i', yaxs='i')
-            mtext(side = 2, line = 3.7, expression(paste("Detection hazard   ", lambda [0])))
+            if (detectrv$value == 'g0') 
+                mtext(side = 2, line = 3.7, "Detection probability   g")
+            else
+                mtext(side = 2, line = 3.7, expression(paste("Detection hazard   ", lambda)))
             
-            if (lambda0() <= 0.7) 
+            if (detect0() <= 0.7) 
                 p <- seq(0,1,0.05)
             else 
                 p <- seq(0,1,0.1)
             
-            axis(4, at = -log(1 - p), label = p, xpd = FALSE, las = 1)
-            mtext(side = 4, line = 3.7, "Detection probability")
+            if (detectrv$value == 'g0') {
+                axis(4, at = 1-exp(-p), label = p, xpd = FALSE, las = 1)
+            mtext(side = 4, line = 3.7, expression(paste("Detection hazard   ", lambda)))
+            }
+            else {
+                axis(4, at = -log(1 - p), label = p, xpd = FALSE, las = 1)
+                mtext(side = 4, line = 3.7, "Detection probability    g")
+            }
         }
     })
     ##############################################################################
@@ -2538,9 +2628,11 @@ server <- function(input, output, session) {
         }
         else
             drawlabels <- input$pxylabelbox
+        detectparlist <- list(detect0(), sigma(), zw())
+        names(detectparlist) <- c(detectrv$value, 'sigma', 'z')
         pdot.contour(core, border = border, nx = input$pxynx,
-                     detectfn = input$detectfnbtn,
-                     detectpar = list(sigma = sigma(), lambda0 = lambda0()),
+                     detectfn = input$detectfnbox,
+                     detectpar = detectparlist,
                      noccasions = noccasions()[input$sess], drawlabels = drawlabels,
                      binomN = NULL, levels = lev, 
                      poly = if (input$polygonbox) polyrv$data else NULL, 
@@ -2597,7 +2689,7 @@ server <- function(input, output, session) {
                 if (n>0) {
                     plot(tmppop, add = TRUE, pch = 16, cex = 0.7, xpd = TRUE, frame = FALSE)
                     if (input$showHRbox) {
-                        rad <- secr::circular.r(p = 0.95, detectfn = input$detectfnbtn, sigma = sigma())
+                        rad <- secr::circular.r(p = 0.95, detectfn = input$detectfnbox, sigma = sigma())
                         symbols(tmppop$x, tmppop$y, circles = rep(rad, n),
                                 inches = FALSE, fg = grey(0.95), add = TRUE, xpd = FALSE)
                     }
