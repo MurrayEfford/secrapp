@@ -624,61 +624,63 @@ server <- function(input, output, session) {
     ## persqkm
     ## detectorhelp
     ## clusterhelp
-    ## clusteroverlap
-    ## randomtext
-    ## shapefile
-    ## exclusionfile
-    ## habitatfile
-    ## uipopN
-    ## uigridlines
-    
-    ##############################################################################
-    
-    output$secrdesignurl <- renderUI ({
-        if (is.null(fitrv$value) & !is.null(capthist())) {
-            LL <- try(fitmodel(LLonly = TRUE) )
-            if (is.null(LL) || inherits(LL, 'try-error')) {
-                NULL # tag$a(" ")
-            }
-            else {
-                expectedtime <- timefn(LL)/60
-                tags$a(paste0('Fit time ~', round(expectedtime,1), ' min'))
-            }
-        }
-        else {
-        
-        # only show after model fitted
-        req(fitrv$value)
-        
-         parm <- c(
-             paste0("detectfnbox=", input$detectfnbox),
-             paste0("distributionbtn=", input$distributionbtn),
-             paste0("detector=", input$detector)
-         )
-         
-         if (!is.null(input$trapfilename)) {
-             parm <- c(parm,
-                       #paste0("trapfilename=", input$trapfilename),
-                       paste0("trapargs=", input$trapargs))
+     ## clusteroverlap
+     ## randomtext
+     ## shapefile
+     ## exclusionfile
+     ## habitatfile
+     ## uipopN
+     ## uigridlines
+     
+     ##############################################################################
+     
+     output$secrdesignurl <- renderUI ({
+         if (is.null(fitrv$value) & !is.null(capthist())) {
+             LL <- try(fitmodel(LLonly = TRUE) , silent = TRUE)
+             if (is.null(LL) || inherits(LL, 'try-error')) {
+                 NULL # tag$a(" ")
+             }
+             else {
+                 expectedtime <- timefn(LL)/60
+                 tags$a(paste0('Fit time ~', round(expectedtime,1), ' min'))
+             }
          }
-
-         if (!is.null(input$captfilename)) {
-             parm <- c(parm,
-                       paste0("noccasions=", as.character(noccasions())))
+         else  {
+             # only show after model fitted
+             req(fitrv$value)
+             
+             parm <- c(
+                 paste0("detectfnbox=", input$detectfnbox),
+                 paste0("distributionbtn=", input$distributionbtn),
+                 paste0("detector=", input$detector)
+             )
+             
+             if (!is.null(input$trapfilename)) {
+                 parm <- c(parm,
+                           #paste0("trapfilename=", input$trapfilename),
+                           paste0("trapargs=", input$trapargs))
+             }
+             
+             if (!is.null(input$captfilename)) {
+                 parm <- c(parm,
+                           paste0("noccasions=", as.character(noccasions())))
+             }
+             
+             if (!is.null(fitrv$value)) {
+                 parm <- c(parm,
+                           paste0("D=", as.character(round(density(), input$dec))),
+                           paste0(detectrv$value, "=", as.character(round(detect0(), input$dec))),
+                           paste0("sigma=", as.character(round(sigma(), input$dec))))
+             }
+             
+             parm <- paste(parm, collapse = "&")
+             # open secrdesignapp in a new tab, with parameters from secrapp
+             # designurl is set at top of this file
+             
+             if (input$detectfnbox %in% c('HHN','HEX')) {
+                 tags$a(href =  paste0(designurl, "?", parm), "Switch to secrdesign", target="_blank")  
+             }
          }
-         
-         if (!is.null(fitrv$value)) {
-             parm <- c(parm,
-                       paste0("D=", as.character(round(density(), input$dec))),
-                       paste0(detectrv$value, "=", as.character(round(detect0(), input$dec))),
-                       paste0("sigma=", as.character(round(sigma(), input$dec))))
-         }
-         
-         parm <- paste(parm, collapse = "&")
-         # open secrdesignapp in a new tab, with parameters from secrapp
-         # designurl is set at top of this file
-         tags$a(href =  paste0(designurl, "?", parm), "Switch to secrdesign", target="_blank")  
-        }
      })
      ##############################################################################
      
@@ -1315,7 +1317,7 @@ server <- function(input, output, session) {
         model <- modellist()
 
         otherargs <- try(eval(parse(text = paste0("list(", input$otherargs, ")"))))
-        if (inherits(otherargs, "try-error")) {
+        if (inherits(otherargs, "try-error") && !LLonly) {
             showNotification("model fit failed - check other arguments",
                              type = "error", id = "nofit", duration = seconds)
             fit <- NULL
@@ -1334,8 +1336,8 @@ server <- function(input, output, session) {
             if (input$hcovbox != "none") {
                 args$hcov <- input$hcovbox
             }
-            isolate(fit <- try(do.call("secr.fit", args)))
-            if (inherits(fit, "try-error")) {
+            isolate(fit <- try(do.call("secr.fit", args), silent = TRUE))
+            if (inherits(fit, "try-error") && !LLonly) {
                 showNotification("model fit failed - check data, formulae and mask",
                                  type = "error", id = "nofit", duration = seconds)
                 fit <- NULL
@@ -2038,7 +2040,7 @@ server <- function(input, output, session) {
     })
     ##############################################################################
     
-    observeEvent(input$detectfnbox, ignoreInit = TRUE, {
+    observeEvent(input$detectfnbox, ignoreInit = TRUE,  {
         fitrv$value <- NULL
         if (input$detectfnbox %in% c('HHN', 'HHR', 'HEX', 'HAN', 'HCG', 'HVP'))
             detectrv$value <- 'lambda0'

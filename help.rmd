@@ -1,7 +1,7 @@
 ---
 title: "secr app 1.1"
 author: "Murray Efford"
-date: '2019-11-11'
+date: '2019-11-27'
 output:
   html_document:
     toc: yes
@@ -141,7 +141,7 @@ The application is designed for small- to medium-sized models. An internal algor
 </table> 
 
 <br>
-The option 'Switch to secrdesign' appears once a model has been fitted. This opens 'secrdesignapp' on the Otago University server in a new browser window. Settings and parameter estimates are transferred automatically. Detector locations are not transferred; they should be provided either by selecting the file in secrdesignapp, or by the usual options (Grid, Line, Region).
+The option 'Switch to secrdesign' appears once a model has been fitted if the detection function is HHN or HEX. This opens 'secrdesignapp' on the Otago University server in a new browser window. Settings and parameter estimates are transferred automatically. Detector locations are not transferred; they should be provided either by selecting the file in secrdesignapp, or by the usual options (Grid, Line, Region).
 
 ## Results  <a name="results"></a>
 
