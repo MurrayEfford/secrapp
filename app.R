@@ -403,13 +403,13 @@ ui <- function(request) {
                                                     conditionalPanel("output.selectingfields == 'TRUE'",
                                                                      checkboxGroupInput("fields2", "",
                                                                                         choices = c("detectfn", 
-                                                                                                    "hcov", "npar", "logLik", "AIC",
+                                                                                                    "hcov", "npar", "logLik", "AIC", "dAIC",
                                                                                                     "D", "se.D", "RSE.D", 
                                                                                                     "detect0", "se.detect0", "sigma", "se.sigma", "z", "se.z",
                                                                                                     "k", "proctime"
                                                                                         ),
                                                                                         selected = c("detectfn",
-                                                                                                     "hcov", "npar", "logLik", "AIC",
+                                                                                                     "hcov", "npar", "logLik", "AIC", "dAIC",
                                                                                                      "D", "se.D", "RSE.D", "detect0", "se.detect0", "sigma", "se.sigma",
                                                                                                      "k", "proctime"
                                                                                         )
@@ -585,13 +585,13 @@ server <- function(input, output, session) {
     summaryfields <- c("date", "time", "note", "traps", "captures", "n", "r",
                        "ndetectors", "noccasions", "usagepct", "maskbuffer", "masknrow", "maskspace",
                        "likelihood", "distribution", "model", 
-                       "hcov", "detectfn", "npar", "logLik", "AIC",
+                       "hcov", "detectfn", "npar", "logLik", "AIC", "dAIC",
                        "D", "se.D", "RSE.D", "detect0", "se.detect0", "sigma", "se.sigma", "z", "se.z",
                        "k", "proctime"
                        )
     
     fieldgroup1 <- 1:14
-    fieldgroup2 <- 15:32
+    fieldgroup2 <- 15:33
 
     ## for cycling through animals at one detector 2019-03-08
     lasttrap <- 0
@@ -1106,6 +1106,7 @@ server <- function(input, output, session) {
             npar = NA,
             logLik = NA,
             AIC = NA,
+            dAIC = 0,
             D = NA, 
             se.D = NA, 
             RSE.D = NA,
@@ -1124,6 +1125,7 @@ server <- function(input, output, session) {
             df$npar <- fitsum$AICtable$npar
             df$logLik <- fitsum$AICtable$logLik
             df$AIC <- fitsum$AICtable$AIC
+            df$dAIC <- 0
             df$D <- density()
             df$se.D <- se.density()
             df$RSE.D <- se.density() / density()
@@ -1138,9 +1140,10 @@ server <- function(input, output, session) {
             else 
                 df$k <- NA*1  # force numeric NA
             df$proctime <- fitrv$value$proctime
-            df[,20:32] <- ifelse (sapply(df[,20:32], is.numeric), round(df[,20:32], input$dec), df[,20:32])
+            df[,20:33] <- ifelse (sapply(df[,20:33], is.numeric), round(df[,20:33], input$dec), df[,20:33])
         }
         sumrv$value <- rbind (sumrv$value, df)
+        if (nrow(sumrv$value)>1) sumrv$value$dAIC <- sumrv$value$AIC - min(sumrv$value$AIC)
         rownames(sumrv$value) <- paste0("Analysis", 1:nrow(sumrv$value))
     }
     ##############################################################################
@@ -2519,7 +2522,9 @@ server <- function(input, output, session) {
     output$detnPlot <- renderPlot( height = 290, width = 400, {
         ## inp <- oS2()
         invalidateOutputs()
-        pars <- c(detect0(), sigma(), zw())
+        usez <- input$detectfnbox %in% c('HR', 'CLN','CG','HHR','HCG','HVP')
+        np <- if(usez) 3 else 2
+        pars <- c(detect0(), sigma(), zw())[1:np]
         if (any(is.na(pars))) {
             return (NULL)
         }
@@ -2529,7 +2534,7 @@ server <- function(input, output, session) {
                           pars = pars,
                           xval = 0:(3 * sigma()),
                           ylab = "",
-                          hazard = TRUE,       ## 2017-08-28
+                          hazard = TRUE,       
                           ylim = c(0, detect0()*1.2),
                           las=1, col = 'red', lwd = linewidth,
                           xaxs='i', yaxs='i')
