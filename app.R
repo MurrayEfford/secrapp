@@ -130,8 +130,8 @@ ui <- function(request) {
                                          fluidRow(
                                              column(4, actionButton("fitbtn", "Fit model",  width = 130,
                                                                     title = "Fit spatially explicit capture-recapture model to estimate density and update Results")),
-                                             column(4, ''),
-                                             column(4, helpText(HTML("F11 full screen")))
+                                             column(4, uiOutput("secrdesignurl"))  ## switch to secrdesign, with parameters
+                                             
                                          ),
                                          
                                          br(),
@@ -139,8 +139,7 @@ ui <- function(request) {
                                              column(4, actionButton("resetbtn", "Reset all", width = 130, 
                                                                     title = "Reset all inputs to initial values")),
                                              column(4, bookmarkButton(width = 130)),
-                                             
-                                             column(4, uiOutput("secrdesignurl"))  ## switch to secrdesign, with parameters
+                                             column(4, helpText(HTML("F11 full screen")))
                                                     
                                          ),
                                          br(),
