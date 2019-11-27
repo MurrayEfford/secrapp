@@ -127,10 +127,6 @@ The application is designed for small- to medium-sized models. An internal algor
     <td>Fit closed-population SECR model</td>
   </tr>
   <tr>
-    <td>Add to summary</td>
-    <td>Transfer results to summary table</td>
-  </tr>
-  <tr>
     <td>Reset all</td>
     <td>Reset all input options to defaults</td>
   </tr>
@@ -225,7 +221,7 @@ For file input there should be a header line. The first two columns ('x', 'y') a
 
 # Summary  <a name="summary"></a>
 
-The table on this page has one column for each model fit or other summary; summaries are added by clicking the 'Add to summary' button on the [Main screen](#main), or automatically when models are fitted. Some fields will have missing values if no model has been fitted.
+The table on this page has one column for each model fit or other summary; summaries are added automatically when models are fitted.
 
 The table may be downloaded as a comma-separated text file or in the RDS format (use `readRDS` to restore in R). The table is transposed on download so that scenarios become rows.
 
