@@ -141,6 +141,8 @@ The application is designed for small- to medium-sized models. An internal algor
 </table> 
 
 <br>
+'Reset all' does not delete Summary results from the current session. Use the 'Clear all' and 'Delete last' buttons on the Summary page to manage the summaries. Summary results will be lost if you close the application without downloading to a local file.
+
 The option 'Switch to secrdesign' appears once a model has been fitted if the detection function is HHN or HEX. This opens 'secrdesignapp' on the Otago University server in a new browser window. Settings and parameter estimates are transferred automatically. Detector locations are not transferred; they should be provided either by selecting the file in secrdesignapp, or by the usual options (Grid, Line, Region).
 
 ## Results  <a name="results"></a>

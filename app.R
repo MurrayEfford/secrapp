@@ -390,27 +390,27 @@ ui <- function(request) {
                                                                      checkboxGroupInput("fields1", "",
                                                                                         choices = c("date", "time", "note", "traps", "captures", 
                                                                                                     "n", "r", "ndetectors", "noccasions",
-                                                                                                    "usagepct", "maskbuffer", "masknrow", "maskspace"
-                                                                                                    
+                                                                                                    "usagepct", "maskbuffer", "masknrow", "maskspace",
+                                                                                                    "likelihood", "distribution","model"
                                                                                         ),
                                                                                         selected = c("date", "time", "note", "traps", "captures", 
                                                                                                      "n", "r", "ndetectors", "noccasions",
-                                                                                                     "usagepct", "maskbuffer", "masknrow", "maskspace"
-                                                                                                     
+                                                                                                     "usagepct", "maskbuffer", "masknrow", "maskspace",
+                                                                                                     "likelihood", "distribution", "model"
                                                                                         )
                                                                      ))),
                                              column(6,
                                                     conditionalPanel("output.selectingfields == 'TRUE'",
                                                                      checkboxGroupInput("fields2", "",
-                                                                                        choices = c("likelihood", "distribution", "model", "detectfn", 
+                                                                                        choices = c("detectfn", 
                                                                                                     "hcov", "npar", "logLik", "AIC",
                                                                                                     "D", "se.D", "RSE.D", 
-                                                                                                    "g0", "se.g0", "sigma", "se.sigma",
+                                                                                                    "detect0", "se.detect0", "sigma", "se.sigma", "z", "se.z",
                                                                                                     "k", "proctime"
                                                                                         ),
-                                                                                        selected = c("likelihood", "distribution", "model", "detectfn",
+                                                                                        selected = c("detectfn",
                                                                                                      "hcov", "npar", "logLik", "AIC",
-                                                                                                     "D", "se.D", "RSE.D", "g0", "se.g0", "sigma", "se.sigma",
+                                                                                                     "D", "se.D", "RSE.D", "detect0", "se.detect0", "sigma", "se.sigma",
                                                                                                      "k", "proctime"
                                                                                         )
                                                                      )
@@ -586,12 +586,12 @@ server <- function(input, output, session) {
                        "ndetectors", "noccasions", "usagepct", "maskbuffer", "masknrow", "maskspace",
                        "likelihood", "distribution", "model", 
                        "hcov", "detectfn", "npar", "logLik", "AIC",
-                       "D", "se.D", "RSE.D", "g0", "se.g0", "sigma", "se.sigma", 
+                       "D", "se.D", "RSE.D", "detect0", "se.detect0", "sigma", "se.sigma", "z", "se.z",
                        "k", "proctime"
                        )
     
-    fieldgroup1 <- 1:13
-    fieldgroup2 <- 14:30
+    fieldgroup1 <- 1:14
+    fieldgroup2 <- 15:32
 
     ## for cycling through animals at one detector 2019-03-08
     lasttrap <- 0
@@ -1113,6 +1113,8 @@ server <- function(input, output, session) {
             se.detect0 = NA,
             sigma = NA, 
             se.sigma = NA,
+            z = NA, 
+            se.z = NA,
             k = NA,
             proctime = NA
         )
@@ -1129,12 +1131,14 @@ server <- function(input, output, session) {
             df$se.detect0 <- se.detect0()
             df$sigma <- sigma()
             df$se.sigma <- se.sigma()
-            if (input$detectfnbox=="HHN")
+            df$z <- zw()
+            df$se.z <- se.zw()
+            if (input$detectfnbox %in% c("HN", "HHN"))
                 df$k <- density()^0.5 * sigma() / 100
             else 
                 df$k <- NA*1  # force numeric NA
             df$proctime <- fitrv$value$proctime
-            df[,20:30] <- ifelse (sapply(df[,20:30], is.numeric), round(df[,20:30], input$dec), df[,20:30])
+            df[,20:32] <- ifelse (sapply(df[,20:32], is.numeric), round(df[,20:32], input$dec), df[,20:32])
         }
         sumrv$value <- rbind (sumrv$value, df)
         rownames(sumrv$value) <- paste0("Analysis", 1:nrow(sumrv$value))
