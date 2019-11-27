@@ -857,8 +857,21 @@ server <- function(input, output, session) {
     ##############################################################################
     
     modelstring <- function () {
-        # fails with D~s(x,k=6) because of internal comma
+        # deal with internal comma in e.g. D~s(x,k=6)
         form <- strsplit(input$model, ",")[[1]]
+        form <- stringr::str_trim(form)
+        brokenL <- rev(which(grepl("(", form, fixed=TRUE)))
+        brokenR <- rev(which(grepl(")", form, fixed=TRUE)))
+        nbk <- length(brokenL)
+        if (nbk>0) {
+            for (i in 1:nbk) {
+                left <- brokenL[i]
+                right <- brokenR[i]
+                form <- c(form[c(max(0,left-2), left-1)], 
+                          paste0(form[left:right], collapse = ','), 
+                          form[(right+1):length(form)])
+            }
+        }
         fn <- function(f) {
             chf <- tryCatch(parse(text = f), error = function(e) NULL)
             model <- eval(f)
@@ -869,7 +882,6 @@ server <- function(input, output, session) {
                 if (chf[3]=="1") "" else f
             }
         }
-        # out <- modellist()
         out <- sapply(form, fn)
         out <- out[out != ""]
         if (length(out)==0) "~1" else paste0(out, collapse = ", ")
@@ -1112,7 +1124,7 @@ server <- function(input, output, session) {
             r = r(),
             likelihood = input$likelihoodbtn,
             distribution = input$distributionbtn,
-            model =  input$model, # modelstring(), # 
+            model =  modelstring(), # input$model,
             detectfn = input$detectfnbox,
             hcov = "",
             npar = NA,
@@ -1367,7 +1379,10 @@ server <- function(input, output, session) {
         }
         else {
             fitrv$value <- fit
-            fitrv$dsurf <- predictDsurface(fit)
+            if (length(fit)>0)
+                fitrv$dsurf <- predictDsurface(fit)
+            else 
+                fitrv$dsurf <- NULL
             addtosummary()
         }
     }
@@ -2017,18 +2032,22 @@ server <- function(input, output, session) {
         else {
             # one likelihood
             LL <- try(fitmodel(LLonly = TRUE) )
-            if (!inherits(LL, 'try-error')) {
-                expectedtime <- timefn(LL)/60
+            if (inherits(LL, 'try-error')) {
+                showNotification("failed to compute expected time")
+                expectedtime <- Inf
             }
-            if (expectedtime > timewarning)
-                if (expectedtime > timelimit) {
-                    showNotification("exceeds time limit")
-                }
+            else {
+                expectedtime <- timefn(LL)/60
+                if (expectedtime > timewarning)
+                    if (expectedtime > timelimit) {
+                        showNotification("exceeds time limit")
+                    }
                 else {
                     showModal(OKModal(expectedtime))
                 }
-            else {
-                fitmodel()
+                else {
+                    fitmodel()
+                }
             }
         }
     })
