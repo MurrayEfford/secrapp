@@ -405,12 +405,12 @@ ui <- function(request) {
                                                                                         choices = c("detectfn", 
                                                                                                     "hcov", "npar", "logLik", "AIC", "dAIC",
                                                                                                     "D", "se.D", "RSE.D", 
-                                                                                                    "detect0", "se.detect0", "sigma", "se.sigma", "z", "se.z",
+                                                                                                    "g0", "se.g0", "lambda0", "se.lambda0","sigma", "se.sigma", "z", "se.z",
                                                                                                     "k", "proctime"
                                                                                         ),
                                                                                         selected = c("detectfn",
                                                                                                      "hcov", "npar", "logLik", "AIC", "dAIC",
-                                                                                                     "D", "se.D", "RSE.D", "detect0", "se.detect0", "sigma", "se.sigma",
+                                                                                                     "D", "se.D", "RSE.D", "g0", "se.g0", "lambda0", "se.lambda0", "sigma", "se.sigma",
                                                                                                      "k", "proctime"
                                                                                         )
                                                                      )
@@ -586,12 +586,12 @@ server <- function(input, output, session) {
                        "ndetectors", "noccasions", "usagepct", "maskbuffer", "masknrow", "maskspace",
                        "likelihood", "distribution", "model", 
                        "hcov", "detectfn", "npar", "logLik", "AIC", "dAIC",
-                       "D", "se.D", "RSE.D", "detect0", "se.detect0", "sigma", "se.sigma", "z", "se.z",
+                       "D", "se.D", "RSE.D", "g0", "se.g0", "lambda0", "se.lambda0", "sigma", "se.sigma", "z", "se.z",
                        "k", "proctime"
                        )
     
-    fieldgroup1 <- 1:14
-    fieldgroup2 <- 15:33
+    fieldgroup1 <- 1:16
+    fieldgroup2 <- 17:35
 
     ## for cycling through animals at one detector 2019-03-08
     lasttrap <- 0
@@ -1127,21 +1127,23 @@ server <- function(input, output, session) {
             model =  modelstring(), # input$model,
             detectfn = input$detectfnbox,
             hcov = "",
-            npar = NA,
-            logLik = NA,
-            AIC = NA,
+            npar = NA_real_,
+            logLik = NA_real_,
+            AIC = NA_real_,
             dAIC = 0,
-            D = NA, 
-            se.D = NA, 
-            RSE.D = NA,
-            detect0 = NA, 
-            se.detect0 = NA,
-            sigma = NA, 
-            se.sigma = NA,
-            z = NA, 
-            se.z = NA,
-            k = NA,
-            proctime = NA
+            D = NA_real_, 
+            se.D = NA_real_, 
+            RSE.D = NA_real_,
+            g0 = NA_real_, 
+            se.g0 = NA_real_,
+            lambda0 = NA_real_,
+            se.lambda0 = NA_real_,
+            sigma = NA_real_, 
+            se.sigma = NA_real_,
+            z = NA_real_, 
+            se.z = NA_real_,
+            k = NA_real_,
+            proctime = NA_real_
         )
         if (inherits(fitrv$value, "secr")) {
             fitsum <- summary(fitrv$value)
@@ -1153,8 +1155,10 @@ server <- function(input, output, session) {
             df$D <- density()
             df$se.D <- se.density()
             df$RSE.D <- se.density() / density()
-            df$detect0 <- detect0()
-            df$se.detect0 <- se.detect0()
+            df$g0 <- ifelse (detectrv$value=="g0", detect0(), NA_real_)
+            df$se.g0 <- ifelse (detectrv$value=="g0", se.detect0(), NA_real_)
+            df$lambda0 <- ifelse (detectrv$value=="lambda0", detect0(), NA_real_)
+            df$se.lambda0 <-ifelse (detectrv$value=="lambda0", se.detect0(), NA_real_)
             df$sigma <- sigma()
             df$se.sigma <- se.sigma()
             df$z <- zw()
@@ -1162,9 +1166,9 @@ server <- function(input, output, session) {
             if (input$detectfnbox %in% c("HN", "HHN"))
                 df$k <- density()^0.5 * sigma() / 100
             else 
-                df$k <- NA*1  # force numeric NA
+                df$k <- NA_real_ # force numeric NA
             df$proctime <- fitrv$value$proctime
-            df[,20:33] <- ifelse (sapply(df[,20:33], is.numeric), round(df[,20:33], input$dec), df[,20:33])
+            df[,20:35] <- round(df[,20:35], input$dec)
         }
         sumrv$value <- rbind (sumrv$value, df)
         if (nrow(sumrv$value)>1) sumrv$value$dAIC <- sumrv$value$AIC - min(sumrv$value$AIC)
@@ -1640,10 +1644,22 @@ server <- function(input, output, session) {
     ##############################################################################
     
     detectrv <- reactive({
-        if (input$detectfnbox %in% c('HHN', 'HHR', 'HEX', 'HAN', 'HCG', 'HVP'))
+        req(input$fields1)
+        req(input$fields2)
+        if (input$detectfnbox %in% c('HHN', 'HHR', 'HEX', 'HAN', 'HCG', 'HVP')) {
             detectrv$value <- 'lambda0'
-        else 
+            if (!("lambda0" %in% input$fields2)) 
+                updateCheckboxGroupInput(session, "fields2", selected = c(input$fields2, "lambda0"))
+            if (!("se.lambda0" %in% input$fields2))
+                updateCheckboxGroupInput(session, "fields2", selected = c(input$fields2, "se.lambda0"))
+        }
+        else {
             detectrv$value <- 'g0'
+            if (!("g0" %in% input$fields2)) 
+                updateCheckboxGroupInput(session, "fields2", selected = c(input$fields2, "g0"))
+            if (!("se.g0" %in% input$fields2))
+                updateCheckboxGroupInput(session, "fields2", selected = c(input$fields2, "se.g0"))
+        }
     })
     ##############################################################################
     
