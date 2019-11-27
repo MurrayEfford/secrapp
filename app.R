@@ -107,7 +107,9 @@ ui <- function(request) {
                                                    fluidRow(
                                                        column(3, selectInput("detectfnbox", "Detectfn",
                                                                               choices = c("HN", "HR", "EX","HHN", "HHR", "HEX", "HVP"),
-                                                                              selected = "HN")),
+                                                                              selected = "HN"),
+                                                              uiOutput("detectfnui") 
+                                                       ),
                                                        column(3, radioButtons("likelihoodbtn", "Likelihood", choices = c("Full", "Conditional"))),
                                                        column(3, radioButtons("distributionbtn", label = "Distribution of n",
                                                                               choices = c("Poisson", "Binomial"))),
@@ -128,8 +130,7 @@ ui <- function(request) {
                                          fluidRow(
                                              column(4, actionButton("fitbtn", "Fit model",  width = 130,
                                                                     title = "Fit spatially explicit capture-recapture model to estimate density and update Results")),
-                                             column(4, actionButton("appendbtn", "Add to summary",  width = 130,
-                                                                    title = "Append new analysis to Summary table")),
+                                             column(4, ''),
                                              column(4, helpText(HTML("F11 full screen")))
                                          ),
                                          
@@ -145,7 +146,7 @@ ui <- function(request) {
                                          br(),
                                          fluidRow(
                                              column(11, textInput("title", "", value = "", 
-                                                                  placeholder = "label for Summary")))
+                                                                  placeholder = "note for Summary")))
                                   ),
                                   
                                   column (6, # style='padding:0px;',
@@ -633,6 +634,18 @@ server <- function(input, output, session) {
      ## uigridlines
      
      ##############################################################################
+     
+     output$detectfnui <- renderUI({
+         if (input$detectfnbox == 'HN') x <- HTML("halfnormal")  
+         else if (input$detectfnbox == 'EX') x <- HTML("negative exponential")  
+         else if (input$detectfnbox == 'HR') x <- HTML("hazard rate")  
+         else if (input$detectfnbox == 'HHN') x <- HTML("hazard halfnormal")  
+         else if (input$detectfnbox == 'HEX') x <- HTML("hazard negative exponential")  
+         else if (input$detectfnbox == 'HHR') x <- HTML("hazard hazard rate")  
+         else if (input$detectfnbox == 'HVP') x <- HTML("hazard variable power")  
+         else x <- ''
+         helpText(x)
+     })
      
      output$secrdesignurl <- renderUI ({
          if (is.null(fitrv$value) & !is.null(capthist())) {
@@ -1913,7 +1926,6 @@ server <- function(input, output, session) {
     ## observeEvent
 
     # alpha
-    # appendbtn
     # areaunit
     # CIclick
     # clearallbtn
@@ -1946,12 +1958,6 @@ server <- function(input, output, session) {
     observeEvent(input$alpha, {
         updateCheckboxInput(session, "powertype", label = paste0(
             round(100 *(1-input$alpha), 1), "% CI"))
-    })
-    ##############################################################################
-
-    observeEvent(input$appendbtn, {
-        if (!is.null(traprv$data))
-            addtosummary()
     })
     ##############################################################################
 
@@ -2793,7 +2799,7 @@ server <- function(input, output, session) {
     
     ##############################################################################
 
-    setBookmarkExclude(c("fitbtn", "appendbtn",
+    setBookmarkExclude(c("fitbtn", 
                          "clearallbtn", "clearlastbtn", "selectnonebtn", "selectallbtn",
                          "resetbtn", 
                          "selectfieldsbtn", "selecting"))
