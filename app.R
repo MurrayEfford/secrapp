@@ -38,6 +38,7 @@ ui <- function(request) {
         tags$head(tags$style("#codePrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 250px; background: ghostwhite;}")),
         tags$head(tags$style("#maskPrint{color:blue; font-size:12px; background: ghostwhite;}")),
         tags$head(tags$style(type="text/css", "input.shiny-bound-input { font-size:14px; height:30px; margin-top:0px; margin-bottom:2px; padding-top:0px; padding-bottom:0px;}")),
+        #tags$head(tags$style(type="text/css", "input.shiny-bound-input { font-size:14px; height:20px; margin-top:0px; margin-bottom:2px; padding-top:0px; padding-bottom:0px;}")),
         br(),
         navlistPanel(id = "navlist", widths = c(2,10), well=TRUE,
                      
@@ -88,7 +89,12 @@ ui <- function(request) {
                                                                                         ".rda", ".rds"))),
                                                                fluidRow(
                                                                    column(12, radioButtons("fmt", label = "Format", inline = TRUE,
-                                                                                           choices = c("trapID", "XY")))),
+                                                                                           choices = c("trapID", "XY")))
+                                                                   # column(6, style="color:grey;",
+                                                                   #        selectInput("binomNbox", label = "Count binomial N",
+                                                                   #                    choices = c("none"), selected = "none", 
+                                                                   #                    width=160))
+                                                               ),
                                                                # uiOutput("captfilehelp"),
                                                                fluidRow(
                                                                    column(12, textInput("covnames", "Covariate names",
@@ -121,7 +127,8 @@ ui <- function(request) {
                                                        column(12, textInput("model", "", value = "D~1, g0~1, sigma~1"))
                                                    ),
                                                    fluidRow(
-                                                       column(12, textInput("otherargs", "Other arguments", value = "", placeholder = "e.g., details = list(fastproximity = FALSE)"))
+                                                       column(12, textInput("otherargs", "Other arguments", value = "", 
+                                                                            placeholder = "e.g., details = list(fastproximity = FALSE), binomN = 1"))
                                                    )
                                          ),
                                          
@@ -130,8 +137,9 @@ ui <- function(request) {
                                          fluidRow(
                                              column(4, actionButton("fitbtn", "Fit model",  width = 130,
                                                                     title = "Fit spatially explicit capture-recapture model to estimate density and update Results")),
-                                             column(4, uiOutput("secrdesignurl"))  ## switch to secrdesign, with parameters
-                                             
+                                             column(4, uiOutput("secrdesignurl")),  ## switch to secrdesign, with parameters
+                                             column(4, actionButton("helpbtn", "secr help",  width = 130,
+                                                                    title = "Open secr help index"))
                                          ),
                                          
                                          br(),
@@ -1313,11 +1321,16 @@ server <- function(input, output, session) {
     }
     ##############################################################################
     
+    # getbinomN <- function(binomNtext) {
+    #     res <- switch (binomNtext, none = 0, Poisson = 0, 'From usage' = 1, as.integer(binomNtext))
+    # }
+    
     fitcode <- function() {
         detfn <- input$detectfnbox
         if (is.character(detfn)) detfn <- paste0("'", detfn, "'")
         CL <- if (input$likelihoodbtn == "Full") "" else ", CL = TRUE"
         hcov <- if(input$hcovbox == "none") "" else paste0(", hcov = '", input$hcovbox, "'")
+        # binomN <- if(input$binomNbox == "none") "" else paste0(", binomN = ", getbinomN(input$binomNbox))
         model <- paste0("model = list(", input$model, ")")
         distn <- if (input$distributionbtn == "Poisson") "" else 
             ",\n      details = list(distribution = 'binomial')"
@@ -1371,6 +1384,9 @@ server <- function(input, output, session) {
             if (input$hcovbox != "none") {
                 args$hcov <- input$hcovbox
             }
+            # if (input$binomNbox != "none") {
+            #     args$binomN <- getbinomN(input$binomNbox)
+            # }
             isolate(fit <- try(do.call("secr.fit", args), silent = TRUE))
             if (inherits(fit, "try-error") && !LLonly) {
                 showNotification("model fit failed - check data, formulae and mask",
@@ -1616,6 +1632,10 @@ server <- function(input, output, session) {
                 }
                 updateNumericInput(session, "sess", max = length(ch))
                 updateSelectInput(session, "hcovbox", choices = c("none", names(covariates(ch))))
+                # if (input$detector=="count")
+                #     updateSelectInput(session, "binomNbox", choices = c("Poisson", "From usage", 2:20))
+                # else
+                #     updateSelectInput(session, "binomNbox", choices = c("none"))
                 
             }
             ch
@@ -1644,21 +1664,21 @@ server <- function(input, output, session) {
     ##############################################################################
     
     detectrv <- reactive({
-        req(input$fields1)
-        req(input$fields2)
         if (input$detectfnbox %in% c('HHN', 'HHR', 'HEX', 'HAN', 'HCG', 'HVP')) {
             detectrv$value <- 'lambda0'
-            if (!("lambda0" %in% input$fields2)) 
-                updateCheckboxGroupInput(session, "fields2", selected = c(input$fields2, "lambda0"))
-            if (!("se.lambda0" %in% input$fields2))
-                updateCheckboxGroupInput(session, "fields2", selected = c(input$fields2, "se.lambda0"))
+            ## following code not working so suppress
+            # if (!("lambda0" %in% input$fields2)) 
+            #     updateCheckboxGroupInput(session, "fields2", selected = c(input$fields2, "lambda0"))
+            # if (!("se.lambda0" %in% input$fields2))
+            #     updateCheckboxGroupInput(session, "fields2", selected = c(input$fields2, "se.lambda0"))
         }
         else {
             detectrv$value <- 'g0'
-            if (!("g0" %in% input$fields2)) 
-                updateCheckboxGroupInput(session, "fields2", selected = c(input$fields2, "g0"))
-            if (!("se.g0" %in% input$fields2))
-                updateCheckboxGroupInput(session, "fields2", selected = c(input$fields2, "se.g0"))
+            ## following code not working so suppress
+            # if (!("g0" %in% input$fields2)) 
+            #     updateCheckboxGroupInput(session, "fields2", selected = c(input$fields2, "g0"))
+            # if (!("se.g0" %in% input$fields2))
+            #     updateCheckboxGroupInput(session, "fields2", selected = c(input$fields2, "se.g0"))
         }
     })
     ##############################################################################
@@ -2070,6 +2090,10 @@ server <- function(input, output, session) {
     
     ##############################################################################
     
+    observeEvent(input$helpbtn, ignoreInit = TRUE, {
+        browseURL(file.path(path.package("secr"), "html",  "00Index.html")) 
+    })
+    
     observeEvent(input$likelihoodbtn, ignoreInit = TRUE, {
         fitrv$value <- NULL
         ## drop or add density formula depending on full/conditional likelihood
@@ -2244,7 +2268,8 @@ server <- function(input, output, session) {
         updateRadioButtons(session, "distributionbtn", selected = "Poisson")
         updateRadioButtons(session, "likelihoodbtn", selected = "Full")
         updateSelectInput(session, "hcovbox", choices = "none", selected = "none")
-
+        # updateSelectInput(session, "binomNbox", choices = "none", selected = "none")
+        
         updateTextInput(session, "model", 
                         value = "D~1, g0~1, sigma~1", placeholder = "")
         updateTextInput(session, "otherargs", 
@@ -2685,7 +2710,8 @@ server <- function(input, output, session) {
                      detectfn = input$detectfnbox,
                      detectpar = detectparlist,
                      noccasions = noccasions()[input$sess], drawlabels = drawlabels,
-                     binomN = NULL, levels = lev, 
+                     binomN = 0, # getbinomN(input$binomNbox), # assume Poisson
+                     levels = lev, 
                      poly = if (input$polygonbox) polyrv$data else NULL, 
                      poly.habitat = input$includeexcludebtn == "Include",
                      plt = TRUE, add = TRUE,
