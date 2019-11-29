@@ -1334,9 +1334,10 @@ server <- function(input, output, session) {
         model <- paste0("model = list(", input$model, ")")
         distn <- if (input$distributionbtn == "Poisson") "" else 
             ",\n      details = list(distribution = 'binomial')"
+        otherargs <- if (input$otherargs=="") "" else paste0(",\n      ", input$otherargs)
         code <- paste0(
             "fit <- secr.fit(ch, mask = mask, detectfn = ", detfn, CL, hcov, ", \n", 
-            "      ", model, ", trace = FALSE", distn, ")\n"
+            "      ", model, ", trace = FALSE", distn, otherargs, ")\n"
         )
         code
     }
