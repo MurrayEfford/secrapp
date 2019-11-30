@@ -34,8 +34,9 @@ ui <- function(request) {
         useShinyjs(),
         withMathJax(),
         tags$head(tags$style(".mypanel{margin-top:5px; margin-bottom:10px; padding-bottom: 5px;}")),
-        tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 250px; background: ghostwhite;}")),
-        tags$head(tags$style("#codePrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 250px; background: ghostwhite;}")),
+        tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 280px; background: ghostwhite;}")),
+        #tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 250px; background: ghostwhite;}")),
+        tags$head(tags$style("#codePrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 300px; background: ghostwhite;}")),
         tags$head(tags$style("#maskPrint{color:blue; font-size:12px; background: ghostwhite;}")),
         tags$head(tags$style(type="text/css", "input.shiny-bound-input { font-size:14px; height:30px; margin-top:0px; margin-bottom:2px; padding-top:0px; padding-bottom:0px;}")),
         #tags$head(tags$style(type="text/css", "input.shiny-bound-input { font-size:14px; height:20px; margin-top:0px; margin-bottom:2px; padding-top:0px; padding-bottom:0px;}")),
@@ -63,7 +64,8 @@ ui <- function(request) {
                                                                # ),
                                                                fluidRow(
                                                                    column(6, selectInput("detector", "Detector type", 
-                                                                                           choices = c("multi","proximity","count"),
+                                                                                           choices = c("multi","proximity","count",
+                                                                                                       "polygon", "polygonX", "transect", "transectX"),
                                                                                            selected = "multi"))
                                                                ),
                                                                fluidRow(
@@ -89,7 +91,9 @@ ui <- function(request) {
                                                                                         ".rda", ".rds"))),
                                                                fluidRow(
                                                                    column(6, selectInput("fmt", label = "Format",
-                                                                                           choices = c("trapID", "XY")))
+                                                                                         choices = c("trapID", "XY")))
+                                                                   # column(6, selectInput("captsheet", label = "Sheet",
+                                                                   #                       choices = c("Sheet1", "stoatcapt")))
                                                                ),
                                                                # uiOutput("captfilehelp"),
                                                                fluidRow(
@@ -133,9 +137,9 @@ ui <- function(request) {
                                          fluidRow(
                                              column(4, actionButton("fitbtn", "Fit model",  width = 130,
                                                                     title = "Fit spatially explicit capture-recapture model to estimate density and update Results")),
-                                             column(4, uiOutput("secrdesignurl")),  ## switch to secrdesign, with parameters
                                              column(4, actionButton("helpbtn", "secr help",  width = 130,
-                                                                    title = "Open secr help index"))
+                                                                    title = "Open secr help index")),
+                                             column(4, uiOutput("secrdesignurl"))  ## switch to secrdesign, with parameters
                                          ),
                                          
                                          br(),
@@ -597,6 +601,9 @@ server <- function(input, output, session) {
     fieldgroup1 <- 1:16
     fieldgroup2 <- 17:35
 
+    polygondetectors <- c("polygon", "polygonX", "transect", "transectX")
+    hazarddetectfn <- c("HHN", "HHR", "HEX", "HVP")
+    
     ## for cycling through animals at one detector 2019-03-08
     lasttrap <- 0
     clickno <- 0
@@ -719,6 +726,14 @@ server <- function(input, output, session) {
             helptext <- "count proximity detector; integer # detections per animal per occasion"
         else if (input$detector == 'single')
             helptext <- "single-catch trap; max. one detection per animal & one per trap on any occasion"
+        else if (input$detector == 'polygon')
+            helptext <- "searched polygons"
+        else if (input$detector == 'polygonX')
+            helptext <- "searched polygons; max. one detection per animal on any occasion"
+        else if (input$detector == 'transect')
+            helptext <- "searched transect"
+        else if (input$detector == 'transectX')
+            helptext <- "searched transect; max. one detection per animal on any occasion"
         helpText(HTML(helptext))
     })
     ##############################################################################
@@ -1295,9 +1310,15 @@ server <- function(input, output, session) {
             cov <- if (covnames == "") "" else paste0(", covnames = ", covnames)
             
             fmt <- if (input$fmt=='XY') ", fmt = 'XY'" else ""
-                
-            code <- paste0("capt <- read.table('", input$captfilename[1,"name"], "'", args, ")\n",
-                           "ch <- make.capthist (capt, traps = array", fmt, cov, ")\n")
+            if (grepl('.xls', input$captfilename$name[1])) {
+                code <- paste0("capt <- readxl::read_excel('", input$captfilename[1,"name"], "'", args, ")\n")
+            }
+            else {
+                code <- paste0("capt <- read.table('", input$captfilename[1,"name"], "'", args, ")\n")
+            }
+            
+            code <- paste0(code, "ch <- make.capthist (capt, traps = array", fmt, cov, ")\n")
+            
             # if (input$scalefactor != 1.0) {
             #     code <- paste0(code,
             #                    "# optional scaling about centroid\n",
@@ -1317,16 +1338,11 @@ server <- function(input, output, session) {
     }
     ##############################################################################
     
-    # getbinomN <- function(binomNtext) {
-    #     res <- switch (binomNtext, none = 0, Poisson = 0, 'From usage' = 1, as.integer(binomNtext))
-    # }
-    
     fitcode <- function() {
         detfn <- input$detectfnbox
         if (is.character(detfn)) detfn <- paste0("'", detfn, "'")
         CL <- if (input$likelihoodbtn == "Full") "" else ", CL = TRUE"
         hcov <- if(input$hcovbox == "none") "" else paste0(", hcov = '", input$hcovbox, "'")
-        # binomN <- if(input$binomNbox == "none") "" else paste0(", binomN = ", getbinomN(input$binomNbox))
         model <- paste0("model = list(", input$model, ")")
         distn <- if (input$distributionbtn == "Poisson") "" else 
             ",\n      details = list(distribution = 'binomial')"
@@ -1381,9 +1397,6 @@ server <- function(input, output, session) {
             if (input$hcovbox != "none") {
                 args$hcov <- input$hcovbox
             }
-            # if (input$binomNbox != "none") {
-            #     args$binomN <- getbinomN(input$binomNbox)
-            # }
             isolate(fit <- try(do.call("secr.fit", args), silent = TRUE))
             if (inherits(fit, "try-error") && !LLonly) {
                 showNotification("model fit failed - check data, formulae and mask",
@@ -1542,8 +1555,14 @@ server <- function(input, output, session) {
         args <- input$captargs
         if (args != "")
             args <- paste0(", ", args)
-        readcaptcall <- paste0("read.table (filename", args, ")")
+        if (grepl('.xls', input$captfilename$name[1])) {
+            readcaptcall <- paste0("readxl::read_excel(filename", args, ")")
+        }
+        else {
+            readcaptcall <- paste0("read.table (filename", args, ")")
+        }
         captrv$data <- try(eval(parse(text = readcaptcall)))
+        captrv$data <- as.data.frame(captrv$data)
         if (!inherits(captrv$data, "data.frame")) {
             showNotification("invalid capture file or arguments; try again",
                              type = "error", id = "badcapt", duration = seconds)
@@ -1629,11 +1648,6 @@ server <- function(input, output, session) {
                 }
                 updateNumericInput(session, "sess", max = length(ch))
                 updateSelectInput(session, "hcovbox", choices = c("none", names(covariates(ch))))
-                # if (input$detector=="count")
-                #     updateSelectInput(session, "binomNbox", choices = c("Poisson", "From usage", 2:20))
-                # else
-                #     updateSelectInput(session, "binomNbox", choices = c("none"))
-                
             }
             ch
         }
@@ -2046,11 +2060,24 @@ server <- function(input, output, session) {
     
     ##############################################################################
     
+    observeEvent(input$detector, {
+        if (input$detector %in% polygondetectors) {
+            updateSelectInput(session, "detectfnbox", choices = hazarddetectfn, selected = "HHN")
+            updateSelectInput(session, "fmt", label = "Format", choices = c("XY"), selected = 'XY')
+        }
+        else {
+            updateSelectInput(session, "detectfnbox", choices = c('HN','HR','EX',hazarddetectfn))
+            updateSelectInput(session, "fmt", label = "Format", choices = c("trapID", "XY"))
+        }
+            fitrv$value <- NULL
+    })
+    ##############################################################################
+    
     observeEvent(input$detectfnbox, {
         fitrv$value <- NULL
     })
     ##############################################################################
-
+    
     observeEvent(input$distributionbtn, {
         fitrv$value <- NULL
     })
@@ -2265,8 +2292,7 @@ server <- function(input, output, session) {
         updateRadioButtons(session, "distributionbtn", selected = "Poisson")
         updateRadioButtons(session, "likelihoodbtn", selected = "Full")
         updateSelectInput(session, "hcovbox", choices = "none", selected = "none")
-        # updateSelectInput(session, "binomNbox", choices = "none", selected = "none")
-        
+
         updateTextInput(session, "model", 
                         value = "D~1, g0~1, sigma~1", placeholder = "")
         updateTextInput(session, "otherargs", 
@@ -2665,7 +2691,12 @@ server <- function(input, output, session) {
     ##############################################################################
     
     border <- function (multiple) {
-        spc <- spacing(traprv$data) 
+        if (detector(traprv$data)[1] %in% c('polygon','polygonX','transect','transectX')) {
+            spc <- max(diff(range(traprv$data$x)), diff(range(traprv$data$y)))/10
+        }
+        else {
+            spc <- spacing(traprv$data) 
+        }
         if (is.null(spc) || is.na(spc)) spc <- sigma()
         multiple * spc
     }
@@ -2707,7 +2738,7 @@ server <- function(input, output, session) {
                      detectfn = input$detectfnbox,
                      detectpar = detectparlist,
                      noccasions = noccasions()[input$sess], drawlabels = drawlabels,
-                     binomN = 0, # getbinomN(input$binomNbox), # assume Poisson
+                     binomN = 0, 
                      levels = lev, 
                      poly = if (input$polygonbox) polyrv$data else NULL, 
                      poly.habitat = input$includeexcludebtn == "Include",
