@@ -1,0 +1,8 @@
+# Detector locations exported from traps(hornedlizardCH)
+# Sun Dec 01 8:12:46 a.m. 2019 
+# polyID  x  y 
+1 300 300
+1 300 600
+1 600 600
+1 600 300
+1 300 300
