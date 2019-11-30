@@ -62,7 +62,7 @@ ui <- function(request) {
                                                                #         helpText(HTML(paste0("trapID, X, Y")))))
                                                                # ),
                                                                fluidRow(
-                                                                   column(12, radioButtons("detector", "Detector type", inline = TRUE,
+                                                                   column(6, selectInput("detector", "Detector type", 
                                                                                            choices = c("multi","proximity","count"),
                                                                                            selected = "multi"))
                                                                ),
@@ -88,12 +88,8 @@ ui <- function(request) {
                                                                              accept = c(".csv", ".txt", ".rdata",
                                                                                         ".rda", ".rds"))),
                                                                fluidRow(
-                                                                   column(12, radioButtons("fmt", label = "Format", inline = TRUE,
+                                                                   column(6, selectInput("fmt", label = "Format",
                                                                                            choices = c("trapID", "XY")))
-                                                                   # column(6, style="color:grey;",
-                                                                   #        selectInput("binomNbox", label = "Count binomial N",
-                                                                   #                    choices = c("none"), selected = "none", 
-                                                                   #                    width=160))
                                                                ),
                                                                # uiOutput("captfilehelp"),
                                                                fluidRow(
@@ -2254,13 +2250,13 @@ server <- function(input, output, session) {
         ## Trap layout
         updateTextInput(session, "trapargs", 
                         value = "", placeholder = "e.g., skip = 1")
-        updateRadioButtons(session, "detector", selected = "multi")
+        updateSelectInput(session, "detector", selected = "multi")
         updateTextInput(session, "trapcovnames", value = "", placeholder = "e.g., traptype, habitat")
         
         ## Captures
         updateTextInput(session, "captargs", 
                         value = "", placeholder = "e.g., skip = 1")
-        updateRadioButtons(session, "fmt", selected = "trapID")
+        updateSelectInput(session, "fmt", selected = "trapID")
         updateTextInput(session, "covnames", value = "", placeholder = "e.g., sex")
         
         ## Model
