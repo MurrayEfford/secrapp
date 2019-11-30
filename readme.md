@@ -4,7 +4,7 @@ secrapp performs simple spatially explicit capture-recapture analyses using the 
 
 There is very limited support for multisession data and elaborate models: these are best avoided.
 
-To run secrapp on your own machine, install packages **shiny**, **shinyjs**, **secr** and **stringr**. Then paste this code into an R session:
+To run secrapp on your own machine, install packages **shinyjs** and **secr** with their dependencies. Then paste this code into an R session:
 
 ```r
 library(shiny)
@@ -19,9 +19,11 @@ Some test data are provided:
 
 | File name | Description | Usage |
 |--------|-------------------------------|------------------|
-trap.txt | secr test file ||
-capt.txt | secr test file ||
-ovtrap.txt | Locations of possum traps in the Orongorongo Valley | Design - File input of detector array |
-OVforest.dbf | ESRI polygon shapefile extent of habitat near possum traps | Design - Region and Options - Habitat clip to polygons |
+trap.txt | secr test file |Data input - Detector layout |
+capt.txt | secr test file |Data input - Captures |
+FTHLcapt.txt | Flat-tailed horned lizard test data |Data input - Captures |
+FTHLtrap.txt | Perimeter of horned lizard search area | Data input - Detector layout |
+ovtrap.txt | Locations of possum traps in the Orongorongo Valley | Data input - Detector layout |
+OVforest.dbf | ESRI polygon shapefile extent of habitat near possum traps | Habitat mask - Mask polygon files |
 OVforest.shp |||
 OVforest.shx |||
