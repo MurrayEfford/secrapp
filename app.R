@@ -34,7 +34,7 @@ ui <- function(request) {
         useShinyjs(),
         withMathJax(),
         tags$head(tags$style(".mypanel{margin-top:5px; margin-bottom:10px; padding-bottom: 5px;}")),
-        tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 280px; background: ghostwhite;}")),
+        tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 250px; background: ghostwhite;}")),
         #tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 250px; background: ghostwhite;}")),
         tags$head(tags$style("#codePrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 300px; background: ghostwhite;}")),
         tags$head(tags$style("#maskPrint{color:blue; font-size:12px; background: ghostwhite;}")),
@@ -52,7 +52,7 @@ ui <- function(request) {
                                           fluidRow(
                                               column(6,
                                                      wellPanel(class = "mypanel", 
-                                                                  div(style="height: 80px;",
+                                                                  div(style="height: 80px;", # title = 'Text or Excel file, columns TrapID X Y',
                                                                       # trick from Felipe Gerard 2019-01 to allow reset
                                                                       # https://stackoverflow.com/questions/44203728/how-to-reset-a-value-of-fileinput-in-shiny
                                                                       # uiOutput('trapfile_ui')),
@@ -63,10 +63,16 @@ ui <- function(request) {
                                                                #         helpText(HTML(paste0("trapID, X, Y")))))
                                                                # ),
                                                                fluidRow(
-                                                                   column(6, selectInput("detector", "Detector type", 
+                                                                   column(6, 
+                                                                          selectInput("detector", "Detector type", 
                                                                                            choices = c("multi","proximity","count",
                                                                                                        "polygon", "polygonX", "transect", "transectX"),
-                                                                                           selected = "multi"))
+                                                                                           selected = "multi")
+                                                                   ),
+                                                                   column(6, 
+                                                                          br(),br(),
+                                                                          actionLink("showtrapfilebtn", "show file")
+                                                                   )
                                                                ),
                                                                fluidRow(
                                                                    column(12, 
@@ -85,13 +91,17 @@ ui <- function(request) {
                                                      )),
                                               column(6, 
                                                      wellPanel(class = "mypanel", 
-                                                               div(style="height: 80px;",
+                                                               div(style="height: 80px;", # title = 'Text or Excel file',
                                                                    fileInput("captfilename", "Captures",
                                                                              accept = c(".csv", ".txt", ".rdata",
                                                                                         ".rda", ".rds"))),
                                                                fluidRow(
                                                                    column(6, selectInput("fmt", label = "Format",
-                                                                                         choices = c("trapID", "XY")))
+                                                                                         choices = c("trapID", "XY"))),
+                                                                   column(6, 
+                                                                          br(), br(),
+                                                                          actionLink("showcaptfilebtn", "show file")
+                                                                   )
                                                                    # column(6, selectInput("captsheet", label = "Sheet",
                                                                    #                       choices = c("Sheet1", "stoatcapt")))
                                                                ),
@@ -831,28 +841,41 @@ server <- function(input, output, session) {
         if (is.null(xy)) 
             helpText("")
         else {
-            nearest <- nearesttrap(xy, tmpgrid)
-            id <- ""
-            if (!is.null(capthist())) {
-                #-----------------------------------------------------
-                ## machinery to cycle through animals at this detector
-                if (lasttrap != nearest) clickno <<- 0
-                clickno <<- clickno + 1
-                lasttrap <<- nearest
-                at.xy <- apply(capthist()[,,nearest, drop = FALSE],1,sum)
-                at.xy <- which(at.xy>0)
-                clickno <<- ((clickno-1) %% length(at.xy)) + 1
-                #-----------------------------------------------------
-                if (length(at.xy)>0) {
-                    updateNumericInput(session, "animal", value = as.numeric(at.xy[clickno]))
+            if (input$detector %in% polygondetectors) {
+                if (!is.null(capthist())) {
+                    nearest <- nearesttrap(xy, xy(capthist()))
+                    updateNumericInput(session, "animal", value = animalID(capthist(), names=FALSE)[nearest])
+                    id <- paste0(animalID(capthist())[nearest], ":")
                 }
-                if (input$snaptodetector) {
-                    xy <- tmpgrid[nearest,]
-                    id <- paste0(rownames(tmpgrid)[nearest], ":")
+                else {
+                    nearest <- nearesttrap(xy, tmpgrid)
+                    id <- polyID(tmpgrid)[nearest]
                 }
             }
             else {
-                id <- paste0(rownames(tmpgrid)[nearest], ":")
+                nearest <- nearesttrap(xy, tmpgrid)
+                id <- ""
+                if (!is.null(capthist())) {
+                    #-----------------------------------------------------
+                    ## machinery to cycle through animals at this detector
+                    if (lasttrap != nearest) clickno <<- 0
+                    clickno <<- clickno + 1
+                    lasttrap <<- nearest
+                    at.xy <- apply(capthist()[,,nearest, drop = FALSE],1,sum)
+                    at.xy <- which(at.xy>0)
+                    clickno <<- ((clickno-1) %% length(at.xy)) + 1
+                    #-----------------------------------------------------
+                    if (length(at.xy)>0) {
+                        updateNumericInput(session, "animal", value = as.numeric(at.xy[clickno]))
+                    }
+                    if (input$snaptodetector) {
+                        xy <- tmpgrid[nearest,]
+                        id <- paste0(rownames(tmpgrid)[nearest], ":")
+                    }
+                }
+                else {
+                    id <- paste0(rownames(tmpgrid)[nearest], ":")
+                }
             }
             helpText(HTML(paste(id, paste(round(xy), collapse = ", "))))
         }
@@ -1706,9 +1729,11 @@ server <- function(input, output, session) {
     ##############################################################################
     
     derivedresult <- reactive({
-        progress <- Progress$new(session, min = 1, max = 15)
-        on.exit(progress$close())
-        progress$set(message = 'Computing derived estimates ...', detail = '')
+        # progress <- Progress$new(session, min = 1, max = 15)
+        # on.exit(progress$close())
+        # progress$set(message = 'Computing derived estimates ...', detail = '')
+        showNotification("Computing derived estimates ...",
+                         id = "derived", duration = seconds)
         der <- derived(fitrv$value, distribution = tolower(input$distributionbtn))
         round(der, input$dec)
     })
@@ -1981,6 +2006,8 @@ server <- function(input, output, session) {
     selecting <- reactiveValues(v=FALSE)
     sumrv <- reactiveValues(value = read.csv(text = paste(summaryfields, collapse = ", ")))
     detectrv <- reactiveValues(value='g0')
+    traptextrv <- reactiveValues(value=FALSE)
+    capttextrv <- reactiveValues(value=FALSE)
     
     ##############################################################################
     
@@ -2083,6 +2110,18 @@ server <- function(input, output, session) {
     })
     ##############################################################################
 
+    observeEvent(input$showtrapfilebtn, ignoreInit = TRUE, {
+        ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
+        capttextrv$value <- FALSE
+        traptextrv$value <- !is.null(input$trapfilename) && (input$showtrapfilebtn %% 2 == 1)
+    })
+    
+    observeEvent(input$showcaptfilebtn, ignoreInit = TRUE, {
+        ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
+        traptextrv$value <- FALSE
+        capttextrv$value <- !is.null(input$captfilename) && (input$showcaptfilebtn %% 2 == 1)
+    })
+    
     observeEvent(input$fitbtn, ignoreInit = TRUE, {
         ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
         if (is.null(capthist())) {
@@ -2271,6 +2310,8 @@ server <- function(input, output, session) {
         
         current$unit <- "ha"
         fitrv$value <- NULL
+        traptextrv$value <- FALSE
+        capttextrv$value <- FALSE
         
         ## Data input
 
@@ -2502,7 +2543,19 @@ server <- function(input, output, session) {
                           value = rse,
                           step = 0.1)
         disable("resultsbtn")  ## shinyjs
-        if (is.null(traprv$data)) {
+        if (traptextrv$value) {
+            cat("Detector text file\n")
+            cat("----------------------------------------------------------------\n")
+            rawText <- readLines(input$trapfilename[1,"datapath"]) # get raw text
+            writeLines(rawText)
+        }
+        else if (capttextrv$value) {
+            cat("Capture text file\n")
+            cat("----------------------------------------------------------------\n")
+            rawText <- readLines(input$captfilename[1,"datapath"]) # get raw text
+            writeLines(rawText)
+        }
+        else if (is.null(traprv$data)) {
             cat("No data loaded\n")
         }
         else if (is.null(capthist())) {
