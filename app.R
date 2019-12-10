@@ -1264,10 +1264,6 @@ server <- function(input, output, session) {
             if (args != "") {
                 args <- paste0(", ", args)
             }
-            covnames <- getcovnames(input$trapcovnames, TRUE)
-            if (covnames != "") {
-                args <- paste0(args, ", covnames = ", covnames)
-            }
             code <- paste0("array <- read.traps ('",
                            input$trapfilename[1,"name"],
                            "', detector = '", input$detector, "'", args, ")\n")
@@ -1280,6 +1276,11 @@ server <- function(input, output, session) {
             #     #"array[,] <- array[,] * ", input$scalefactor, "\n")
             # }
 
+            if (!is.null(covariates(traprv$data))) {
+                covnames <- getcovnames(input$trapcovnames, ncol(covariates(traprv$data)), TRUE)
+                covnamecode <- paste0("names(covariates(array)) <- ", covnames, "\n")
+                code <- paste0(code, covnamecode)
+            }
             if (comment) {
                 tmp <- lapply(strsplit(code, "\n")[[1]], function(x) paste0("# ", x))
                 tmp$sep <- "\n"
@@ -1329,10 +1330,23 @@ server <- function(input, output, session) {
             args <- input$captargs
             if (args != "")
                 args <- paste0(", ", args)
-            covnames <- getcovnames(input$covnames, TRUE)
-            cov <- if (covnames == "") "" else paste0(", covnames = ", covnames)
+            if (input$fmt=='XY') {
+                fmt <- ", fmt = 'XY'" 
+                datacols <- 5
+            }
+            else {
+                fmt <- ""
+                datacols <- 4
+            }
+            ncov <- ncol(captrv$data) - datacols
+            if (ncov==0) {
+                cov <- NULL
+            }
+            else {
+                covnames <- getcovnames(input$covnames, ncov, TRUE)
+                cov <- if (covnames == "") "" else paste0(", covnames = ", covnames)
+            }
             
-            fmt <- if (input$fmt=='XY') ", fmt = 'XY'" else ""
             if (grepl('.xls', input$captfilename$name[1])) {
                 code <- paste0("capt <- readxl::read_excel('", input$captfilename[1,"name"], "'", args, ")\n")
             }
@@ -1350,7 +1364,22 @@ server <- function(input, output, session) {
             #                    "array[,2] <- (array[,2]- meanxy[2]) * ", input$scalefactor, " + meanxy[2]\n")
             #     #"array[,] <- array[,] * ", input$scalefactor, "\n")
             # }
-            
+            # if (ms(captrv$data)) {
+            #     if (!is.null(covariates(captrv$data[[1]]))) {
+            #         ncov <- ncol(covariates(captrv$data[[1]]))
+            #         covnames <- getcovnames(input$captcovnames, ncov, TRUE)
+            #         covnamecode <- paste0("names(covariates(ch)) <- ", covnames, "\n")
+            #         code <- paste0(code, covnamecode)
+            #     }
+            # }
+            # else {
+            #     if (!is.null(covariates(captrv$data))) {
+            #         covnames <- getcovnames(input$captcovnames, ncol(covariates(captrv$data)), TRUE)
+            #         covnamecode <- paste0("names(covariates(ch)) <- ", covnames, "\n")
+            #         code <- paste0(code, covnamecode)
+            #     }
+            # }
+            # 
             if (comment) {
                 tmp <- lapply(strsplit(code, "\n")[[1]], function(x) paste0("# ", x))
                 tmp$sep <- "\n"
@@ -1520,22 +1549,31 @@ server <- function(input, output, session) {
     
     ##############################################################################
 
-    getcovnames <- function (cov, quote = FALSE) {
-        if (cov == "") {
+    getcovnames <- function (cov, ncov, quote = FALSE, character = TRUE) {
+        if (ncov <= 0) {
             NULL
         }
         else {
-            nam <- strsplit(str_squish(cov), '[ ,]')
-            cov <- nam[[1]]
-            if (quote) {
-                cov <- paste0("'", nam[[1]], "'")
+            covnames <- paste0('X', 1:ncov)   # default
+            if (cov != "") {
+                cov <- gsub("(')|(\")", "", cov)   # remove quotes
+                nam <- strsplit(str_squish(cov), '[ ,]')
+                if (length(nam[[1]]) >= ncov) {
+                    covnames <- nam[[1]][1:ncov]
+                }
             }
-            if (length(nam[[1]])>1) {
-                cov <- paste(cov, collapse = ",")
-                cov <- paste0("c(", cov, ")")
+            if (character) {
+                if (quote) {
+                    covnames <- paste0("'", covnames, "'")
+                }
+                if (length(covnames)>1) {
+                    covnames <- paste(covnames, collapse = ",")
+                    covnames <- paste0("c(", covnames, ")")
+                }
             }
+            # otherwise just return character vector
         }
-        cov
+        covnames
     }
     
     ## read trap file
@@ -1549,11 +1587,7 @@ server <- function(input, output, session) {
         if (args != "") {
             args <- paste0(", ", args)
         }
-        covnames <- getcovnames(input$trapcovnames, TRUE)
-        if (covnames != "") {
-            args <- paste0(", covnames = ", covnames)
-        }
-            
+        
         readtrapcall <-  paste0("read.traps (filename, detector = input$detector", args, ")")
         temp <- try(eval(parse(text = readtrapcall)))
         if (!inherits(temp, "traps")) {
@@ -1563,6 +1597,14 @@ server <- function(input, output, session) {
             #traprv$clear <- TRUE
         }
         else {
+            ncov <- ncol(covariates(temp))
+            if (length(ncov)>0 && ncov>0) {
+                covnames <- getcovnames(input$trapcovnames, ncov, TRUE, FALSE)
+                names(covariates(temp)) <- covnames
+            }
+            # if (covnames != "") {
+            #     args <- paste0(", covnames = ", covnames)
+            # }
             traprv$data <- temp
         }
     })
@@ -1649,9 +1691,12 @@ server <- function(input, output, session) {
             NULL
         }
         else {
+            # covnames <- getcovnames(input$covnames, TRUE)
+            # ch <- try(suppressWarnings(make.capthist(captrv$data, traprv$data, 
+            #                                          fmt = input$fmt, 
+            #                                          covnames = covnames)))
             ch <- try(suppressWarnings(make.capthist(captrv$data, traprv$data, 
-                                                     fmt = input$fmt, 
-                                                     covnames = getcovnames(input$covnames, FALSE)))) 
+                                                      fmt = input$fmt)))
             if (inherits(ch, 'try-error')) {
                 showNotification("invalid capture file or arguments; try again",
                                  type = "error", id = "badcapt", duration = seconds)
@@ -1660,12 +1705,28 @@ server <- function(input, output, session) {
             }
             else {
                 if (ms(ch)) {
+                    ncov <- ncol(covariates(ch[[1]]))
+                    if (length(ncov)>0 && ncov>0) {
+                        covnames <- getcovnames(input$covnames, ncov, TRUE, FALSE)
+                    }
+                    if (length(ncov)>0 && ncov>0) {
+                        for (i in 1:length(ch)) names(covariates(ch[[i]])) <- covnames
+                    }
                     showNotification("multisession data - may cause problems", 
                                      type = "warning", id = "mswarning", duration = seconds)
                     updateNumericInput(session, "animal", max = nrow(ch[[input$sess]]))
                      output$multisession <- renderText("true")
+                     
+                     
                 }
                 else {
+                    ncov <- ncol(covariates(ch))
+                    if (length(ncov)>0 && ncov>0) {
+                        covnames <- getcovnames(input$covnames, ncov, TRUE, FALSE)
+                    }
+                    if (length(ncov)>0 && ncov>0) {
+                        names(covariates(ch)) <- covnames
+                    }
                     updateNumericInput(session, "animal", max = nrow(ch))
                      output$multisession <- renderText("false")
                 }
