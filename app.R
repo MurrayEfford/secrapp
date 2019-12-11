@@ -145,19 +145,19 @@ ui <- function(request) {
                                          
                                          h2("Actions"),
                                          fluidRow(
-                                             column(4, actionButton("fitbtn", "Fit model",  width = 130,
+                                             column(3, actionButton("fitbtn", "Fit model",  width = 130,
                                                                     title = "Fit spatially explicit capture-recapture model to estimate density and update Results")),
-                                             column(4, actionButton("helpbtn", "secr help",  width = 130,
+                                             column(3, actionButton("helpbtn", "secr help",  width = 130,
                                                                     title = "Open secr help index")),
-                                             column(4, uiOutput("secrdesignurl"))  ## switch to secrdesign, with parameters
+                                             column(3, uiOutput("secrdesignurl"))  ## switch to secrdesign, with parameters
                                          ),
                                          
                                          br(),
                                          fluidRow(
-                                             column(4, actionButton("resetbtn", "Reset all", width = 130, 
+                                             column(3, actionButton("resetbtn", "Reset all", width = 130, 
                                                                     title = "Reset all inputs to initial values")),
-                                             column(4, bookmarkButton(width = 130)),
-                                             column(4, helpText(HTML("F11 full screen")))
+                                             column(3, bookmarkButton(width = 130)),
+                                             column(3, helpText(HTML("F11 full screen")))
                                                     
                                          ),
                                          br(),
@@ -450,7 +450,7 @@ ui <- function(request) {
                               fluidRow(
                                   column(3,
                                          
-                                         h2("Detector array"),
+                                         # h2("Detector array"),
                                          # wellPanel(class = "mypanel", 
                                          #           fluidRow(
                                          #               column(6, radioButtons("areaunit", label = "Area units",
@@ -458,6 +458,22 @@ ui <- function(request) {
                                          #                                      selected = "ha", inline = TRUE))
                                          #           )
                                          # ),
+                                         h2("Data Import/Export"),
+                                         wellPanel(class = "mypanel",
+                                                   fluidRow(
+                                                       column(8, fileInput("importfilename", "Import capthist from Rds file")),
+                                                       # ,  
+                                                       #                  accept = "text/plain")),
+                                                       column(4, br(), actionLink("clearimportbtn", "Clear"))
+                                                       
+                                                   ),
+                                                   fluidRow(
+                                                       column(8, downloadLink("exportbtn", "Export capthist to Rds file", 
+                                                                                title = "Save as RDS file"))  #, "Export capthist to Rds file")),
+                                                       #column(4, br(), actionLink("exportbtn", "Save"))
+                                                       
+                                                   )
+                                         ),
                                          h2("Model fitting"),
                                          wellPanel(class = "mypanel",
                                                    fluidRow(
@@ -626,7 +642,6 @@ server <- function(input, output, session) {
      outputOptions(output, "multisession", suspendWhenHidden = FALSE)
 
      output$maskready <- reactive({
-         ## return(!is.null(traprv$data))
          return(!is.null(mask()))
      })
      
@@ -690,7 +705,6 @@ server <- function(input, output, session) {
              
              if (!is.null(input$trapfilename)) {
                  parm <- c(parm,
-                           #paste0("trapfilename=", input$trapfilename),
                            paste0("trapargs=", input$trapargs))
              }
              
@@ -1154,8 +1168,11 @@ server <- function(input, output, session) {
             date = format(Sys.time(), "%Y-%m-%d"),
             time = format(Sys.time(), "%H:%M:%S"),
             note = input$title,
-            traps = if (is.null(traprv$data)) "" else input$trapfilename$name[1],
-            captures = if (is.null(captrv$data)) "" else input$captfilename$name[1],
+            traps = if (is.null(input$trapfilename)) "" else input$trapfilename$name[1],
+            captures = if (is.null(captrv$data)) {
+                if (is.null(input$importfilename)) "" else input$importfilename$name[1]
+            }
+            else input$captfilename$name[1],
             ndetectors = ndetectors()[input$sess],
             noccasions = noccasions()[input$sess],
             usagepct = usagepct()[input$sess],
@@ -1259,7 +1276,7 @@ server <- function(input, output, session) {
         # returns the R code needed to generate the specified array, 
         # as a character value
         code <- ""  
-        if (!is.null(traprv$data)) {
+        if (!is.null(traprv$data) & is.null(input$importfilename)) {
             args <- input$trapargs
             if (args != "") {
                 args <- paste0(", ", args)
@@ -1326,6 +1343,10 @@ server <- function(input, output, session) {
         # returns the R code needed to generate the specified array, 
         # as a character value
         code <- ""  
+        if (!is.null(importrv$data)) {
+            code <- paste0("ch <- readRDS('", input$importfilename[1,"name"], "')\n")
+        }
+        else {
         if (!is.null(captrv$data)) {
             args <- input$captargs
             if (args != "")
@@ -1364,27 +1385,13 @@ server <- function(input, output, session) {
             #                    "array[,2] <- (array[,2]- meanxy[2]) * ", input$scalefactor, " + meanxy[2]\n")
             #     #"array[,] <- array[,] * ", input$scalefactor, "\n")
             # }
-            # if (ms(captrv$data)) {
-            #     if (!is.null(covariates(captrv$data[[1]]))) {
-            #         ncov <- ncol(covariates(captrv$data[[1]]))
-            #         covnames <- getcovnames(input$captcovnames, ncov, TRUE)
-            #         covnamecode <- paste0("names(covariates(ch)) <- ", covnames, "\n")
-            #         code <- paste0(code, covnamecode)
-            #     }
-            # }
-            # else {
-            #     if (!is.null(covariates(captrv$data))) {
-            #         covnames <- getcovnames(input$captcovnames, ncol(covariates(captrv$data)), TRUE)
-            #         covnamecode <- paste0("names(covariates(ch)) <- ", covnames, "\n")
-            #         code <- paste0(code, covnamecode)
-            #     }
-            # }
-            # 
+            
             if (comment) {
                 tmp <- lapply(strsplit(code, "\n")[[1]], function(x) paste0("# ", x))
                 tmp$sep <- "\n"
                 code <- do.call(paste, tmp)
             }
+        }
         }
         code        
     }
@@ -1398,10 +1405,12 @@ server <- function(input, output, session) {
         model <- paste0("model = list(", input$model, ")")
         distn <- if (input$distributionbtn == "Poisson") "" else 
             ",\n      details = list(distribution = 'binomial')"
+        method <- if (input$method == "Newton-Raphson") "" else 
+            paste0(",\n      method = '", input$method, "'")
         otherargs <- if (input$otherargs=="") "" else paste0(",\n      ", input$otherargs)
         code <- paste0(
             "fit <- secr.fit(ch, mask = mask, detectfn = ", detfn, CL, hcov, ", \n", 
-            "      ", model, ", trace = FALSE", distn, otherargs, ")\n"
+            "      ", model, ", trace = FALSE", distn, method, otherargs, ")\n"
         )
         code
     }
@@ -1537,6 +1546,11 @@ server <- function(input, output, session) {
         clear = FALSE
     )
     
+    importrv <- reactiveValues(
+        data = NULL,
+        clear = FALSE
+    )
+    
     polyrv <- reactiveValues(
         data = NULL,
         clear = FALSE
@@ -1576,11 +1590,27 @@ server <- function(input, output, session) {
         covnames
     }
     
+    ## read import file
+    observe({
+        req(input$importfilename)
+        req(!importrv$clear)
+        ch <- readRDS(input$importfilename[1,"datapath"])
+        if (inherits(ch, 'capthist')) {
+            importrv$data <- ch
+            traprv$data <- traps(ch)
+        }
+        else {
+            stop("not a valid capthist Rds")
+        }
+    })
+    
+    
     ## read trap file
     observe({
         req(input$trapfilename)
         req(!traprv$clear)
         filename <- input$trapfilename[1,"datapath"]
+        
         if (is.null(filename))
             stop("provide valid filename")
         args <- input$trapargs
@@ -1671,6 +1701,10 @@ server <- function(input, output, session) {
         traprv$clear <- FALSE
     }, priority = 1000)
     
+    observeEvent(input$importfilename, {
+        traprv$clear <- FALSE
+    }, priority = 1000)
+    
     observeEvent(input$captfilename, {
         captrv$clear <- FALSE
     }, priority = 1000)
@@ -1686,52 +1720,53 @@ server <- function(input, output, session) {
     ##############################################################################
     
     capthist <- reactive( {
-        if (is.null(traprv$data) || is.null(captrv$data)) {
+        if ((is.null(traprv$data) || is.null(captrv$data)) && is.null(importrv$data)) {
             updateNumericInput(session, "animal", max = 0)
             NULL
         }
         else {
-            # covnames <- getcovnames(input$covnames, TRUE)
-            # ch <- try(suppressWarnings(make.capthist(captrv$data, traprv$data, 
-            #                                          fmt = input$fmt, 
-            #                                          covnames = covnames)))
-            ch <- try(suppressWarnings(make.capthist(captrv$data, traprv$data, 
-                                                      fmt = input$fmt)))
-            if (inherits(ch, 'try-error')) {
-                showNotification("invalid capture file or arguments; try again",
-                                 type = "error", id = "badcapt", duration = seconds)
-                showNotification(ch, type = "error", id = "capterror", duration = seconds)
-                ch <- NULL
+            if (!is.null(importrv$data)) {
+                ch <- importrv$data
             }
             else {
-                if (ms(ch)) {
-                    ncov <- ncol(covariates(ch[[1]]))
-                    if (length(ncov)>0 && ncov>0) {
-                        covnames <- getcovnames(input$covnames, ncov, TRUE, FALSE)
-                    }
-                    if (length(ncov)>0 && ncov>0) {
-                        for (i in 1:length(ch)) names(covariates(ch[[i]])) <- covnames
-                    }
-                    showNotification("multisession data - may cause problems", 
-                                     type = "warning", id = "mswarning", duration = seconds)
-                    updateNumericInput(session, "animal", max = nrow(ch[[input$sess]]))
-                     output$multisession <- renderText("true")
-                     
-                     
+                ch <- try(suppressWarnings(make.capthist(captrv$data, traprv$data, 
+                                                         fmt = input$fmt)))
+                if (inherits(ch, 'try-error')) {
+                    showNotification("invalid capture file or arguments; try again",
+                                     type = "error", id = "badcapt", duration = seconds)
+                    showNotification(ch, type = "error", id = "capterror", duration = seconds)
+                    ch <- NULL
                 }
                 else {
-                    ncov <- ncol(covariates(ch))
-                    if (length(ncov)>0 && ncov>0) {
-                        covnames <- getcovnames(input$covnames, ncov, TRUE, FALSE)
+                    if (ms(ch)) {
+                        ncov <- ncol(covariates(ch[[1]]))
+                        if (length(ncov)>0 && ncov>0) {
+                            covnames <- getcovnames(input$covnames, ncov, TRUE, FALSE)
+                        }
+                        if (length(ncov)>0 && ncov>0) {
+                            for (i in 1:length(ch)) names(covariates(ch[[i]])) <- covnames
+                        }
+                        showNotification("multisession data - may cause problems", 
+                                         type = "warning", id = "mswarning", duration = seconds)
+                        updateNumericInput(session, "animal", max = nrow(ch[[input$sess]]))
+                        output$multisession <- renderText("true")
+                        
+                        
                     }
-                    if (length(ncov)>0 && ncov>0) {
-                        names(covariates(ch)) <- covnames
+                    else {
+                        ncov <- ncol(covariates(ch))
+                        if (length(ncov)>0 && ncov>0) {
+                            covnames <- getcovnames(input$covnames, ncov, TRUE, FALSE)
+                        }
+                        if (length(ncov)>0 && ncov>0) {
+                            names(covariates(ch)) <- covnames
+                        }
+                        updateNumericInput(session, "animal", max = nrow(ch))
+                        output$multisession <- renderText("false")
                     }
-                    updateNumericInput(session, "animal", max = nrow(ch))
-                     output$multisession <- renderText("false")
+                    updateNumericInput(session, "sess", max = length(ch))
+                    updateSelectInput(session, "hcovbox", choices = c("none", names(covariates(ch))))
                 }
-                updateNumericInput(session, "sess", max = length(ch))
-                updateSelectInput(session, "hcovbox", choices = c("none", names(covariates(ch))))
             }
             ch
         }
@@ -2140,6 +2175,16 @@ server <- function(input, output, session) {
     }   )
     
     ##############################################################################
+
+    observeEvent(input$clearimportbtn, {
+        reset('importfilename')
+        importrv$clear <- TRUE
+        importrv$data <- NULL
+        traprv$value <- NULL
+        captrv$value <- NULL
+    }   )
+    
+    ##############################################################################
     
     observeEvent(input$clearlastbtn, {
         if (nrow(sumrv$value)>0)
@@ -2500,7 +2545,11 @@ server <- function(input, output, session) {
         
         maskrv$data <- NULL
         maskrv$clear <- TRUE
-        reset('maskfilename')
+        reset('maskfilename') 
+        
+        importrv$data <- NULL
+        importrv$clear <- TRUE
+        reset('importfilename')
         
         detectrv$value <- 'g0'
 
@@ -2982,6 +3031,14 @@ server <- function(input, output, session) {
         }
     )
     
+    output$exportbtn <- downloadHandler(
+        #if (!is.null(capthist())) {
+            filename = "ch.rds",
+            content = function(file) {
+                saveRDS(capthist(), file)
+            }
+        #}
+    )
     output$downloadfitcode <- downloadHandler(
         filename = "fitcode.R",
         content = function(file) {
