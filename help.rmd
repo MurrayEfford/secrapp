@@ -43,7 +43,7 @@ TIP: on small displays, running your browser in full-screen mode will avoid the 
 
 The detector layout is input from a text file. The file typically should have three columns (trapID, x, y) with no headers. These may optionally be followed by binary usage codes (0/1), one per occasion. Columns after a '/' are interpreted as detector covariates. 
 
-Options for <u>detector type</u>  follow **secr** ([Efford (2019a)](#references)): "multi" refers to a multi-catch trap; "proximity" to binary proximity detectors, and "count" to detectors that yield integer counts. Counts are assumed to be Poisson-distributed.
+Options for <u>detector type</u>  follow **secr** ([Efford (2019a)](#references)): "multi" refers to a multi-catch trap; "proximity" to binary proximity detectors, and "count" to detectors that yield integer counts. Counts are assumed to be Poisson-distributed. Data from searches of areas or transects use the types "polygon", "polygonX", "transect" or "transectX" (Efford 2011; see also [secr-polygondetectors.pdf]).
 
 If detector covariates are included then one or more covariate names should be provided (without quotes, separated by commas).
 
@@ -139,7 +139,7 @@ The application is designed for small- to medium-sized models. An internal algor
 <br>
 'Reset all' does not delete Summary results from the current session. Use the 'Clear all' and 'Delete last' buttons on the Summary page to manage the summaries. Summary results will be lost if you close the application without downloading to a local file.
 
-The option 'Switch to secrdesign' appears once a model has been fitted if the detection function is HHN or HEX. This opens 'secrdesignapp' on the Otago University server in a new browser window. Settings and parameter estimates are transferred automatically. Detector locations are not transferred; they should be provided either by selecting the file in secrdesignapp, or by the usual options (Grid, Line, Region).
+The option 'Switch to secrdesign' appears once a model has been fitted if the detection function is HHN or HEX and the detector type is multi, proximity or count. This opens 'secrdesignapp' on the Otago University server in a new browser window. Settings and parameter estimates are transferred automatically. Detector locations are not transferred; they should be provided either by selecting the file in secrdesignapp, or by the usual options (Grid, Line, Region).
 
 ## Results  <a name="results"></a>
 
@@ -259,12 +259,18 @@ The port number is arbitrary. Bookmarks are stored in a subdirectory of destdir.
 
 Borchers, D. L. and Efford, M. G. (2008) Spatially explicit maximum likelihood methods for capture--recapture studies. *Biometrics* **64**, 377--385.
 
-Efford, M. G. (2019a) secr: Spatially explicit capture--recapture models. R package version 4.0.1. https://CRAN.R-project.org/package=secr
+Efford, M. G. (2011) Estimation of population density by
+spatially explicit capture--recapture analysis of data from area
+searches. *Ecology* **92**, 2202--2207.
+
+Efford, M. G. (2019a) secr: Spatially explicit capture--recapture models. R package version 4.1.0. https://CRAN.R-project.org/package=secr
 
 Efford, M. G. (2019b) secrdesign: Sampling design for spatially explicit capture--recapture. R package version 2.5.7.
   https://CRAN.R-project.org/package=secrdesign
 
 Efford, M. G. and Boulanger, J. (2019) Fast evaluation of study designs for spatially explicit capture--recapture. *Methods in Ecology and Evolution* **10**, 1529--1535.
+
 ----------------------------------------------------
 
 [secrdesign-Enrm.pdf]: http://www.otago.ac.nz/density/pdfs/secrdesign-tools.pdf
+[secr-polygondetectors.pdf]: http://www.otago.ac.nz/density/pdfs/secr-polygondetectors.pdf

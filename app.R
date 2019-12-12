@@ -724,7 +724,7 @@ server <- function(input, output, session) {
              # open secrdesignapp in a new tab, with parameters from secrapp
              # designurl is set at top of this file
              
-             if (input$detectfnbox %in% c('HHN','HEX')) {
+             if (input$detectfnbox %in% c('HHN','HEX') && input$detector %in% c('multi','proximity','count')) {
                  tags$a(href =  paste0(designurl, "?", parm), "Switch to secrdesign", target="_blank")  
              }
          }
