@@ -1276,7 +1276,7 @@ server <- function(input, output, session) {
         # returns the R code needed to generate the specified array, 
         # as a character value
         code <- ""  
-        if (!is.null(traprv$data) & is.null(input$importfilename)) {
+        if (!is.null(traprv$data) && is.null(importrv$value)) {
             args <- input$trapargs
             if (args != "") {
                 args <- paste0(", ", args)
@@ -1702,7 +1702,7 @@ server <- function(input, output, session) {
     }, priority = 1000)
     
     observeEvent(input$importfilename, {
-        traprv$clear <- FALSE
+        importrv$clear <- FALSE
     }, priority = 1000)
     
     observeEvent(input$captfilename, {
@@ -2178,11 +2178,16 @@ server <- function(input, output, session) {
 
     observeEvent(input$clearimportbtn, {
         reset('importfilename')
-        importrv$clear <- TRUE
+        
         importrv$data <- NULL
-        traprv$value <- NULL
-        captrv$value <- NULL
-    }   )
+        importrv$clear <- TRUE
+        
+        traprv$data <- NULL
+        traprv$clear <- TRUE
+        
+        captrv$data <- NULL
+        captrv$clear <- TRUE
+    })
     
     ##############################################################################
     
