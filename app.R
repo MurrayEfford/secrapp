@@ -212,6 +212,7 @@ ui <- function(request) {
                                                                           )
                                                                  ),
                                                                  tabPanel("Detectfn", plotOutput("detnPlot", height = 320)),
+                                                                 tabPanel("Buffer", plotOutput("esaPlot", height = 320)),
                                                                  tabPanel("Pxy",
                                                                           br(),
                                                                           fluidRow(
@@ -1293,9 +1294,12 @@ server <- function(input, output, session) {
             #     #"array[,] <- array[,] * ", input$scalefactor, "\n")
             # }
 
-            if (!is.null(covariates(traprv$data))) {
-                covnames <- getcovnames(input$trapcovnames, ncol(covariates(traprv$data)), TRUE)
-                covnamecode <- paste0("names(covariates(array)) <- ", covnames, "\n")
+            cov <- covariates(traprv$data)
+            if (!is.null(cov) && !ms(cov)) {     # defer hard case
+                ncov <- if (ms(cov)) ncol(cov[[1]]) else ncol(cov)
+                covnames <- getcovnames(input$trapcovnames, ncov, TRUE)
+                covnamecode <- if (ms(cov)) ""   # defer hard case
+                else paste0("names(covariates(array)) <- ", covnames, "\n")
                 code <- paste0(code, covnamecode)
             }
             if (comment) {
@@ -1610,6 +1614,11 @@ server <- function(input, output, session) {
         req(input$trapfilename)
         req(!traprv$clear)
         filename <- input$trapfilename[1,"datapath"]
+        reset('importfilename')
+        importrv$data <- NULL
+        importrv$clear <- TRUE
+        captrv$data <- NULL
+        captrv$clear <- TRUE
         
         if (is.null(filename))
             stop("provide valid filename")
@@ -1720,6 +1729,7 @@ server <- function(input, output, session) {
     ##############################################################################
     
     capthist <- reactive( {
+        ch <- NULL
         if ((is.null(traprv$data) || is.null(captrv$data)) && is.null(importrv$data)) {
             updateNumericInput(session, "animal", max = 0)
             NULL
@@ -1731,48 +1741,46 @@ server <- function(input, output, session) {
             else {
                 ch <- try(suppressWarnings(make.capthist(captrv$data, traprv$data, 
                                                          fmt = input$fmt)))
-                if (inherits(ch, 'try-error')) {
-                    showNotification("invalid capture file or arguments; try again",
-                                     type = "error", id = "badcapt", duration = seconds)
-                    showNotification(ch, type = "error", id = "capterror", duration = seconds)
-                    ch <- NULL
+            }
+            if (inherits(ch, 'try-error')) {
+                showNotification("invalid capture file or arguments; try again",
+                                 type = "error", id = "badcapt", duration = seconds)
+                showNotification(ch, type = "error", id = "capterror", duration = seconds)
+                ch <- NULL
+            }
+            else {
+                if (ms(ch)) {
+                    ncov <- ncol(covariates(ch[[1]]))
+                    if (length(ncov)>0 && ncov>0) {
+                        covnames <- getcovnames(input$covnames, ncov, TRUE, FALSE)
+                    }
+                    if (length(ncov)>0 && ncov>0) {
+                        for (i in 1:length(ch)) names(covariates(ch[[i]])) <- covnames
+                    }
+                    showNotification("multisession data - may cause problems", 
+                                     type = "warning", id = "mswarning", duration = seconds)
+                    updateNumericInput(session, "animal", max = nrow(ch[[input$sess]]))
+                    output$multisession <- renderText("true")
                 }
                 else {
-                    if (ms(ch)) {
-                        ncov <- ncol(covariates(ch[[1]]))
-                        if (length(ncov)>0 && ncov>0) {
-                            covnames <- getcovnames(input$covnames, ncov, TRUE, FALSE)
-                        }
-                        if (length(ncov)>0 && ncov>0) {
-                            for (i in 1:length(ch)) names(covariates(ch[[i]])) <- covnames
-                        }
-                        showNotification("multisession data - may cause problems", 
-                                         type = "warning", id = "mswarning", duration = seconds)
-                        updateNumericInput(session, "animal", max = nrow(ch[[input$sess]]))
-                        output$multisession <- renderText("true")
-                        
-                        
+                    ncov <- ncol(covariates(ch))
+                    if (length(ncov)>0 && ncov>0) {
+                        covnames <- getcovnames(input$covnames, ncov, TRUE, FALSE)
                     }
-                    else {
-                        ncov <- ncol(covariates(ch))
-                        if (length(ncov)>0 && ncov>0) {
-                            covnames <- getcovnames(input$covnames, ncov, TRUE, FALSE)
-                        }
-                        if (length(ncov)>0 && ncov>0) {
-                            names(covariates(ch)) <- covnames
-                        }
-                        updateNumericInput(session, "animal", max = nrow(ch))
-                        output$multisession <- renderText("false")
+                    if (length(ncov)>0 && ncov>0) {
+                        names(covariates(ch)) <- covnames
                     }
-                    updateNumericInput(session, "sess", max = length(ch))
-                    updateSelectInput(session, "hcovbox", choices = c("none", names(covariates(ch))))
+                    updateNumericInput(session, "animal", max = nrow(ch))
+                    output$multisession <- renderText("false")
                 }
+                updateNumericInput(session, "sess", max = length(ch))
+                updateSelectInput(session, "hcovbox", choices = c("none", names(covariates(ch))))
             }
-            ch
         }
+        ch
     })
     ##############################################################################
-
+    
     density <- reactive( {
         if (!inherits(fitrv$value, "secr")) {
             NA
@@ -1831,7 +1839,10 @@ server <- function(input, output, session) {
         showNotification("Computing derived estimates ...",
                          id = "derived", duration = seconds)
         der <- derived(fitrv$value, distribution = tolower(input$distributionbtn))
-        round(der, input$dec)
+        if (ms(capthist()))
+            lapply(der, round, input$dec)
+        else 
+            round(der, input$dec)
     })
     ##############################################################################
     
@@ -1895,8 +1906,9 @@ server <- function(input, output, session) {
                                   poly = if (input$polygonbox) polyrv$data else NULL,
                                   poly.habitat = input$includeexcludebtn == "Include",
                                   keep.poly = FALSE)
-                if (nrow(msk) > 10000) {
-                    showNotification(paste0(nrow(msk), " mask rows is excessive; reduce nx"),
+                nrw <- if (ms(msk)) nrow(msk[[1]]) else nrow(msk)
+                if (nrw > 10000) {
+                    showNotification(paste0(nrw, " mask rows is excessive; reduce nx"),
                                      type = "warning", id = "maskrows",
                                      duration = seconds)
                 }
@@ -1999,7 +2011,7 @@ server <- function(input, output, session) {
         {
             poprv$v
             input$Dshowpopn
-            core <- traprv$data
+            core <- if (ms(traprv$data)) traprv$data[input$sess] else traprv$data
             if (is.null(core) || (density() == 0) || is.na(density())) {
                 return (NULL)
             }
@@ -2011,9 +2023,8 @@ server <- function(input, output, session) {
             else removeNotification("bigpop")
             Ndist <- if (input$distributionbtn == 'Poisson') 'poisson' else 'fixed'
             
-            # dsurf <- predictDsurface(fitrv$value)
-            msk <- fitrv$value$mask
-            sim.popn (D = 'D.0', core=fitrv$dsurf, model2D="IHP", Ndist = Ndist)   # density()
+            dsurf <- if(ms(fitrv$dsurf)) fitrv$dsurf[[input$sess]] else fitrv$dsurf
+            sim.popn (D = 'D.0', core = dsurf, model2D = "IHP", Ndist = Ndist)  
             
         }
     )
@@ -2372,7 +2383,10 @@ server <- function(input, output, session) {
 
     observeEvent(input$pxyclick, {
         invalidateOutputs()
-        trps <- traprv$data
+        if (ms(traprv$data)) 
+            trps <- traprv$data[[input$sess]]
+        else
+            trps <- traprv$data
         
         border <- border(input$pxyborder)
         
@@ -2397,12 +2411,13 @@ server <- function(input, output, session) {
     ##############################################################################
     observeEvent(input$Dclick, {
         invalidateOutputs()
-        #dsurf <- predictDsurface(fitrv$value)
+        dsurf <- if (ms(fitrv$dsurf)) fitrv$dsurf[[input$sess]] else fitrv$dsurf
         Drv$xy <-c(input$Dclick$x, input$Dclick$y)
-        if (pointsInPolygon(Drv$xy, fitrv$dsurf)) {
-            maskrow <- nearesttrap(Drv$xy, mask())
+        if (pointsInPolygon(Drv$xy, dsurf)) {
+            msk <- if (ms(mask())) mask()[[input$sess]] else mask()
+            maskrow <- nearesttrap(Drv$xy, msk)
             cov <- 'D.0'
-            Drv$value <- covariates(fitrv$dsurf)[maskrow, cov, drop = FALSE]
+            Drv$value <- covariates(dsurf)[maskrow, cov, drop = FALSE]
         }
         else {
             Drv$value <- NULL
@@ -2636,6 +2651,7 @@ server <- function(input, output, session) {
         }
         hideplotif (is.null(traprv$data), "Array")
         hideplotif (is.null(fitrv$value), "Detectfn")
+        hideplotif (is.null(fitrv$value), "Buffer")
         hideplotif (is.null(fitrv$value), "Pxy")
         hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != 'Full'), "Dxy")
         hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != "Full"), "Popn")
@@ -2677,7 +2693,11 @@ server <- function(input, output, session) {
             summary(traprv$data)
         }
         else if (is.null(fitrv$value)) {
-            summary(capthist(), moves = TRUE)
+            if (ms(capthist())) {
+                list(terse = summary(capthist(), terse = TRUE), bysession = summary(capthist(), moves = TRUE))            }
+            else {
+                summary(capthist(), moves = TRUE)
+            }
         }
         else if (inherits(fitrv$value, "secr")) {
             enable("resultsbtn")    ## shinyjs
@@ -2733,6 +2753,7 @@ server <- function(input, output, session) {
     
     ## arrayPlot
     ## detnPlot
+    ## esaPlot
     ## pxyPlot
     ## DPlot
     ## powerPlot
@@ -2776,7 +2797,6 @@ server <- function(input, output, session) {
     ##############################################################################
 
     output$detnPlot <- renderPlot( height = 290, width = 400, {
-        ## inp <- oS2()
         invalidateOutputs()
         usez <- input$detectfnbox %in% c('HR', 'CLN','CG','HHR','HCG','HVP')
         np <- if(usez) 3 else 2
@@ -2806,12 +2826,24 @@ server <- function(input, output, session) {
             
             if (detectrv$value == 'g0') {
                 axis(4, at = 1-exp(-p), label = p, xpd = FALSE, las = 1)
-            mtext(side = 4, line = 3.7, expression(paste("Detection hazard   ", lambda)))
+                mtext(side = 4, line = 3.7, expression(paste("Detection hazard   ", lambda)))
             }
             else {
                 axis(4, at = -log(1 - p), label = p, xpd = FALSE, las = 1)
                 mtext(side = 4, line = 3.7, "Detection probability    g")
             }
+        }
+    })
+    ##############################################################################
+    
+    output$esaPlot <- renderPlot( height = 290, width = 400, {
+        invalidateOutputs()
+        req(fitrv$value)
+        par(mar=c(4,5,2,5))
+        esa.plot(fitrv$value, session = input$sess)
+        mtext("Density estimate", side = 4, line = 1.5)
+        if (input$masktype == "Build") {
+            abline(v = input$buffer, col = "red")
         }
     })
     ##############################################################################
@@ -2863,14 +2895,18 @@ server <- function(input, output, session) {
             spc <- max(diff(range(traprv$data$x)), diff(range(traprv$data$y)))/10
         }
         else {
-            spc <- spacing(traprv$data) 
+            spc <- spacing(traprv$data)[1] 
         }
         if (is.null(spc) || is.na(spc)) spc <- sigma()
         multiple * spc
     }
     
     output$pxyPlot <- renderPlot({
-        core <- traprv$data
+        if (ms(traprv$data))
+            core <- traprv$data[[input$sess]]
+        else
+            core <- traprv$data
+        
         if (is.null(core)) return (NULL)
         invalidateOutputs()
         

@@ -178,6 +178,10 @@ By default, the locations of one animal are highlighted. Suppress this by select
 
 Fitted detection function on the hazard and probability scales.
 
+### Buffer   <a name="esaplot"></a>
+
+Predicted effect of buffer width on density estimates. The plot is generated with `esa.plot(fit)`. A red vertical line indicates the buffer that was used (there is no line when the mask has been read from a file).
+
 ### Pxy
 
 Contours of the overall detection probability \( \small p_\cdot(\mathbf x)\) under the fitted model ('Pxy' is the label that has been used for this quantity in the Windows application Density).  Settings in Options toggle the display between filled and unfilled contour plots, and determine whether contours are labelled. The requested contour levels are 0.1, 0.2, ..., 0.9, but higher contours may be missing. Click on the plot to find the value at a point.
