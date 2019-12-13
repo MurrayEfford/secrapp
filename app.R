@@ -462,18 +462,19 @@ ui <- function(request) {
                                          h2("Data Import/Export"),
                                          wellPanel(class = "mypanel",
                                                    fluidRow(
-                                                       column(8, fileInput("importfilename", "Import capthist from Rds file")),
-                                                       # ,  
-                                                       #                  accept = "text/plain")),
+                                                       column(8, fileInput("importfilename", 
+                                                                           "Import capthist from Rds file")),
                                                        column(4, br(), actionLink("clearimportbtn", "Clear"))
                                                        
-                                                   ),
-                                                   fluidRow(
-                                                       column(8, downloadLink("exportbtn", "Export capthist to Rds file", 
-                                                                                title = "Save as RDS file"))  #, "Export capthist to Rds file")),
-                                                       #column(4, br(), actionLink("exportbtn", "Save"))
-                                                       
                                                    )
+                                         ),
+                                         conditionalPanel("output.capthistLoaded", 
+                                                          wellPanel(class = "mypanel",
+                                                          fluidRow(
+                                                              column(8, downloadLink("exportbtn", "Export current capthist to Rds file", 
+                                                                                           title = "Save as RDS file"))),
+                                                          br()
+                                                          )
                                          ),
                                          h2("Model fitting"),
                                          wellPanel(class = "mypanel",
@@ -650,9 +651,14 @@ server <- function(input, output, session) {
          return(!is.null(fitrv$value))
      })
      
+     output$capthistLoaded <- reactive({
+         return(!is.null(capthist()))
+     })
+     
      outputOptions(output, "maskready", suspendWhenHidden=FALSE)
      outputOptions(output, "modelFitted", suspendWhenHidden=FALSE)
-
+     outputOptions(output, "capthistLoaded", suspendWhenHidden=FALSE)
+     
      
     ##############################################################################
     
@@ -3073,13 +3079,12 @@ server <- function(input, output, session) {
     )
     
     output$exportbtn <- downloadHandler(
-        #if (!is.null(capthist())) {
-            filename = "ch.rds",
-            content = function(file) {
-                saveRDS(capthist(), file)
-            }
-        #}
+        filename = "ch.rds",
+        content = function(file) {
+            saveRDS(capthist(), file)
+        }
     )
+    
     output$downloadfitcode <- downloadHandler(
         filename = "fitcode.R",
         content = function(file) {
