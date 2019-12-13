@@ -1,7 +1,7 @@
 ---
 title: "secr app 1.1"
 author: "Murray Efford"
-date: '2019-11-27'
+date: '2019-12-14'
 output:
   html_document:
     toc: yes
@@ -23,13 +23,13 @@ output:
 
 # Introduction  <a name="introduction"></a>
 
-This Shiny application is an interactive interface to parts of the R package **secr** ([Efford 2019a](#references)). It fits simple single-session models. The current source code is available from https://GitHub.com/MurrayEfford/secrapp.
-
-Documentation of **secr** is available at www.otago.ac.nz/density. For example:
+This Shiny application is an interactive interface to parts of the R package **secr** ([Efford 2019a](#references)). The current source code is available from https://GitHub.com/MurrayEfford/secrapp. Documentation of **secr** is available at www.otago.ac.nz/density. For example:
 
 <a href="https://www.otago.ac.nz/density/pdfs/secr-manual.pdf"; target="_blank";>secr-manual.pdf</a>   (details of each function)  
 <a href="https://www.otago.ac.nz/density/pdfs/secr-datainput.pdf"; target="_blank";>secr-datainput.pdf</a>  
 <a href="https://www.otago.ac.nz/density/pdfs/secr-overview.pdf"; target="_blank";>secr-overview.pdf</a>
+
+The analyses available through the Shiny app are a subset of those in **secr**. Support for multi-session analyses is limited.
 
 TIP: on small displays, running your browser in full-screen mode will avoid the need to scroll down (often F11 will get you there; otherwise try the options menu).
 
@@ -173,6 +173,8 @@ The statements may be copied and pasted into an R session. It is assumed that in
 A plot of the current detector layout. Detections are overplotted if they have been uploaded.
 
 By default, the locations of one animal are highlighted. Suppress this by selecting animal '0'.
+
+A session selector is shown for multi-session data. Changing the session changes the plot displayed on this tab, and on some others (Buffer, Pxy, Dxy); it does not affect model fitting.
 
 ### Detectfn   <a name="detectfnplot"></a>
 
