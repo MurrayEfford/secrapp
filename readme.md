@@ -11,7 +11,7 @@ library(shiny)
 runGitHub("secrapp", "MurrayEfford")
 ```
 
-Version 1.1 requires secr >= 4.0.1.
+Version 1.1 requires secr >= 4.1.0.
 
 ----
 
@@ -27,3 +27,5 @@ ovtrap.txt | Locations of possum traps in the Orongorongo Valley | Data input - 
 OVforest.dbf | ESRI polygon shapefile extent of habitat near possum traps | Habitat mask - Mask polygon files |
 OVforest.shp |||
 OVforest.shx |||
+masktext2.txt | Demo mask file for capt.txt | Habitat mask - File input |
+ovenCHp.Rds | Saved ovenbird proximity dataset | Options - Data import |
