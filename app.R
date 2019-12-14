@@ -1,6 +1,3 @@
-# 2019-11-05 secr only (openCR removed)
-# 2019-11-05 new timing (trial evaluation LL)
-
 library(secr)
 library(shinyjs)
 library(stringr)
@@ -1309,15 +1306,6 @@ server <- function(input, output, session) {
             code <- paste0("array <- read.traps ('",
                            input$trapfilename[1,"name"],
                            "', detector = '", input$detector, "'", args, ")\n")
-            # if (input$scalefactor != 1.0) {
-            #     code <- paste0(code,
-            #                    "# optional scaling about centroid\n",
-            #                    "meanxy <- apply(array,2,mean)\n",
-            #                    "array[,1] <- (array[,1]- meanxy[1]) * ", input$scalefactor, " + meanxy[1]\n",
-            #                    "array[,2] <- (array[,2]- meanxy[2]) * ", input$scalefactor, " + meanxy[2]\n")
-            #     #"array[,] <- array[,] * ", input$scalefactor, "\n")
-            # }
-
             cov <- covariates(traprv$data)
             if (!is.null(cov) && !ms(cov)) {     # defer hard case
                 ncov <- if (ms(cov)) ncol(cov[[1]]) else ncol(cov)
@@ -1375,51 +1363,45 @@ server <- function(input, output, session) {
             code <- paste0("ch <- readRDS('", input$importfilename[1,"name"], "')\n")
         }
         else {
-        if (!is.null(captrv$data)) {
-            args <- input$captargs
-            if (args != "")
-                args <- paste0(", ", args)
-            if (input$fmt=='XY') {
-                fmt <- ", fmt = 'XY'" 
-                datacols <- 5
+            if (!is.null(captrv$data)) {
+                args <- input$captargs
+                
+                
+                if (args != "")
+                    args <- paste0(", ", args)
+                
+                if (input$fmt=='XY') {
+                    fmt <- ", fmt = 'XY'" 
+                    datacols <- 5
+                }
+                else {
+                    fmt <- ""
+                    datacols <- 4
+                }
+                ncov <- ncol(captrv$data) - datacols
+                if (ncov==0) {
+                    cov <- NULL
+                }
+                else {
+                    covnames <- getcovnames(input$covnames, ncov, TRUE)
+                    cov <- if (covnames == "") "" else paste0(", covnames = ", covnames)
+                }
+                
+                if (grepl('.xls', input$captfilename$name[1])) {
+                    code <- paste0("capt <- readxl::read_excel('", input$captfilename[1,"name"], "'", args, ")\n")
+                }
+                else {
+                    code <- paste0("capt <- read.table('", input$captfilename[1,"name"], "'", args, ")\n")
+                }
+                
+                code <- paste0(code, "ch <- make.capthist (capt, traps = array", fmt, cov, ")\n")
+                
+                if (comment) {
+                    tmp <- lapply(strsplit(code, "\n")[[1]], function(x) paste0("# ", x))
+                    tmp$sep <- "\n"
+                    code <- do.call(paste, tmp)
+                }
             }
-            else {
-                fmt <- ""
-                datacols <- 4
-            }
-            ncov <- ncol(captrv$data) - datacols
-            if (ncov==0) {
-                cov <- NULL
-            }
-            else {
-                covnames <- getcovnames(input$covnames, ncov, TRUE)
-                cov <- if (covnames == "") "" else paste0(", covnames = ", covnames)
-            }
-            
-            if (grepl('.xls', input$captfilename$name[1])) {
-                code <- paste0("capt <- readxl::read_excel('", input$captfilename[1,"name"], "'", args, ")\n")
-            }
-            else {
-                code <- paste0("capt <- read.table('", input$captfilename[1,"name"], "'", args, ")\n")
-            }
-            
-            code <- paste0(code, "ch <- make.capthist (capt, traps = array", fmt, cov, ")\n")
-            
-            # if (input$scalefactor != 1.0) {
-            #     code <- paste0(code,
-            #                    "# optional scaling about centroid\n",
-            #                    "meanxy <- apply(array,2,mean)\n",
-            #                    "array[,1] <- (array[,1]- meanxy[1]) * ", input$scalefactor, " + meanxy[1]\n",
-            #                    "array[,2] <- (array[,2]- meanxy[2]) * ", input$scalefactor, " + meanxy[2]\n")
-            #     #"array[,] <- array[,] * ", input$scalefactor, "\n")
-            # }
-            
-            if (comment) {
-                tmp <- lapply(strsplit(code, "\n")[[1]], function(x) paste0("# ", x))
-                tmp$sep <- "\n"
-                code <- do.call(paste, tmp)
-            }
-        }
         }
         code        
     }
@@ -1461,9 +1443,6 @@ server <- function(input, output, session) {
         }
         CL <- input$likelihoodbtn != "Full"
         
-        # f <- paste0("list(", input$model, ")")
-        # f <- tryCatch(parse(text = f), error = function(e) NULL)
-        # model <- eval(f)
         model <- modellist()
 
         otherargs <- try(eval(parse(text = paste0("list(", input$otherargs, ")"))), silent = TRUE)
@@ -1647,29 +1626,37 @@ server <- function(input, output, session) {
         
         if (is.null(filename))
             stop("provide valid filename")
-        args <- input$trapargs
-        if (args != "") {
-            args <- paste0(", ", args)
-        }
         
-        readtrapcall <-  paste0("read.traps (filename, detector = input$detector", args, ")")
-        temp <- try(eval(parse(text = readtrapcall)))
-        if (!inherits(temp, "traps")) {
-            showNotification("invalid trap file or arguments; try again",
-                             type = "error", id = "badtrap", duration = seconds)
-            traprv$data <- NULL
-            #traprv$clear <- TRUE
+        tempargs <- try(eval(parse(text = paste0("list(", input$trapargs, ")"))), silent = TRUE)
+        if (inherits(tempargs, "try-error")) {
+            showNotification("trap arguments incomplete or invalid", type = "error", id = "badtrapargs")
         }
         else {
-            ncov <- ncol(covariates(temp))
-            if (length(ncov)>0 && ncov>0) {
-                covnames <- getcovnames(input$trapcovnames, ncov, TRUE, FALSE)
-                names(covariates(temp)) <- covnames
+            removeNotification(id = "badtrapargs")
+            args <- input$trapargs
+            if (args != "") {
+                args <- paste0(", ", args)
             }
-            # if (covnames != "") {
-            #     args <- paste0(", covnames = ", covnames)
-            # }
-            traprv$data <- temp
+            
+            readtrapcall <-  paste0("read.traps (filename, detector = input$detector", args, ")")
+            temp <- try(eval(parse(text = readtrapcall)))
+            if (!inherits(temp, "traps")) {
+                showNotification("invalid trap file or arguments; try again",
+                                 type = "error", id = "badtrap", duration = seconds)
+                traprv$data <- NULL
+                #traprv$clear <- TRUE
+            }
+            else {
+                ncov <- ncol(covariates(temp))
+                if (length(ncov)>0 && ncov>0) {
+                    covnames <- getcovnames(input$trapcovnames, ncov, TRUE, FALSE)
+                    names(covariates(temp)) <- covnames
+                }
+                # if (covnames != "") {
+                #     args <- paste0(", covnames = ", covnames)
+                # }
+                traprv$data <- temp
+            }
         }
     })
     ##############################################################################
@@ -1682,24 +1669,31 @@ server <- function(input, output, session) {
         if (is.null(filename))
             stop("provide valid filename")
         args <- input$captargs
-        if (args != "")
-            args <- paste0(", ", args)
-        if (grepl('.xls', input$captfilename$name[1])) {
-            readcaptcall <- paste0("readxl::read_excel(filename", args, ")")
+        tempargs <- try(eval(parse(text = paste0("list(", args, ")"))), silent = TRUE)
+        if (inherits(tempargs, "try-error")) {
+            showNotification("arguments incomplete or invalid", type = "error", id = "badcaptargs")
         }
         else {
-            readcaptcall <- paste0("read.table (filename", args, ")")
-        }
-        captrv$data <- try(eval(parse(text = readcaptcall)))
-        captrv$data <- as.data.frame(captrv$data)
-        if (!inherits(captrv$data, "data.frame")) {
-            showNotification("invalid capture file or arguments; try again",
-                             type = "error", id = "badcapt", duration = seconds)
-            captrv$data <- NULL
+            removeNotification(id = "badcaptargs")
+            if (args != "")
+                args <- paste0(", ", args)
+            if (grepl('.xls', input$captfilename$name[1])) {
+                readcaptcall <- paste0("readxl::read_excel(filename", args, ")")
+            }
+            else {
+                readcaptcall <- paste0("read.table (filename", args, ")")
+            }
+            captrv$data <- try(eval(parse(text = readcaptcall)))
+            captrv$data <- as.data.frame(captrv$data)
+            if (!inherits(captrv$data, "data.frame")) {
+                showNotification("invalid capture file or arguments; try again",
+                                 type = "error", id = "badcapt", duration = seconds)
+                captrv$data <- NULL
+            }
         }
     })
     ##############################################################################
-
+    
     ## read mask polygon file
     observe({
         req(input$polyfilename)
