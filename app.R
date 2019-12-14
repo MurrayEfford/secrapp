@@ -1324,6 +1324,13 @@ server <- function(input, output, session) {
     }
     ##############################################################################
     
+    trapscode <- function () {
+        # returns the R code needed to extract array from capthist
+        # as a character value
+        if (!is.null(importrv$data) && input$masktype == "Build") "array <- traps(ch)\n" else ""
+    }
+    ##############################################################################
+    
     maskcode <- function () {
         if (input$masktype == 'Build') {
             if (is.null(traprv$data))
@@ -2766,9 +2773,11 @@ server <- function(input, output, session) {
             cat(arraycode())
         }
         cat(captcode())
+        
         if (!is.null(capthist())) {
             cat("summary(ch)\n")
             cat("\n# fit model\n")
+            cat(trapscode())  # optionally retrieve array from ch for mask    
             cat(maskcode())
             cat(fitcode())
             cat("summary(fit)\n")
