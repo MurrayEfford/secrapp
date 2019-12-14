@@ -1309,7 +1309,7 @@ server <- function(input, output, session) {
             cov <- covariates(traprv$data)
             if (!is.null(cov) && !ms(cov)) {     # defer hard case
                 ncov <- if (ms(cov)) ncol(cov[[1]]) else ncol(cov)
-                covnames <- getcovnames(input$trapcovnames, ncov, TRUE)
+                covnames <- getcovnames(input$trapcovnames, ncov, 'T', TRUE)
                 covnamecode <- if (ms(cov)) ""   # defer hard case
                 else paste0("names(covariates(array)) <- ", covnames, "\n")
                 code <- paste0(code, covnamecode)
@@ -1390,7 +1390,7 @@ server <- function(input, output, session) {
                     cov <- NULL
                 }
                 else {
-                    covnames <- getcovnames(input$covnames, ncov, TRUE)
+                    covnames <- getcovnames(input$covnames, ncov, 'C', TRUE)
                     cov <- if (covnames == "") "" else paste0(", covnames = ", covnames)
                 }
                 
@@ -1578,12 +1578,12 @@ server <- function(input, output, session) {
     
     ##############################################################################
 
-    getcovnames <- function (cov, ncov, quote = FALSE, character = TRUE) {
+    getcovnames <- function (cov, ncov, prefix = 'X', quote = FALSE, character = TRUE) {
         if (ncov <= 0) {
             NULL
         }
         else {
-            covnames <- paste0('X', 1:ncov)   # default
+            covnames <- paste0(prefix, 1:ncov)   # default
             if (cov != "") {
                 cov <- gsub("(')|(\")", "", cov)   # remove quotes
                 nam <- strsplit(str_squish(cov), '[ ,]')
@@ -1656,7 +1656,7 @@ server <- function(input, output, session) {
             else {
                 ncov <- ncol(covariates(temp))
                 if (length(ncov)>0 && ncov>0) {
-                    covnames <- getcovnames(input$trapcovnames, ncov, TRUE, FALSE)
+                    covnames <- getcovnames(input$trapcovnames, ncov, 'T', TRUE, FALSE)
                     names(covariates(temp)) <- covnames
                 }
                 # if (covnames != "") {
@@ -1778,7 +1778,7 @@ server <- function(input, output, session) {
                 if (ms(ch)) {
                     ncov <- ncol(covariates(ch[[1]]))
                     if (length(ncov)>0 && ncov>0) {
-                        covnames <- getcovnames(input$covnames, ncov, TRUE, FALSE)
+                        covnames <- getcovnames(input$covnames, ncov, 'C', TRUE, FALSE)
                     }
                     if (length(ncov)>0 && ncov>0) {
                         for (i in 1:length(ch)) names(covariates(ch[[i]])) <- covnames
@@ -1791,7 +1791,7 @@ server <- function(input, output, session) {
                 else {
                     ncov <- ncol(covariates(ch))
                     if (length(ncov)>0 && ncov>0) {
-                        covnames <- getcovnames(input$covnames, ncov, TRUE, FALSE)
+                        covnames <- getcovnames(input$covnames, ncov, 'C', TRUE, FALSE)
                     }
                     if (length(ncov)>0 && ncov>0) {
                         names(covariates(ch)) <- covnames
