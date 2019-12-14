@@ -1586,6 +1586,7 @@ server <- function(input, output, session) {
             covnames <- paste0(prefix, 1:ncov)   # default
             if (cov != "") {
                 cov <- gsub("(')|(\")", "", cov)   # remove quotes
+                cov <- gsub(",", " ", cov)         # comma to space
                 nam <- strsplit(str_squish(cov), '[ ,]')
                 if (length(nam[[1]]) >= ncov) {
                     covnames <- nam[[1]][1:ncov]
