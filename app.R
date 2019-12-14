@@ -157,8 +157,7 @@ ui <- function(request) {
                                                                     title = "Fit spatially explicit capture-recapture model to estimate density and update Results")),
                                              column(3, actionButton("helpbtn", "secr help",  width = 130,
                                                                     title = "Open secr help index")),
-                                             column(3, uiOutput("secrdesignurl")),  ## switch to secrdesign, with parameters
-                                             column(3, actionLink("incrementtime", label = "."))  
+                                             column(3, uiOutput("secrdesignurl"))  ## switch to secrdesign, with parameters
                                          ),
                                          
                                          br(),
@@ -488,9 +487,13 @@ ui <- function(request) {
                                          h2("Model fitting"),
                                          wellPanel(class = "mypanel",
                                                    fluidRow(
-                                                       column(12, selectInput("method", "Maximization method",
+                                                       column(11, selectInput("method", "Maximization method",
                                                                    choices = c("Newton-Raphson", "Nelder-Mead", "none"),
-                                                                   selected = "Newton-Raphson", width=160))
+                                                                   selected = "Newton-Raphson", width=160)),
+                                                       column(1, br(), br(), actionLink("incrementtime", label = "."))
+                                                   ),
+                                                   fluidRow(
+                                                       column(8, uiOutput("timelimitui") )
                                                    )
                                          ),
                                          h2("Summary"),
@@ -498,12 +501,7 @@ ui <- function(request) {
                                                    fluidRow(
                                                        column(12, numericInput("dec", "Decimal places", min = 0, max = 8, value = 4, width=160))
                                                    )
-                                         ),
-                                         h2("Settings"),
-                                         wellPanel(class = "mypanel",
-                                                   fluidRow(
-                                                       column(8, uiOutput("timelimitui") )
-                                                   ))
+                                         )
                                   ),
                                   column(3,
                                          
@@ -2469,6 +2467,8 @@ server <- function(input, output, session) {
         fitrv$value <- NULL
         traptextrv$value <- FALSE
         capttextrv$value <- FALSE
+        timerv$timewarning <- timewarning
+        timerv$timelimit <- timelimit
         
         ## Data input
 
@@ -2637,6 +2637,7 @@ server <- function(input, output, session) {
             progress$set(message = 'Suggesting buffer width ...', detail = '')
            if (is.null(fitrv$value)) {
                ch <- if (ms(ch)) ch[[1]] else ch
+               # 0.3 is guess?
                detectparlist <- list(0.3, RPSV(ch, CC = TRUE), 1)
                names(detectparlist) <- c(detectrv$value, 'sigma', 'z')
                buff <- suggest.buffer(ch, detectfn = input$detectfnbox,
