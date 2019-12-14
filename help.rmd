@@ -31,7 +31,7 @@ This Shiny application is an interactive interface to parts of the R package **s
 
 The analyses available through the Shiny app are a subset of those in **secr**. Support for multi-session analyses is limited.
 
-TIP: on small displays, running your browser in full-screen mode will avoid the need to scroll down (often F11 will get you there; otherwise try the options menu).
+TIP: on small displays, running your browser in full-screen mode will avoid the need to scroll down (often F11 will get you there; otherwise try the options menu of the browser).
 
 # Main screen  <a name="main"></a>
 
@@ -111,7 +111,7 @@ The <u>Distribution</u> radio button toggles between two models for the number o
 
 The <u>Mixture hcov</u> select input allows the user to choose a variable defining a mixture class from among the individual covariates. This is passed to `secr.fit` as the argument 'hcov'. The covariate should take two non-missing values (e.g., 'F','M'); missing values are allowed. The mixing proportion 'pmix' is included in the model automatically when hcov is specified. To estimate mixture-specific values of a parameter include ~h2 in its formula (e.g., lambda0~h2). See <a href="https://www.otago.ac.nz/density/pdfs/secr-finitemixtures.pdf"; target="_blank";>secr-finitemixtures.pdf</a> for more.
 
-Other arguments separated by commas may be used to customise the call to `secr.fit`.
+Other arguments separated by commas may be used to customise the call to `secr.fit`. Attempts here to change 'capthist', 'mask', 'model' or 'detectfn' are ignored, and 'trace' is always FALSE.
 
 Model formulae may be edited using pre-defined predictors or covariate names as described in <a href="https://www.otago.ac.nz/density/pdfs/secr-overview.pdf"; target="_blank";>secr-overview.pdf</a>. Time covariates ('timecov') and session covariates ('sessioncov') may be specified in 'Other arguments'. There is no provision for time-varying detector covariates.
 

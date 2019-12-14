@@ -1466,13 +1466,14 @@ server <- function(input, output, session) {
         # model <- eval(f)
         model <- modellist()
 
-        otherargs <- try(eval(parse(text = paste0("list(", input$otherargs, ")"))))
+        otherargs <- try(eval(parse(text = paste0("list(", input$otherargs, ")"))), silent = TRUE)
         if (inherits(otherargs, "try-error") && !LLonly) {
             showNotification("model fit failed - check other arguments",
                              type = "error", id = "nofit", duration = seconds)
             fit <- NULL
         }
         else {
+            otherargs <- otherargs[!(names(otherargs) %in% c('capthist','trace','mask','model','detectfn'))]
             args <- c(list(capthist = capthist(), 
                            trace = FALSE,
                            mask = mask(), 
