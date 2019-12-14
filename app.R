@@ -22,8 +22,16 @@ designurl <- "https://www.stats.otago.ac.nz/secrdesignapp/"   # secrdesignapp 1.
 # interrupt is hard -
 # see http://htmlpreview.github.io/?https://github.com/fellstat/ipc/blob/master/inst/doc/shinymp.html
 
+##############################################################################
+## global variables
+
 linewidth <- 2  # for various plots 
 seconds <- 6   ## default duration for showNotification()
+
+timewarning <- 0.2  ## minutes
+timelimit <- 5.0    ## minutes
+
+##############################################################################
 
 # Define UI 
 ui <- function(request) {
@@ -149,7 +157,8 @@ ui <- function(request) {
                                                                     title = "Fit spatially explicit capture-recapture model to estimate density and update Results")),
                                              column(3, actionButton("helpbtn", "secr help",  width = 130,
                                                                     title = "Open secr help index")),
-                                             column(3, uiOutput("secrdesignurl"))  ## switch to secrdesign, with parameters
+                                             column(3, uiOutput("secrdesignurl")),  ## switch to secrdesign, with parameters
+                                             column(3, actionLink("incrementtime", label = "."))  
                                          ),
                                          
                                          br(),
@@ -489,7 +498,12 @@ ui <- function(request) {
                                                    fluidRow(
                                                        column(12, numericInput("dec", "Decimal places", min = 0, max = 8, value = 4, width=160))
                                                    )
-                                         )
+                                         ),
+                                         h2("Settings"),
+                                         wellPanel(class = "mypanel",
+                                                   fluidRow(
+                                                       column(8, uiOutput("timelimitui") )
+                                                   ))
                                   ),
                                   column(3,
                                          
@@ -686,6 +700,12 @@ server <- function(input, output, session) {
          else if (input$detectfnbox == 'HHR') x <- HTML("hazard hazard rate")  
          else if (input$detectfnbox == 'HVP') x <- HTML("hazard variable power")  
          else x <- ''
+         helpText(x)
+     })
+     
+     output$timelimitui <- renderUI({
+         req(timerv)
+         x <- paste0("Time limit ", timerv$timelimit, " minutes")
          helpText(x)
      })
      
@@ -2111,7 +2131,8 @@ server <- function(input, output, session) {
     
     arrrv <- reactiveValues(v = 0)  # used to invalidate and re-plot detectorarray
     current <- reactiveValues(unit = "ha")
-    fitrv <- reactiveValues(value = NULL)
+    timerv <- reactiveValues(timewarning = timewarning, timelimit = timelimit)
+    fitrv <-  reactiveValues(value = NULL)
     poprv <- reactiveValues(v = 0)  # used to invalidate and re-plot popn
     pxyrv <- reactiveValues(current = FALSE, xy = NULL, value = NULL)
     Drv <- reactiveValues(current = FALSE, xy = NULL, value = NULL)
@@ -2238,6 +2259,10 @@ server <- function(input, output, session) {
     })
     ##############################################################################
 
+    observeEvent(input$incrementtime, ignoreInit = TRUE, {
+        timerv$timelimit <- timerv$timelimit+1
+    })
+    
     observeEvent(input$showtrapfilebtn, ignoreInit = TRUE, {
         ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
         capttextrv$value <- FALSE
@@ -2265,8 +2290,8 @@ server <- function(input, output, session) {
             }
             else {
                 expectedtime <- timefn(LL)/60
-                if (expectedtime > timewarning)
-                    if (expectedtime > timelimit) {
+                if (expectedtime > timerv$timewarning)
+                    if (expectedtime > timerv$timelimit) {
                         showNotification("exceeds time limit")
                     }
                 else {
@@ -3131,13 +3156,6 @@ server <- function(input, output, session) {
             showNotification("Cannot restore ESRI shapefile(s); re-select", type = "error", id = "noshapefile2")
         }
     })
-    ##############################################################################
-    ## global variables
-    
-    timewarning <- 0.2  ## minutes
-    timelimit <- 5.0    ## minutes
-
-    ##############################################################################
 }
 
 ##################################################################################
