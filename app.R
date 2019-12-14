@@ -1298,7 +1298,7 @@ server <- function(input, output, session) {
         # returns the R code needed to generate the specified array, 
         # as a character value
         code <- ""  
-        if (!is.null(traprv$data) && is.null(importrv$value)) {
+        if (!is.null(traprv$data) && is.null(importrv$data)) {
             args <- input$trapargs
             if (args != "") {
                 args <- paste0(", ", args)
