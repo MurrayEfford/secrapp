@@ -1324,13 +1324,6 @@ server <- function(input, output, session) {
     }
     ##############################################################################
     
-    trapscode <- function () {
-        # returns the R code needed to extract array from capthist
-        # as a character value
-        if (!is.null(importrv$data) && input$masktype == "Build") "array <- traps(ch)\n" else ""
-    }
-    ##############################################################################
-    
     maskcode <- function () {
         if (input$masktype == 'Build') {
             if (is.null(traprv$data))
@@ -1345,8 +1338,9 @@ server <- function(input, output, session) {
                     polyhabitat <- input$includeexcludebtn == "Include"
                     polycode <- getSPcode(input$polyfilename, "poly", input$polygonbox)
                 }
+                trps <- if (is.null(importrv$data)) "array" else "traps(ch)"
                 paste0(polycode,
-                       "mask <- make.mask (array",  
+                       "mask <- make.mask (", trps,  
                        ", buffer = ", buffer, 
                        ", nx = ", input$habnx, 
                        ", type = '", type, "'",  
@@ -2632,25 +2626,25 @@ server <- function(input, output, session) {
     ##############################################################################
 
     observeEvent(input$suggestbuffer, ignoreInit = TRUE, {
-        ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
-               ch <- capthist()
+        ## ignoreInit blocks initial execution when suggestbuffer goes from NULL to 0
+        ch <- capthist()
         if (!is.null(ch)) {
             progress <- Progress$new(session, min = 1, max = 15)
             on.exit(progress$close())
             progress$set(message = 'Suggesting buffer width ...', detail = '')
-           if (is.null(fitrv$value)) {
-               ch <- if (ms(ch)) ch[[1]] else ch
-               # 0.3 is guess?
-               detectparlist <- list(0.3, RPSV(ch, CC = TRUE), 1)
-               names(detectparlist) <- c(detectrv$value, 'sigma', 'z')
-               buff <- suggest.buffer(ch, detectfn = input$detectfnbox,
-                                      detectpar = detectparlist,
-                                      noccasions = noccasions()[1], RBtarget = 0.001)
-           }
-            else {
-               buff <- suggest.buffer(fitrv$value, RBtarget = 0.001)[1]
+            if (is.null(fitrv$value)) {
+                ch <- if (ms(ch)) ch[[1]] else ch
+                # 0.3 is guess?
+                detectparlist <- list(0.3, RPSV(ch, CC = TRUE), 1)
+                names(detectparlist) <- c(detectrv$value, 'sigma', 'z')
+                buff <- suggest.buffer(ch, detectfn = input$detectfnbox,
+                                       detectpar = detectparlist,
+                                       noccasions = noccasions()[1], RBtarget = 0.001)
             }
-
+            else {
+                buff <- suggest.buffer(fitrv$value, RBtarget = 0.001)[1]
+            }
+            
             updateNumericInput(session, "buffer", value = round(buff))
         }
     })
@@ -2710,13 +2704,13 @@ server <- function(input, output, session) {
                           step = 0.1)
         disable("resultsbtn")  ## shinyjs
         if (traptextrv$value) {
-            cat("Detector text file\n")
+            cat("Detector layout file :", input$trapfilename[1,'name'], "\n")
             cat("----------------------------------------------------------------\n")
             rawText <- readLines(input$trapfilename[1,"datapath"]) # get raw text
             writeLines(rawText)
         }
         else if (capttextrv$value) {
-            cat("Capture text file\n")
+            cat("Capture file :", input$captfilename[1,'name'], "\n")
             cat("----------------------------------------------------------------\n")
             rawText <- readLines(input$captfilename[1,"datapath"]) # get raw text
             writeLines(rawText)
@@ -2778,7 +2772,6 @@ server <- function(input, output, session) {
         if (!is.null(capthist())) {
             cat("summary(ch)\n")
             cat("\n# fit model\n")
-            cat(trapscode())  # optionally retrieve array from ch for mask    
             cat(maskcode())
             cat(fitcode())
             cat("summary(fit)\n")
