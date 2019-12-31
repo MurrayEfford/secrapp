@@ -55,78 +55,95 @@ ui <- function(request) {
                                   column (5, # offset = 0, style='padding:15px;',
                                           h2("Data input"),
                                           fluidRow(
-                                              column(6,
-                                                     wellPanel(class = "mypanel", 
-                                                                  div(style="height: 80px;", # title = 'Text or Excel file, columns TrapID X Y',
-                                                                      # trick from Felipe Gerard 2019-01 to allow reset
-                                                                      # https://stackoverflow.com/questions/44203728/how-to-reset-a-value-of-fileinput-in-shiny
-                                                                      # uiOutput('trapfile_ui')),
-                                                                      fileInput("trapfilename", "Detector layout",   # Detector layout file
-                                                                                 accept = "text/plain")),
-                                                               # fluidRow(div(style="height: 25px;",
-                                                               #     column(12, 
-                                                               #         helpText(HTML(paste0("trapID, X, Y")))))
-                                                               # ),
-                                                               fluidRow(
-                                                                   column(6, 
-                                                                          selectInput("detector", "Detector type", 
-                                                                                           choices = c("multi","proximity","count",
-                                                                                                       "polygon", "polygonX", "transect", "transectX"),
-                                                                                           selected = "multi")
-                                                                   ),
-                                                                   column(6, 
-                                                                          br(),br(),
-                                                                          actionLink("showtrapfilebtn", "show file")
-                                                                   )
-                                                               ),
-                                                               fluidRow(
-                                                                   column(12, 
-                                                                          div(#style="height: 25px;",
-                                                                              textInput("trapcovnames", "Covariate names",
-                                                                                        value = "", placeholder = "e.g., traptype, habitat"))
-                                                                          )
-                                                               ),
-                                                               fluidRow(
-                                                                   column(12,
-                                                                          div(# style="height: 25px;",
-                                                                             textInput("trapargs", "Other arguments",value = "", placeholder = "e.g., skip = 1"))
-                                                                          )
-                                                               )
-                                                               
-                                                     )),
-                                              column(6, 
-                                                     wellPanel(class = "mypanel", 
-                                                               div(style="height: 80px;", # title = 'Text or Excel file',
-                                                                   fileInput("captfilename", "Captures",
-                                                                             accept = c(".csv", ".txt", ".rdata",
-                                                                                        ".rda", ".rds"))),
-                                                               fluidRow(
-                                                                   column(6, selectInput("fmt", label = "Format",
-                                                                                         choices = c("trapID", "XY"))),
-                                                                   column(6, 
-                                                                          br(), br(),
-                                                                          actionLink("showcaptfilebtn", "show file")
-                                                                   )
-                                                                   # column(6, selectInput("captsheet", label = "Sheet",
-                                                                   #                       choices = c("Sheet1", "stoatcapt")))
-                                                               ),
-                                                               # uiOutput("captfilehelp"),
-                                                               fluidRow(
-                                                                   column(12, textInput("covnames", "Covariate names",
-                                                                                   value = "", placeholder = "e.g., sex"))
-                                                               ),
-                                                               fluidRow(
-                                                                   column(12,textInput("captargs", "Other arguments",
-                                                                                       value = "", placeholder = "e.g., skip = 1"))
-                                                               )
-                                                               
-                                              )
-                                              )
+                                            column(12, radioButtons("datasource", "", inline = TRUE, choices = c("Text files", "Stored capthist object")))
+                                          ),
+                                          conditionalPanel( condition = "input.datasource == 'Text files'",
+                                                            
+                                                            fluidRow(
+                                                                column(6,
+                                                                       wellPanel(class = "mypanel", 
+                                                                                 div(style="height: 80px;", # title = 'Text or Excel file, columns TrapID X Y',
+                                                                                     # trick from Felipe Gerard 2019-01 to allow reset
+                                                                                     # https://stackoverflow.com/questions/44203728/how-to-reset-a-value-of-fileinput-in-shiny
+                                                                                     # uiOutput('trapfile_ui')),
+                                                                                     fileInput("trapfilename", "Detector layout",   # Detector layout file
+                                                                                               accept = "text/plain")),
+                                                                                 # fluidRow(div(style="height: 25px;",
+                                                                                 #     column(12, 
+                                                                                 #         helpText(HTML(paste0("trapID, X, Y")))))
+                                                                                 # ),
+                                                                                 fluidRow(
+                                                                                     column(6, 
+                                                                                            selectInput("detector", "Detector type", 
+                                                                                                        choices = c("multi","proximity","count",
+                                                                                                                    "polygon", "polygonX", "transect", "transectX"),
+                                                                                                        selected = "multi")
+                                                                                     ),
+                                                                                     column(6, 
+                                                                                            br(),br(),
+                                                                                            actionLink("showtrapfilebtn", "show file")
+                                                                                     )
+                                                                                 ),
+                                                                                 fluidRow(
+                                                                                     column(12, 
+                                                                                            div(#style="height: 25px;",
+                                                                                                textInput("trapcovnames", "Covariate names",
+                                                                                                          value = "", placeholder = "e.g., traptype, habitat"))
+                                                                                     )
+                                                                                 ),
+                                                                                 fluidRow(
+                                                                                     column(12,
+                                                                                            div(# style="height: 25px;",
+                                                                                                textInput("trapargs", "Other arguments",value = "", placeholder = "e.g., skip = 1"))
+                                                                                     )
+                                                                                 )
+                                                                                 
+                                                                       )),
+                                                                column(6, 
+                                                                       wellPanel(class = "mypanel", 
+                                                                                 div(style="height: 80px;", # title = 'Text or Excel file',
+                                                                                     fileInput("captfilename", "Captures",
+                                                                                               accept = c(".csv", ".txt", ".rdata",
+                                                                                                          ".rda", ".rds"))),
+                                                                                 fluidRow(
+                                                                                     column(6, selectInput("fmt", label = "Format",
+                                                                                                           choices = c("trapID", "XY"))),
+                                                                                     column(6, 
+                                                                                            br(), br(),
+                                                                                            actionLink("showcaptfilebtn", "show file")
+                                                                                     )
+                                                                                     # column(6, selectInput("captsheet", label = "Sheet",
+                                                                                     #                       choices = c("Sheet1", "stoatcapt")))
+                                                                                 ),
+                                                                                 # uiOutput("captfilehelp"),
+                                                                                 fluidRow(
+                                                                                     column(12, textInput("covnames", "Covariate names",
+                                                                                                          value = "", placeholder = "e.g., sex"))
+                                                                                 ),
+                                                                                 fluidRow(
+                                                                                     column(12,textInput("captargs", "Other arguments",
+                                                                                                         value = "", placeholder = "e.g., skip = 1"))
+                                                                                 )
+                                                                                 
+                                                                       )
+                                                                )
+                                                            )
+                                          ),
+                                          conditionalPanel( condition = "input.datasource != 'Text files'",
+                                                            wellPanel(class = "mypanel",
+                                                                      fluidRow(
+                                                                          column(9, fileInput("importfilename", 
+                                                                                              "Import capthist from Rds file")),
+                                                                          column(3, br(), actionLink("clearimportbtn", "Clear"))
+                                                                          
+                                                                      )
+                                                            )
+                                                            
                                           ),
                                           h2("Model"),
                                           wellPanel(class = "mypanel", 
                                                    fluidRow(
-                                                       column(3, selectInput("detectfnbox", "Detectfn",
+                                                       column(3, selectInput("detectfnbox", "Detection function",
                                                                               choices = c("HN", "HR", "EX","HHN", "HHR", "HEX", "HVP"),
                                                                               selected = "HN"),
                                                               uiOutput("detectfnui") 
@@ -173,12 +190,14 @@ ui <- function(request) {
                                   
                                   column (6, # style='padding:0px;',
                                           h2("Results"),
-                                                   fluidRow(
-                                                       column(5, radioButtons("resultsbtn", label = "", 
-                                                                               inline = TRUE, choices = c("summary", "predict", "derived", "other"))),
-                                                       column(5, textInput("otherfunction", label="", placeholder = "e.g., vcov(fit)")),
-                                                       conditionalPanel("output.modelFitted", column(2, br(), downloadLink("savebtn", "Save fit")))
-                                                   ),
+                                          
+                                          fluidRow(
+                                              column(5, radioButtons("resultsbtn", label = "", 
+                                                                     inline = TRUE, choices = c("summary", "predict", "derived", "other"))),
+                                             
+                                              column(5,  textInput("otherfunction", label="", placeholder = "e.g., vcov(fit)")),
+                                              conditionalPanel("output.modelFitted", column(2, br(), downloadLink("savebtn", "Save fit")))
+                                          ),
                                           
                                           fluidRow(
                                               column(12, 
@@ -465,14 +484,14 @@ ui <- function(request) {
                                          #           )
                                          # ),
                                          h2("Data Import/Export"),
-                                         wellPanel(class = "mypanel",
-                                                   fluidRow(
-                                                       column(8, fileInput("importfilename", 
-                                                                           "Import capthist from Rds file")),
-                                                       column(4, br(), actionLink("clearimportbtn", "Clear"))
-                                                       
-                                                   )
-                                         ),
+                                         # wellPanel(class = "mypanel",
+                                         #           fluidRow(
+                                         #               column(8, fileInput("importfilename", 
+                                         #                                   "Import capthist from Rds file")),
+                                         #               column(4, br(), actionLink("clearimportbtn", "Clear"))
+                                         #               
+                                         #           )
+                                         # ),
                                          conditionalPanel("output.capthistLoaded", 
                                                           wellPanel(class = "mypanel",
                                                           fluidRow(
@@ -2209,7 +2228,10 @@ server <- function(input, output, session) {
     
     ##############################################################################
 
-    observeEvent(input$clearimportbtn, {
+    observeEvent(c(input$clearimportbtn, input$datasource), {
+        
+        reset('trapfilename')
+        reset('captfilename')
         reset('importfilename')
         
         importrv$data <- NULL
@@ -2468,7 +2490,8 @@ server <- function(input, output, session) {
         timerv$timelimit <- timelimit
         
         ## Data input
-
+        updateRadioButtons(session, "datasource", selected = "Text files")
+        
         ## Trap layout
         updateTextInput(session, "trapargs", 
                         value = "", placeholder = "e.g., skip = 1")
@@ -2743,7 +2766,7 @@ server <- function(input, output, session) {
                 if (fncall=="") cat("No function specified\n")
                 else {
                     fncall <- gsub("fit", "fitrv$value", fncall)
-                    out <- try(eval(parse(text = fncall)))
+                    out <- try(eval(parse(text = fncall)), silent = TRUE)
                     if (inherits(out, "try-error")) {
                         err <- attr(out, 'condition')$message
                         cat("Did not compute\n")
