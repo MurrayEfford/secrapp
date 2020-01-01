@@ -1,7 +1,7 @@
 ---
 title: "secr app 1.1"
 author: "Murray Efford"
-date: '2019-12-14'
+date: '2020-01-01'
 output:
   html_document:
     toc: yes
@@ -39,6 +39,8 @@ TIP: on small displays, running your browser in full-screen mode will avoid the 
 
 ## Data input
 
+By default, input is from two text files, one for the detector layout and one for detections ('captures') of known individuals. Alternatively, secrapp may  read the secr capthist object from a .rds file.
+
 ### Detector layout
 
 The detector layout is input from a text file. The file typically should have three columns (trapID, x, y) with no headers. These may optionally be followed by binary usage codes (0/1), one per occasion. Columns after a '/' are interpreted as detector covariates. 
@@ -51,7 +53,7 @@ Optional arguments separated by commas may be used to customise input (e.g., `sk
 
 ### Captures
 
-Detections ('captures') of known individuals are also input from a text file. Two formats are allowed, as in DENSITY or **secr**; 'trapID' uses four columns (Session, AnimalID, Occasion, TrapID) and 'XY' uses five (Session, AnimalID, Occasion, X, Y). Supplementary columns are interpreted as individual covariates.
+Two formats are allowed, as in DENSITY or **secr**; 'trapID' uses four columns (Session, AnimalID, Occasion, TrapID) and 'XY' uses five (Session, AnimalID, Occasion, X, Y). Supplementary columns are interpreted as individual covariates.
 
 If individual covariates are included then the correct number of covariate names should be provided (without quotes, separated by commas).
 
@@ -117,7 +119,7 @@ Model formulae may be edited using pre-defined predictors or covariate names as 
 
 ## Time limits
 
-The application is designed for small- to medium-sized models. An internal algorithm predicts the execution time by evaluating the likelihood once and making a simple extrapolation. When the predicted time exceeds a lower threshold ('timewarning', default 0.2 minutes) a dialog box asks the user for confirmation before proceeding. If the predicted time exceeds an upper threshold ('timelimit', default 5 minutes) then execution aborts, with a notification at the lower right of the screen. The thresholds may be changed in the R code of the app.R file (near the end).
+The application is designed for small- to medium-sized models. An internal algorithm predicts the execution time by evaluating the likelihood once and making a simple extrapolation. The prediction is quite rough. When the predicted time exceeds a lower threshold ('timewarning', default 0.2 minutes) a dialog box asks the user for confirmation before proceeding. If the predicted time exceeds an upper threshold ('timelimit', default 5 minutes) then execution aborts, with a notification at the lower right of the screen. The thresholds may be changed in the R code of the app.R file (near the top).
 
 ## Actions
 
