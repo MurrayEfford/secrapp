@@ -1,7 +1,7 @@
 ---
 title: "secr app 1.1"
 author: "Murray Efford"
-date: '2020-01-01'
+date: '2020-01-07'
 output:
   html_document:
     toc: yes
@@ -96,7 +96,7 @@ Optional arguments separated by commas may be used to customise input (e.g., `sk
   </tr>
   <tr>
     <td>Mixture hcov</td>
-    <td>name of covariate \( \small n\)</td>
+    <td>name of covariate</td>
   </tr>
 </table> 
 
