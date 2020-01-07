@@ -633,7 +633,7 @@ ui <- function(request) {
                               a("https://github.com/MurrayEfford/secrapp", href="https://github.com/MurrayEfford/secrapp", target="_blank"), br(),
                               br(),
                               h5("Citation"),
-                              h5("[The preferred citation for this package is not finalised]")
+                              h5("[The preferred citation for this package has not been finalised]")
                      )
                      
         )   # end navlistpanel
