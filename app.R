@@ -1627,6 +1627,15 @@ server <- function(input, output, session) {
         if (inherits(ch, 'capthist')) {
             importrv$data <- ch
             traprv$data <- traps(ch)
+            if (detector(traprv$data)[1] %in% polygondetectors) {
+                updateSelectInput(session, "detectfnbox", choices = hazarddetectfn, 
+                                  selected = "HHN")
+            }
+            else {
+                updateSelectInput(session, "detectfnbox", choices = c('HN','HR','EX', hazarddetectfn), 
+                                  selected = "HN")
+            }
+                
         }
         else {
             stop("not a valid capthist Rds")
@@ -1842,7 +1851,7 @@ server <- function(input, output, session) {
     ##############################################################################
     
     detectrv <- reactive({
-        if (input$detectfnbox %in% c('HHN', 'HHR', 'HEX', 'HAN', 'HCG', 'HVP')) {
+        if (input$detectfnbox %in% hazarddetectfn) {
             detectrv$value <- 'lambda0'
             ## following code not working so suppress
             # if (!("lambda0" %in% input$fields2)) 
@@ -2234,6 +2243,9 @@ server <- function(input, output, session) {
         reset('captfilename')
         reset('importfilename')
         
+        updateSelectInput(session, "detectfnbox", choices = c('HN','HR','EX', hazarddetectfn), 
+                          selected = "HN")
+        
         importrv$data <- NULL
         importrv$clear <- TRUE
         
@@ -2253,7 +2265,7 @@ server <- function(input, output, session) {
     
     ##############################################################################
     
-    observeEvent(input$detector, {
+    observeEvent(c(input$detector), {
         if (input$detector %in% polygondetectors) {
             updateSelectInput(session, "detectfnbox", choices = hazarddetectfn, selected = "HHN")
             updateSelectInput(session, "fmt", label = "Format", choices = c("XY"), selected = 'XY')
