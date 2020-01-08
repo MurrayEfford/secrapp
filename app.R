@@ -2916,11 +2916,16 @@ server <- function(input, output, session) {
                 return()
             }
         }
-        esa.plot(fitrv$value, session = input$sess)
-        mtext("Density estimate", side = 4, line = 1.5)
         if (input$masktype == "Build") {
+            spscale <- secr:::spatialscale(fitrv$value)
+            max.buffer <- max(input$buffer, 5*spscale)
+            esa.plot(fitrv$value, session = input$sess, max.buffer = max.buffer)
             abline(v = input$buffer, col = "red")
         }
+        else {
+            esa.plot(fitrv$value, session = input$sess)
+        }
+        mtext("Density estimate", side = 4, line = 1.5)
     })
     ##############################################################################
     
