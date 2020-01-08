@@ -1630,10 +1630,12 @@ server <- function(input, output, session) {
             if (detector(traprv$data)[1] %in% polygondetectors) {
                 updateSelectInput(session, "detectfnbox", choices = hazarddetectfn, 
                                   selected = "HHN")
+                disable('suggestbuffer')
             }
             else {
                 updateSelectInput(session, "detectfnbox", choices = c('HN','HR','EX', hazarddetectfn), 
                                   selected = "HN")
+                enable('suggestbuffer')
             }
                 
         }
@@ -2269,10 +2271,12 @@ server <- function(input, output, session) {
         if (input$detector %in% polygondetectors) {
             updateSelectInput(session, "detectfnbox", choices = hazarddetectfn, selected = "HHN")
             updateSelectInput(session, "fmt", label = "Format", choices = c("XY"), selected = 'XY')
+            disable('suggestbuffer')
         }
         else {
             updateSelectInput(session, "detectfnbox", choices = c('HN','HR','EX',hazarddetectfn))
             updateSelectInput(session, "fmt", label = "Format", choices = c("trapID", "XY"))
+            enable('suggestbuffer')
         }
             fitrv$value <- NULL
     })

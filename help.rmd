@@ -1,4 +1,3 @@
----
 title: "secr app 1.1"
 author: "Murray Efford"
 date: '2020-01-07'
@@ -224,6 +223,8 @@ As an alternative to conventional power analysis we can construct intervals for 
 Either construct a habitat mask from scratch ('Build') or read mask coordinates from a text file ('File'). 
 
 For file input there should be a header line. The first two columns ('x', 'y') are read as the x- and y-coordinates. Further columns are assumed to represent covariates and their names may be used in formulae for density (D).
+
+The 'Suggest width' button runs the **secr** function `suggest.buffer` which is currently available only for point detectors (not polygon types).
 
 ----------------------------------------------------
 
