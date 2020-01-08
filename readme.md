@@ -28,4 +28,5 @@ OVforest.dbf | ESRI polygon shapefile extent of habitat near possum traps | Habi
 OVforest.shp |||
 OVforest.shx |||
 masktext2.txt | Demo mask file for capt.txt | Habitat mask - File input |
-ovenCHp.Rds | Saved ovenbird proximity dataset | Options - Data import |
+ovenCHp.Rds | Saved ovenbird proximity dataset | Data input |
+FTHL.Rds | Saved flat-tailed horned lizard dataset | Data input |
