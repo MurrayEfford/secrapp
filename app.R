@@ -741,7 +741,7 @@ server <- function(input, output, session) {
              parm <- c(
                  paste0("detectfnbox=", input$detectfnbox),
                  paste0("distributionbtn=", input$distributionbtn),
-                 paste0("detector=", input$detector)
+                 paste0("detector=", detector(traprv$data)[1])
              )
              
              if (!is.null(input$trapfilename)) {
@@ -765,7 +765,8 @@ server <- function(input, output, session) {
              # open secrdesignapp in a new tab, with parameters from secrapp
              # designurl is set at top of this file
              
-             if (input$detectfnbox %in% c('HHN','HEX') && input$detector %in% c('multi','proximity','count')) {
+             if (input$detectfnbox %in% c('HHN','HEX') && 
+                 detector(traprv$data)[1] %in% c('multi','proximity','count')) {
                  tags$a(href =  paste0(designurl, "?", parm), "Switch to secrdesign", target="_blank")  
              }
          }
@@ -896,7 +897,7 @@ server <- function(input, output, session) {
         if (is.null(xy)) 
             helpText("")
         else {
-            if (input$detector %in% polygondetectors) {
+            if (detector(traprv$data)[1] %in% polygondetectors) {
                 if (!is.null(capthist())) {
                     nearest <- nearesttrap(xy, xy(capthist()))
                     updateNumericInput(session, "animal", value = animalID(capthist(), names=FALSE)[nearest])
@@ -2909,6 +2910,12 @@ server <- function(input, output, session) {
         invalidateOutputs()
         req(fitrv$value)
         par(mar=c(4,5,2,5))
+        if (detector(traprv$data)[1] %in% polygondetectors) {
+            if (compareVersion(as.character(secrversion), '4.1.1') < 0) {
+                showNotification("esa.plot for polygon detector types requires secr >= 4.1.1")
+                return()
+            }
+        }
         esa.plot(fitrv$value, session = input$sess)
         mtext("Density estimate", side = 4, line = 1.5)
         if (input$masktype == "Build") {
