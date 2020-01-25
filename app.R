@@ -66,7 +66,9 @@ ui <- function(request) {
                                                                                      # trick from Felipe Gerard 2019-01 to allow reset
                                                                                      # https://stackoverflow.com/questions/44203728/how-to-reset-a-value-of-fileinput-in-shiny
                                                                                      # uiOutput('trapfile_ui')),
-                                                                                     fileInput("trapfilename", "Detector layout",   # Detector layout file
+                                                                                     
+                                                                                     # non-breaking space ASCII 160
+                                                                                     fileInput("trapfilename", paste0("1. ",intToUtf8(160), "Detector layout"),   # Detector layout file
                                                                                                accept = "text/plain")),
                                                                                  # fluidRow(div(style="height: 25px;",
                                                                                  #     column(12, 
@@ -102,7 +104,8 @@ ui <- function(request) {
                                                                 column(6, 
                                                                        wellPanel(class = "mypanel", 
                                                                                  div(style="height: 80px;", # title = 'Text or Excel file',
-                                                                                     fileInput("captfilename", "Captures",
+                                                                                     # non-breaking space ASCII 160
+                                                                                     fileInput("captfilename", paste0("2. ", intToUtf8(160), "Captures"),
                                                                                                accept = c(".csv", ".txt", ".rdata",
                                                                                                           ".rda", ".rds"))),
                                                                                  fluidRow(
@@ -156,7 +159,8 @@ ui <- function(request) {
                                                                               choices = c("none"), selected = "none", width=160))
                                                    ),
                                                    fluidRow(
-                                                       column(12, textInput("model", "", value = "D~1, g0~1, sigma~1"))
+                                                       column(8, textInput("model", "Model", value = "D~1, g0~1, sigma~1")),
+                                                       column(4, uiOutput("maskdetailui1"), uiOutput("maskdetailui2"))
                                                    ),
                                                    fluidRow(
                                                        column(12, textInput("otherargs", "Other arguments", value = "", 
@@ -350,9 +354,9 @@ ui <- function(request) {
                                                                 )
                                                       ),
                                                       wellPanel(class = "mypanel", 
-                                                                br(),
                                                                 div(style="height: 80px;",
-                                                                    fileInput("polyfilename", "Mask polygon file(s)",
+                                                                    fileInput("polyfilename", 
+                                                                              paste0("Mask polygon file(s) ", intToUtf8(160), intToUtf8(160), " (optional)"),
                                                                               accept = c('.shp','.dbf','.sbn','.sbx',
                                                                                          '.shx',".prj", ".txt", ".rdata", ".rda", ".rds"), 
                                                                               multiple = TRUE)),
@@ -715,6 +719,33 @@ server <- function(input, output, session) {
          else if (input$detectfnbox == 'HVP') x <- HTML("hazard variable power")  
          else x <- ''
          helpText(x)
+     })
+
+     output$maskdetailui1 <- renderUI({
+         if (is.null(mask()))  {
+             if (is.null(capthist()))
+                 x <- HTML("")  
+             else
+                 x <- HTML("No valid habitat mask")  
+         }
+         else {
+             if (input$masktype == 'Build')
+                 x <- HTML(paste0("Habitat mask buffer ", input$buffer, " m"))
+             else
+                 x <- HTML(paste0("Habitat mask from file"))
+         }
+         helpText(x)
+     })
+     
+     output$maskdetailui2 <- renderUI({
+         if (is.null(mask()))  
+             x <- HTML("")  
+         else 
+             if (ms(mask()))
+                 x <- HTML(paste0("Session 1 ", nrow(mask()[[1]]), " points, spacing ", signif(spacing(mask()[[1]]),3), " m"))
+             else
+                 x <- HTML(paste0(nrow(mask()), " points, spacing ", signif(spacing(mask()),3), " m"))
+             helpText(x)
      })
      
      output$timelimitui <- renderUI({
