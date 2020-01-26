@@ -229,7 +229,7 @@ ui <- function(request) {
                                                                           ),
                                                                           fluidRow(
                                                                               column(2, offset = 1, checkboxInput("tracks", "All tracks", FALSE),
-                                                                                     conditionalPanel("input.animal>0", checkboxInput("fxi", "fxi contour", FALSE))),
+                                                                                     conditionalPanel("output.modelFitted", checkboxInput("fxi", "fxi contour", FALSE))),
                                                                               column(2, checkboxInput("varycol", "Vary colours", FALSE)),
                                                                               column(2, numericInput("animal", "Select animal", min = 0, max = 2000, 
                                                                                                      step = 1, value = 1)),
@@ -2575,10 +2575,11 @@ server <- function(input, output, session) {
 
         ## Array plot
         updateCheckboxInput(session, "tracks", value = FALSE)
+        updateCheckboxInput(session, "fxi", value = FALSE)
         updateCheckboxInput(session, "varycol", value = FALSE)
         updateNumericInput(session, "animal", value = 1)
         updateNumericInput(session, "sess", value = 1)
-
+        
         ## pop plot
         updateCheckboxInput(session, "showHRbox", "Display 95% home range", value = FALSE)
 
@@ -2894,12 +2895,16 @@ server <- function(input, output, session) {
                      title = "", subtitle = "")
             }
             if (!is.null(fitrv$value) && input$fxi) {
-                if (input$animal>0) {
-                    if (!(input$detector %in% c("multi","proximity","count")))
-                        showNotification("fxi.contour requires point detector type")
-                    else {
+                if (!(input$detector %in% c("multi","proximity","count")))
+                    showNotification("fxi.contour requires point detector type")
+                else {
+                    if (input$animal>0) {
                         tmp <- try(fxi.contour(fitrv$value, i = input$animal, sessnum = input$sess, add = TRUE), silent = TRUE)
-                        if (inherits(tmp, 'try-error')) 
+                    }
+                    else {
+                        tmp <- try(fxi.contour(fitrv$value, i = NULL, sessnum = input$sess, add = TRUE), silent = TRUE)
+                    }
+                    if (inherits(tmp, 'try-error')) {
                             showNotification("error in fxi.contour; consider smaller mask spacing")
                     }
                 }
