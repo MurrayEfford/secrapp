@@ -178,6 +178,8 @@ By default, the locations of one animal are highlighted. Suppress this by select
 
 A session selector is shown for multi-session data. Changing the session changes the plot displayed on this tab, and on some others (Buffer, Pxy, Dxy); it does not affect model fitting.
 
+Once a model has been fitted, ticking 'fxi contour' displays a contour plot of probability density contours for the activity centre of the current animal. This may fail if the mask spacing is too small.
+
 ### Detectfn   <a name="detectfnplot"></a>
 
 Fitted detection function on the hazard and probability scales.
