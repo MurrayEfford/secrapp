@@ -68,7 +68,7 @@ ui <- function(request) {
                                                                                      # uiOutput('trapfile_ui')),
                                                                                      
                                                                                      # non-breaking space ASCII 160
-                                                                                     fileInput("trapfilename", paste0("1. ",intToUtf8(160), "Detector layout"),   # Detector layout file
+                                                                                     fileInput("trapfilename", paste0("1.", strrep(intToUtf8(160),2), "Detector layout"),   # Detector layout file
                                                                                                accept = "text/plain")),
                                                                                  # fluidRow(div(style="height: 25px;",
                                                                                  #     column(12, 
@@ -104,8 +104,7 @@ ui <- function(request) {
                                                                 column(6, 
                                                                        wellPanel(class = "mypanel", 
                                                                                  div(style="height: 80px;", # title = 'Text or Excel file',
-                                                                                     # non-breaking space ASCII 160
-                                                                                     fileInput("captfilename", paste0("2. ", intToUtf8(160), "Captures"),
+                                                                                     fileInput("captfilename", paste0("2.", strrep(intToUtf8(160),2), "Captures"),
                                                                                                accept = c(".csv", ".txt", ".rdata",
                                                                                                           ".rda", ".rds"))),
                                                                                  fluidRow(
@@ -229,7 +228,8 @@ ui <- function(request) {
                                                                                      br(), uiOutput('xycoord'))
                                                                           ),
                                                                           fluidRow(
-                                                                              column(2, offset = 1, checkboxInput("tracks", "All tracks", FALSE)),
+                                                                              column(2, offset = 1, checkboxInput("tracks", "All tracks", FALSE),
+                                                                                     conditionalPanel("input.animal>0", checkboxInput("fxi", "fxi contour", FALSE))),
                                                                               column(2, checkboxInput("varycol", "Vary colours", FALSE)),
                                                                               column(2, numericInput("animal", "Select animal", min = 0, max = 2000, 
                                                                                                      step = 1, value = 1)),
@@ -268,7 +268,7 @@ ui <- function(request) {
                                                                               column(2, checkboxInput("Dmaskedge", "mask edge", value = FALSE)),
                                                                               column(2, checkboxInput("Dshowdetectors", "detectors", value = FALSE)),
                                                                               column(2, checkboxInput("Dshowdetections", "detections", value = FALSE)),
-                                                                              column(2, checkboxInput("Dshowpopn", "realisation", value = FALSE),
+                                                                              column(2, checkboxInput("Dshowpopn", "random popn", value = FALSE),
                                                                                      uiOutput('uipopN')),
                                                                               column(4, checkboxInput("showHRbox", "95% HR", value = FALSE))
                                                                           )
@@ -356,7 +356,7 @@ ui <- function(request) {
                                                       wellPanel(class = "mypanel", 
                                                                 div(style="height: 80px;",
                                                                     fileInput("polyfilename", 
-                                                                              paste0("Mask polygon file(s) ", intToUtf8(160), intToUtf8(160), " (optional)"),
+                                                                              paste0("Mask polygon file(s)", strrep(intToUtf8(160), 3), " (optional)"),
                                                                               accept = c('.shp','.dbf','.sbn','.sbx',
                                                                                          '.shx',".prj", ".txt", ".rdata", ".rda", ".rds"), 
                                                                               multiple = TRUE)),
@@ -2893,6 +2893,18 @@ server <- function(input, output, session) {
                      cappar = selectcol2, trkpar=list(col='black', lwd = 1),
                      title = "", subtitle = "")
             }
+            if (!is.null(fitrv$value) && input$fxi) {
+                if (input$animal>0) {
+                    if (!(input$detector %in% c("multi","proximity","count")))
+                        showNotification("fxi.contour requires point detector type")
+                    else {
+                        tmp <- try(fxi.contour(fitrv$value, i = input$animal, sessnum = input$sess, add = TRUE), silent = TRUE)
+                        if (inherits(tmp, 'try-error')) 
+                            showNotification("error in fxi.contour; consider smaller mask spacing")
+                    }
+                }
+            }
+            
         }
     })
     ##############################################################################
