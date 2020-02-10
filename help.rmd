@@ -243,6 +243,23 @@ The table may be downloaded as a comma-separated text file or in the RDS format 
 
 *These should be self-explanatory. Experiment if in doubt.*
 
+
+## Model fitting
+
+### Maximization method
+
+The default (Newton-Raphson in function `nlm`) is generally OK. Nelder-Mead in function `optim` is slower and somewhat more robust with difficult likelihood surfaces.
+
+### Number of cores
+
+Multithreading allows some operations to be performed in parallel for faster model fitting. The number of cores (ncores argument of `secr::secr.fit`) may be set manually. The maximum allowed by secrapp is the smaller of 24 and the number of cores available (including virtual cores)[1]. The default number of cores is half the maximum (cf ncores = 1 in `secr::secr.fit`).
+
+[1] The limit of 24 is arbitrary. It prevents a user from hogging a vast number of cores in some environments. 
+
+### Time limit
+
+A model will not be fitted if the predicted time exceeds a limit, currently 5 minutes. The prediction is quite rough as there is no obvious way to anticipate the number of likelihood evaluations that will be required. 
+
 ----------------------------------------------------
 
 # Troubleshooting <a name="troubles"></a>
