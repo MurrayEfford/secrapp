@@ -2,7 +2,7 @@
 
 secrapp performs simple spatially explicit capture-recapture analyses using the R package [secr](https://CRAN.R-project.org/package=secr). See the Help tab for details.
 
-There is very limited support for multisession data and elaborate models: these are best avoided.
+There is limited support for multisession data and elaborate models: these are best avoided.
 
 To run secrapp on your own machine, install packages **shinyjs** and **secr** with their dependencies. Then paste this code into an R session:
 
