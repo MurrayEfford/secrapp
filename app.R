@@ -511,7 +511,8 @@ ui <- function(request) {
                                          wellPanel(class = "mypanel",
                                                    fluidRow(
                                                        column(11, selectInput("method", "Maximization method",
-                                                                              choices = c("Newton-Raphson", "Nelder-Mead", "none"),
+                                                                              ## 2020-02-10 choices = c("Newton-Raphson", "Nelder-Mead", "none"),
+                                                                              choices = c("Newton-Raphson", "Nelder-Mead"),
                                                                               selected = "Newton-Raphson", width=160)),
                                                        column(1, br(), br(), actionLink("incrementtime", label = "."))
                                                    ),
@@ -1527,6 +1528,7 @@ server <- function(input, output, session) {
                            mask = mask(), 
                            model = model,
                            detectfn = input$detectfnbox,
+                           method = input$method,
                            ncores = nc),
                       otherargs)
             args$CL <- CL 
