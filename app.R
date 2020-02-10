@@ -28,6 +28,8 @@ seconds <- 6   ## default duration for showNotification()
 timewarning <- 0.2  ## minutes
 timelimit <- 5.0    ## minutes
 
+availablecores <- parallel::detectCores()
+
 ##############################################################################
 
 # Define UI 
@@ -508,9 +510,15 @@ ui <- function(request) {
                                          wellPanel(class = "mypanel",
                                                    fluidRow(
                                                        column(11, selectInput("method", "Maximization method",
-                                                                   choices = c("Newton-Raphson", "Nelder-Mead", "none"),
-                                                                   selected = "Newton-Raphson", width=160)),
+                                                                              choices = c("Newton-Raphson", "Nelder-Mead", "none"),
+                                                                              selected = "Newton-Raphson", width=160)),
                                                        column(1, br(), br(), actionLink("incrementtime", label = "."))
+                                                   ),
+                                                   fluidRow(
+                                                       column(6, numericInput("ncores", "Number of cores", width = 100,
+                                                                               min = 0, max = availablecores, 
+                                                                               step = 1, value = 1)),
+                                                       column(6, br(), uiOutput("ncoresui") )
                                                    ),
                                                    fluidRow(
                                                        column(8, uiOutput("timelimitui") )
@@ -751,6 +759,14 @@ server <- function(input, output, session) {
      output$timelimitui <- renderUI({
          req(timerv)
          x <- paste0("Time limit ", timerv$timelimit, " minutes")
+         helpText(x)
+     })
+     
+     output$ncoresui <- renderUI({
+         x <- if (input$ncores == availablecores)
+             paste0(input$ncores, " is the number available")
+         else if (input$ncores>0) "" 
+         else paste0(availablecores-1, " cores (available - 1)")
          helpText(x)
      })
      
@@ -1469,10 +1485,13 @@ server <- function(input, output, session) {
             ",\n      details = list(distribution = 'binomial')"
         method <- if (input$method == "Newton-Raphson") "" else 
             paste0(",\n      method = '", input$method, "'")
+        nc <- input$ncores
+        if (nc==0) nc <- availablecores - 1
+        ncores <- paste0(", ncores = ", nc)
         otherargs <- if (input$otherargs=="") "" else paste0(",\n      ", input$otherargs)
         code <- paste0(
             "fit <- secr.fit(ch, mask = mask, detectfn = ", detfn, CL, hcov, ", \n", 
-            "      ", model, ", trace = FALSE", distn, method, otherargs, ")\n"
+            "      ", model, ", trace = FALSE", distn, method, ncores, otherargs, ")\n"
         )
         code
     }
@@ -1505,11 +1524,14 @@ server <- function(input, output, session) {
         }
         else {
             otherargs <- otherargs[!(names(otherargs) %in% c('capthist','trace','mask','model','detectfn'))]
+            nc <- input$ncores
+            if (nc==0) nc <- availablecores - 1
             args <- c(list(capthist = capthist(), 
                            trace = FALSE,
                            mask = mask(), 
                            model = model,
-                           detectfn = input$detectfnbox),
+                           detectfn = input$detectfnbox,
+                           ncores = nc),
                       otherargs)
             args$CL <- CL 
             args$details <- as.list(replace (args$details, "distribution", input$distributionbtn))
@@ -2619,6 +2641,9 @@ server <- function(input, output, session) {
         
         ## Options
 
+        updateNumericInput(session, "ncores", value = 1)
+        updateSelectInput(session, "method", selected = "Newton-Raphson")
+        
         ## detector array
         updateRadioButtons(session, "areaunit", selected = "ha")
 
