@@ -28,8 +28,8 @@ seconds <- 6   ## default duration for showNotification()
 timewarning <- 0.2  ## minutes
 timelimit <- 5.0    ## minutes
 
-availablecores <- parallel::detectCores()
-
+availablecores <- min(24, parallel::detectCores())
+defaultcores <- max(1, availablecores/2)
 ##############################################################################
 
 # Define UI 
@@ -128,7 +128,6 @@ ui <- function(request) {
                                                                                      column(12,textInput("captargs", "Other arguments",
                                                                                                          value = "", placeholder = "e.g., skip = 1"))
                                                                                  )
-                                                                                 
                                                                        )
                                                                 )
                                                             )
@@ -136,13 +135,15 @@ ui <- function(request) {
                                           conditionalPanel( condition = "input.datasource != 'Text files'",
                                                             wellPanel(class = "mypanel",
                                                                       fluidRow(
+                                                                          # known issue: 'accept' does not restrict types in RStudio,
+                                                                          # only in browsers
+                                                                          # https://github.com/rstudio/shiny/issues/951
                                                                           column(9, fileInput("importfilename", 
-                                                                                              "Import capthist from Rds file")),
+                                                                                              "Import capthist from Rds file",
+                                                                                              accept = c(".RDS", ".Rds",".rds"))),
                                                                           column(3, br(), actionLink("clearimportbtn", "Clear"))
-                                                                          
                                                                       )
                                                             )
-                                                            
                                           ),
                                           h2("Model"),
                                           wellPanel(class = "mypanel", 
@@ -516,8 +517,8 @@ ui <- function(request) {
                                                    ),
                                                    fluidRow(
                                                        column(6, numericInput("ncores", "Number of cores", width = 100,
-                                                                               min = 0, max = availablecores, 
-                                                                               step = 1, value = 1)),
+                                                                               min = 1, max = availablecores, 
+                                                                               step = 1, value = defaultcores)),
                                                        column(6, br(), uiOutput("ncoresui") )
                                                    ),
                                                    fluidRow(
@@ -763,10 +764,7 @@ server <- function(input, output, session) {
      })
      
      output$ncoresui <- renderUI({
-         x <- if (input$ncores == availablecores)
-             paste0(input$ncores, " is the number available")
-         else if (input$ncores>0) "" 
-         else paste0(availablecores-1, " cores (available - 1)")
+         x <- paste0(availablecores, " cores available")
          helpText(x)
      })
      
@@ -1486,7 +1484,6 @@ server <- function(input, output, session) {
         method <- if (input$method == "Newton-Raphson") "" else 
             paste0(",\n      method = '", input$method, "'")
         nc <- input$ncores
-        if (nc==0) nc <- availablecores - 1
         ncores <- paste0(", ncores = ", nc)
         otherargs <- if (input$otherargs=="") "" else paste0(",\n      ", input$otherargs)
         code <- paste0(
@@ -1525,7 +1522,6 @@ server <- function(input, output, session) {
         else {
             otherargs <- otherargs[!(names(otherargs) %in% c('capthist','trace','mask','model','detectfn'))]
             nc <- input$ncores
-            if (nc==0) nc <- availablecores - 1
             args <- c(list(capthist = capthist(), 
                            trace = FALSE,
                            mask = mask(), 
@@ -2641,7 +2637,7 @@ server <- function(input, output, session) {
         
         ## Options
 
-        updateNumericInput(session, "ncores", value = 1)
+        updateNumericInput(session, "ncores", value = defaultcores)
         updateSelectInput(session, "method", selected = "Newton-Raphson")
         
         ## detector array
