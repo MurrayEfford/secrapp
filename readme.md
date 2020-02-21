@@ -1,4 +1,4 @@
-# secrapp 1.1
+# secrapp 1.2
 
 secrapp performs simple spatially explicit capture-recapture analyses using the R package [secr](https://CRAN.R-project.org/package=secr). See the Help tab for details.
 
@@ -11,7 +11,7 @@ library(shiny)
 runGitHub("secrapp", "MurrayEfford")
 ```
 
-Version 1.1 requires secr >= 4.1.0. A few features work only with secr >= 4.1.1.
+Version 1.2 requires secr >= 4.1.0. A few features work only with secr >= 4.2.0.
 
 ----
 

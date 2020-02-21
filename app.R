@@ -4,7 +4,7 @@ library(stringr)
 
 secrversion <- packageVersion('secr')
 if (compareVersion(as.character(secrversion), '4.0.1') < 0)
-    stop("secrapp 1.1 requires secr version 4.0.1 or later",
+    stop("secrapp 1.2 requires secr version 4.0.1 or later",
          call. = FALSE)
 
 # for transfer to secrdesign
@@ -36,7 +36,7 @@ defaultcores <- max(1, availablecores/2)
 ui <- function(request) {
     
     fluidPage(
-        title = "secr app 1.1",
+        title = "secr app 1.2",
         includeCSS("secrstyle.css"),
         useShinyjs(),
         withMathJax(),
@@ -50,7 +50,7 @@ ui <- function(request) {
         br(),
         navlistPanel(id = "navlist", widths = c(2,10), well=TRUE,
                      
-                     "secr app 1.1",
+                     "secr app 1.2",
                      
                      tabPanel("Main screen",
                               fluidRow(
@@ -632,7 +632,7 @@ ui <- function(request) {
                               withMathJax(includeMarkdown("help.rmd"))
                      ),
                      tabPanel("About",
-                              h2("secr app 1.1"), br(),
+                              h2("secr app 1.2"), br(),
                               
                               h5(paste("This Shiny application provides an interface to the R package 'secr', version", 
                                        packageDescription("secr")$Version), "."),
@@ -2992,8 +2992,8 @@ server <- function(input, output, session) {
         req(fitrv$value)
         par(mar=c(4,5,2,5))
         if (detector(traprv$data)[1] %in% polygondetectors) {
-            if (compareVersion(as.character(secrversion), '4.1.1') < 0) {
-                showNotification("esa.plot for polygon detector types requires secr >= 4.1.1")
+            if (compareVersion(as.character(secrversion), '4.2.0') < 0) {
+                showNotification("esa.plot for polygon detector types requires secr >= 4.2.0")
                 return()
             }
         }
