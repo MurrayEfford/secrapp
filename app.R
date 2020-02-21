@@ -1858,6 +1858,7 @@ server <- function(input, output, session) {
     
     capthist <- reactive( {
         ch <- NULL
+        # fitrv$value <- NULL
         if ((is.null(traprv$data) || is.null(captrv$data)) && is.null(importrv$data)) {
             updateNumericInput(session, "animal", max = 0)
             NULL
@@ -3023,7 +3024,8 @@ server <- function(input, output, session) {
             }
         }
         if (input$masktype == "Build") {
-            spscale <- secr:::spatialscale(fitrv$value)
+            spscale <- secr:::spatialscale(fitrv$value, detectfn = input$detectfnbox, 
+                                           session = input$sess)
             max.buffer <- max(input$buffer, 5*spscale)
             esa.plot(fitrv$value, session = input$sess, max.buffer = max.buffer)
             abline(v = input$buffer, col = "red")
