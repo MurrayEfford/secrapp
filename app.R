@@ -225,22 +225,24 @@ ui <- function(request) {
                                                                           br(),
                                                                           fluidRow(
                                                                               column(9, style='padding:0px;', plotOutput("arrayPlot", 
-                                                                                                                         click = clickOpts(id="arrayClick", clip = FALSE))),
+                                                                                                                         click = clickOpts(id="arrayClick", clip = FALSE),
+                                                                                                                         hover = hoverOpts(id ="arrayHover", delayType = "throttle"))),
                                                                               column(3, br(), conditionalPanel("input.gridlines != 'None'",
                                                                                                                uiOutput("uigridlines") ),
                                                                                      br(), uiOutput('xycoord'))
                                                                           ),
-                                                                          fluidRow(
+                                                                          conditionalPanel("output.capthistLoaded",
+                                                                              fluidRow(
                                                                               column(2, offset = 1, checkboxInput("tracks", "All tracks", FALSE),
                                                                                      conditionalPanel("output.modelFitted", checkboxInput("fxi", "fxi contour", FALSE))),
                                                                               column(2, checkboxInput("varycol", "Vary colours", FALSE)),
                                                                               column(2, numericInput("animal", "Select animal", min = 0, max = 2000, 
                                                                                                      step = 1, value = 1)),
-                                                                              column(2, br(), conditionalPanel("input.animal>0", uiOutput("uianimalID"))),
+                                                                              column(3, br(), conditionalPanel("input.animal>0", uiOutput("uianimalID"))),
                                                                               column(2, conditionalPanel("output.multisession=='true'",
                                                                                                          numericInput("sess", "Session", min = 1, max = 2000, 
                                                                                                                       step = 1, value = 1)))
-                                                                          )
+                                                                          ))
                                                                  ),
                                                                  tabPanel("Detectfn", plotOutput("detnPlot", height = 320)),
                                                                  tabPanel("Buffer", plotOutput("esaPlot", height = 320)),
@@ -937,17 +939,56 @@ server <- function(input, output, session) {
     })
     ##############################################################################
     
-    output$xycoord <- renderUI({
+    observeEvent(input$arrayClick, {
         xy <- c(input$arrayClick$x, input$arrayClick$y)
         tmpgrid <- isolate(traprv$data)
+        tmpcapt <- capthist()
+        if (ms(tmpcapt)) {
+            tmpcapt <- tmpcapt[[input$sess]]
+            tmpgrid <- traps(tmpcapt)
+        }
+        if (!is.null(xy) && !is.null(tmpcapt)) 
+        {
+            if (detector(tmpgrid)[1] %in% polygondetectors) {
+                nearest <- nearesttrap(xy, xy(tmpcapt))
+                updateNumericInput(session, "animal", value = animalID(tmpcapt, names=FALSE)[nearest])
+                id <- paste0(animalID(tmpcapt)[nearest], ":")
+            }
+            else {
+                nearest <- nearesttrap(xy, tmpgrid)
+                #-----------------------------------------------------
+                ## machinery to cycle through animals at this detector
+                if (lasttrap != nearest) clickno <<- 0
+                clickno <<- clickno + 1
+                lasttrap <<- nearest
+                at.xy <- apply(tmpcapt[,,nearest, drop = FALSE],1,sum)
+                at.xy <- which(at.xy>0)
+                clickno <<- ((clickno-1) %% length(at.xy)) + 1
+                #-----------------------------------------------------
+                if (length(at.xy)>0) {
+                    updateNumericInput(session, "animal", value = as.numeric(at.xy[clickno]))
+                }
+            }
+        }
+    })
+    ##############################################################################
+    
+    output$xycoord <- renderUI({
+        xy <- c(input$arrayHover$x, input$arrayHover$y)
+        tmpgrid <- isolate(traprv$data)
+        tmpcapt <- capthist()
+        if (ms(tmpcapt)) {
+            tmpcapt <- tmpcapt[[input$sess]]
+            tmpgrid <- traps(tmpcapt)
+        }
         if (is.null(xy)) 
             helpText("")
         else {
-            if (detector(traprv$data)[1] %in% polygondetectors) {
-                if (!is.null(capthist())) {
-                    nearest <- nearesttrap(xy, xy(capthist()))
-                    updateNumericInput(session, "animal", value = animalID(capthist(), names=FALSE)[nearest])
-                    id <- paste0(animalID(capthist())[nearest], ":")
+            if (detector(tmpgrid)[1] %in% polygondetectors) {
+                if (!is.null(tmpcapt)) {
+                    nearest <- nearesttrap(xy, xy(tmpcapt))
+                    ## updateNumericInput(session, "animal", value = animalID(tmpcapt, names=FALSE)[nearest])
+                    id <- paste0(animalID(tmpcapt)[nearest], ":")
                 }
                 else {
                     nearest <- nearesttrap(xy, tmpgrid)
@@ -956,29 +997,13 @@ server <- function(input, output, session) {
             }
             else {
                 nearest <- nearesttrap(xy, tmpgrid)
-                id <- ""
-                if (!is.null(capthist())) {
-                    #-----------------------------------------------------
-                    ## machinery to cycle through animals at this detector
-                    if (lasttrap != nearest) clickno <<- 0
-                    clickno <<- clickno + 1
-                    lasttrap <<- nearest
-                    at.xy <- apply(capthist()[,,nearest, drop = FALSE],1,sum)
-                    at.xy <- which(at.xy>0)
-                    clickno <<- ((clickno-1) %% length(at.xy)) + 1
-                    #-----------------------------------------------------
-                    if (length(at.xy)>0) {
-                        updateNumericInput(session, "animal", value = as.numeric(at.xy[clickno]))
-                    }
-                    if (input$snaptodetector) {
-                        xy <- tmpgrid[nearest,]
-                        id <- paste0(rownames(tmpgrid)[nearest], ":")
-                    }
-                }
-                else {
-                    id <- paste0(rownames(tmpgrid)[nearest], ":")
+                id <- paste0(rownames(tmpgrid)[nearest], ":")
+                if (input$snaptodetector) {
+                    xy <- tmpgrid[nearest,]
                 }
             }
+            # 2020-02-22 this is transient on capthist plot 
+            #            as plot is redrawn when new animal selected
             helpText(HTML(paste(id, paste(round(xy), collapse = ", "))))
         }
     })
