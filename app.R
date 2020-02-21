@@ -2814,9 +2814,19 @@ server <- function(input, output, session) {
             cat("No data loaded\n")
         }
         else if (is.null(capthist())) {
+            cat("Summary of detector layout from", input$trapfilename[1,'name'], "\n")
+            cat("----------------------------------------------------------------\n")
             summary(traprv$data)
         }
         else if (is.null(fitrv$value)) {
+            if (input$datasource == 'Text files') {
+            cat("Summary of capthist object from", input$trapfilename[1,'name'], "and", 
+                input$captfilename[1,'name'], "\n")
+            }
+            else {
+                cat("Summary of capthist object from", input$importfilename[1,'name'], "\n")
+            }
+            cat("----------------------------------------------------------------\n")
             if (ms(capthist())) {
                 list(terse = summary(capthist(), terse = TRUE), bysession = summary(capthist(), moves = TRUE))            }
             else {
