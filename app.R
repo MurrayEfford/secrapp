@@ -680,6 +680,8 @@ server <- function(input, output, session) {
     lasttrap <- 0
     clickno <- 0
     
+    disable("fitbtn")
+    
     showNotification(paste("secr", desc$Version, desc$Date),
                      closeButton = FALSE, type = "message", duration = seconds)
      output$selectingfields <- renderText('false')
@@ -1858,10 +1860,9 @@ server <- function(input, output, session) {
     
     capthist <- reactive( {
         ch <- NULL
-        # fitrv$value <- NULL
         if ((is.null(traprv$data) || is.null(captrv$data)) && is.null(importrv$data)) {
             updateNumericInput(session, "animal", max = 0)
-            NULL
+            ch <- NULL
         }
         else {
             if (!is.null(importrv$data)) {
@@ -1905,6 +1906,14 @@ server <- function(input, output, session) {
                 updateNumericInput(session, "sess", max = length(ch))
                 updateSelectInput(session, "hcovbox", choices = c("none", names(covariates(ch))))
             }
+        }
+        # added 2020-02-22; weak as some other changes can invalidate model
+        if (is.null(ch)) {
+            fitrv$value <- NULL  
+            disable("fitbtn")
+        }
+        else {
+            enable("fitbtn")
         }
         ch
     })
