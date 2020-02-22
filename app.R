@@ -1907,8 +1907,8 @@ server <- function(input, output, session) {
                 updateSelectInput(session, "hcovbox", choices = c("none", names(covariates(ch))))
             }
         }
-        # added 2020-02-22; weak as some other changes can invalidate model
         if (is.null(ch)) {
+            # added 2020-02-22; weak as some other changes can invalidate model
             fitrv$value <- NULL  
             disable("fitbtn")
         }
