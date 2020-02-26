@@ -23,7 +23,7 @@ output:
 
 # Introduction  <a name="introduction"></a>
 
-This Shiny application is an interactive interface to parts of the R package **secr** ([Efford 2019a](#references)). The current source code is available from https://GitHub.com/MurrayEfford/secrapp. Documentation of **secr** is available at www.otago.ac.nz/density. For example:
+This Shiny application is an interactive interface to parts of the R package **secr** ([Efford 2020](#references)). The current source code is available from https://GitHub.com/MurrayEfford/secrapp. Documentation of **secr** is available at www.otago.ac.nz/density. For example:
 
 <a href="https://www.otago.ac.nz/density/pdfs/secr-manual.pdf"; target="_blank";>secr-manual.pdf</a>   (details of each function)  
 <a href="https://www.otago.ac.nz/density/pdfs/secr-datainput.pdf"; target="_blank";>secr-datainput.pdf</a>  
@@ -45,7 +45,7 @@ By default, input is from two text files, one for the detector layout and one fo
 
 The detector layout is input from a text file. The file typically should have three columns (trapID, x, y) with no headers. These may optionally be followed by binary usage codes (0/1), one per occasion. Columns after a '/' are interpreted as detector covariates. 
 
-Options for <u>detector type</u>  follow **secr** ([Efford (2019a)](#references)): "multi" refers to a multi-catch trap; "proximity" to binary proximity detectors, and "count" to detectors that yield integer counts. Counts are assumed to be Poisson-distributed. Data from searches of areas or transects use the types "polygon", "polygonX", "transect" or "transectX" (Efford 2011; see also [secr-polygondetectors.pdf]).
+Options for <u>detector type</u>  follow **secr** ([Efford (2020)](#references)): "multi" refers to a multi-catch trap; "proximity" to binary proximity detectors, and "count" to detectors that yield integer counts. Counts are assumed to be Poisson-distributed. Data from searches of areas or transects use the types "polygon", "polygonX", "transect" or "transectX" (Efford 2011; see also [secr-polygondetectors.pdf]).
 
 If detector covariates are included then one or more covariate names should be provided (without quotes, separated by commas).
 
@@ -252,9 +252,9 @@ The default (Newton-Raphson in function `nlm`) is generally OK. Nelder-Mead in f
 
 ### Number of cores
 
-Multithreading allows some operations to be performed in parallel for faster model fitting. The number of cores (ncores argument of `secr::secr.fit`) may be set manually. The maximum allowed by secrapp is the smaller of 24 and the number of cores available (including virtual cores)[1]. The default number of cores is half the maximum (cf ncores = 1 in `secr::secr.fit`).
+Multithreading allows some operations to be performed in parallel for faster model fitting. The number of cores (ncores argument of `secr::secr.fit`) may be set manually. The maximum allowed by secrapp is the smaller of 24 and the number of cores available (including virtual cores)[1]. The default number of cores is half the maximum.
 
-[1] The limit of 24 is arbitrary. It prevents a user from hogging a vast number of cores in some environments. 
+[1] The limit of 24 is arbitrary. It stops a user from hogging a vast number of cores in some environments. 
 
 ### Time limit
 
@@ -292,10 +292,10 @@ Efford, M. G. (2011) Estimation of population density by
 spatially explicit capture--recapture analysis of data from area
 searches. *Ecology* **92**, 2202--2207.
 
-Efford, M. G. (2019a) secr: Spatially explicit capture--recapture models. R package version 4.1.0. https://CRAN.R-project.org/package=secr
-
-Efford, M. G. (2019b) secrdesign: Sampling design for spatially explicit capture--recapture. R package version 2.5.7.
+Efford, M. G. (2019) secrdesign: Sampling design for spatially explicit capture--recapture. R package version 2.5.7.
   https://CRAN.R-project.org/package=secrdesign
+
+Efford, M. G. (2020) secr: Spatially explicit capture--recapture models. R package version 4.2.0. https://CRAN.R-project.org/package=secr
 
 Efford, M. G. and Boulanger, J. (2019) Fast evaluation of study designs for spatially explicit capture--recapture. *Methods in Ecology and Evolution* **10**, 1529--1535.
 
