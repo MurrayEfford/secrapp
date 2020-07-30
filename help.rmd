@@ -286,18 +286,22 @@ The port number is arbitrary. Bookmarks are stored in a subdirectory of destdir.
 ----------------------------------------------------
 # References <a name="references"></a>
 
-Borchers, D. L. and Efford, M. G. (2008) Spatially explicit maximum likelihood methods for capture--recapture studies. *Biometrics* **64**, 377--385.
+Borchers, D. L. and Efford, M. G. (2008) Spatially explicit maximum likelihood 
+methods for capture--recapture studies. *Biometrics* **64**, 377--385.
 
 Efford, M. G. (2011) Estimation of population density by
 spatially explicit capture--recapture analysis of data from area
 searches. *Ecology* **92**, 2202--2207.
 
-Efford, M. G. (2019) secrdesign: Sampling design for spatially explicit capture--recapture. R package version 2.5.7.
+Efford, M. G. (2019) secrdesign: Sampling design for spatially explicit 
+capture--recapture. R package version 2.5.7.
   https://CRAN.R-project.org/package=secrdesign
 
-Efford, M. G. (2020) secr: Spatially explicit capture--recapture models. R package version 4.2.0. https://CRAN.R-project.org/package=secr
+Efford, M. G. (2020) secr: Spatially explicit capture--recapture models. 
+R package version 4.3.0. https://CRAN.R-project.org/package=secr
 
-Efford, M. G. and Boulanger, J. (2019) Fast evaluation of study designs for spatially explicit capture--recapture. *Methods in Ecology and Evolution* **10**, 1529--1535.
+Efford, M. G. and Boulanger, J. (2019) Fast evaluation of study designs for 
+spatially explicit capture--recapture. *Methods in Ecology and Evolution* **10**, 1529--1535.
 
 ----------------------------------------------------
 
