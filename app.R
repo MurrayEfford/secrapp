@@ -160,11 +160,13 @@ ui <- function(request) {
                                                                               choices = c("Poisson", "Binomial"))),
                                                        column(3, style="color:grey;",
                                                               selectInput("hcovbox", label = "Mixture hcov",
-                                                                              choices = c("none"), selected = "none", width=160))
+                                                                              choices = c("none"), selected = "none", width=160),
+                                                              actionLink("masklink", "Habitat mask"))
                                                    ),
                                                    fluidRow(
                                                        column(8, textInput("model", "Model", value = "D~1, g0~1, sigma~1")),
-                                                       column(4, uiOutput("maskdetailui1"), uiOutput("maskdetailui2"))
+                                                       column(4, 
+                                                              uiOutput("maskdetailui1"), uiOutput("maskdetailui2"))
                                                    ),
                                                    fluidRow(
                                                        column(12, textInput("otherargs", "Other arguments", value = "", 
@@ -392,7 +394,8 @@ ui <- function(request) {
                                                                              width = 180)
                                                       )
                                              ) 
-                                         )
+                                         ),
+                                         actionLink("mainlink", "Return to Main screen")
                                   ),
                                   column(5, plotOutput("maskPlot"),
                                          conditionalPanel ("output.maskready", fluidRow(
@@ -746,7 +749,7 @@ server <- function(input, output, session) {
          }
          else {
              if (input$masktype == 'Build')
-                 x <- HTML(paste0("Habitat mask buffer ", input$buffer, " m"))
+                 x <- HTML(paste0(input$buffer, " m  buffer"))
              else
                  x <- HTML(paste0("Habitat mask from file"))
          }
@@ -2402,6 +2405,16 @@ server <- function(input, output, session) {
         ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
         capttextrv$value <- FALSE
         traptextrv$value <- !is.null(input$trapfilename) && (input$showtrapfilebtn %% 2 == 1)
+    })
+    
+    observeEvent(input$mainlink, ignoreInit = TRUE, {
+        ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
+        updateNavlistPanel(session, "navlist", "Main screen")
+    })
+    
+    observeEvent(input$masklink, ignoreInit = TRUE, {
+        ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
+        updateNavlistPanel(session, "navlist", "Habitat mask")
     })
     
     observeEvent(input$showcaptfilebtn, ignoreInit = TRUE, {
