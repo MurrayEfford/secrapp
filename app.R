@@ -4,7 +4,7 @@ library(stringr)
 
 secrversion <- packageVersion('secr')
 if (compareVersion(as.character(secrversion), '4.0.1') < 0)
-    stop("secrapp 1.2 requires secr version 4.0.1 or later",
+    stop("secrapp 1.3 requires secr version 4.0.1 or later",
          call. = FALSE)
 
 # for transfer to secrdesign
@@ -36,7 +36,7 @@ defaultcores <- max(1, availablecores/2)
 ui <- function(request) {
     
     fluidPage(
-        title = "secr app 1.2",
+        title = "secr app 1.3",
         includeCSS("secrstyle.css"),
         useShinyjs(),
         withMathJax(),
@@ -50,8 +50,10 @@ ui <- function(request) {
         br(),
         navlistPanel(id = "navlist", widths = c(2,10), well=TRUE,
                      
-                     "secr app 1.2",
-                     
+                     "secr app 1.3",
+                     tabPanel("Introduction",
+                              withMathJax(includeMarkdown("intro.rmd"))
+                     ),
                      tabPanel("Main screen",
                               fluidRow(
                                   column (5, # offset = 0, style='padding:15px;',
@@ -634,7 +636,7 @@ ui <- function(request) {
                               withMathJax(includeMarkdown("help.rmd"))
                      ),
                      tabPanel("About",
-                              h2("secr app 1.2"), br(),
+                              h2("secr app 1.3"), br(),
                               
                               h5(paste("This Shiny application provides an interface to the R package 'secr', version", 
                                        packageDescription("secr")$Version), "."),
@@ -1481,11 +1483,18 @@ server <- function(input, output, session) {
                     cov <- if (covnames == "") "" else paste0(", covnames = ", covnames)
                 }
                 
+                filename <- input$captfilename[1,"name"]
                 if (grepl('.xls', input$captfilename$name[1])) {
-                    code <- paste0("capt <- readxl::read_excel('", input$captfilename[1,"name"], "'", args, ")\n")
+                    code <- paste0("capt <- readxl::read_excel('", filename, "'", args, ")\n")
                 }
                 else {
-                    code <- paste0("capt <- read.table('", input$captfilename[1,"name"], "'", args, ")\n")
+                    # ensure correct type for trapID
+                    if (input$fmt == "trapID" && ! grepl("colClasses", args)) {
+                        nfield <- count.fields(filename)[1]
+                        colClass <- c('"character"', '"character"','"integer"','"character"', rep(NA, nfield-4))
+                        args <- paste0(args, ", colClasses = c(", paste0(colClass, collapse = ","), ")")
+                    }
+                    code <- paste0("capt <- read.table('", filename, "'", args, ")\n")
                 }
                 
                 code <- paste0(code, "ch <- make.capthist (capt, traps = array", fmt, cov, ")\n")
@@ -1792,6 +1801,12 @@ server <- function(input, output, session) {
                 readcaptcall <- paste0("readxl::read_excel(filename", args, ")")
             }
             else {
+                # ensure correct type for trapID
+                if (input$fmt == "trapID" && ! grepl("colClasses", args)) {
+                    nfield <- count.fields(filename)[1]
+                    colClass <- c("character", "character","integer","character", rep(NA, nfield-4))
+                    args <- paste0(args, ", colClasses = colClass")
+                }
                 readcaptcall <- paste0("read.table (filename", args, ")")
             }
             captrv$data <- try(eval(parse(text = readcaptcall)))
