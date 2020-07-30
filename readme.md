@@ -1,4 +1,4 @@
-# secrapp 1.2
+# secrapp 1.3
 
 secrapp performs simple spatially explicit capture-recapture analyses using the R package [secr](https://CRAN.R-project.org/package=secr). See the Help tab for details.
 
@@ -11,7 +11,7 @@ library(shiny)
 runGitHub("secrapp", "MurrayEfford")
 ```
 
-Version 1.2 requires secr >= 4.1.0. A few features work only with secr >= 4.2.0.
+Version 1.3 requires secr >= 4.1.0. A few features work only with secr >= 4.3.0.
 
 ----
 
@@ -21,12 +21,15 @@ Some test data are provided:
 |--------|-------------------------------|------------------|
 trap.txt | secr test file |Data input - Detector layout |
 capt.txt | secr test file |Data input - Captures |
-FTHLcapt.txt | Flat-tailed horned lizard test data |Data input - Captures |
+masktext2.txt | Demo mask file for capt.txt | Habitat mask - File input |
 FTHLtrap.txt | Perimeter of horned lizard search area | Data input - Detector layout |
+FTHLcapt.txt | Flat-tailed horned lizard test data |Data input - Captures |
+FTHL.Rds | Saved flat-tailed horned lizard dataset | Data input |
+hareCH6trap.txt | Snowshow hare data | Data input - Detector layout |
+hareCH6capt.txt | Snowshow hare data | Data input - Captures |
+hareCH6.Rds | Saved snowshoe hare dataset | Data input |
 ovtrap.txt | Locations of possum traps in the Orongorongo Valley | Data input - Detector layout |
 OVforest.dbf | ESRI polygon shapefile extent of habitat near possum traps | Habitat mask - Mask polygon files |
 OVforest.shp |||
 OVforest.shx |||
-masktext2.txt | Demo mask file for capt.txt | Habitat mask - File input |
 ovenCHp.Rds | Saved ovenbird proximity dataset | Data input |
-FTHL.Rds | Saved flat-tailed horned lizard dataset | Data input |
