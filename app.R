@@ -160,13 +160,16 @@ ui <- function(request) {
                                                                               choices = c("Poisson", "Binomial"))),
                                                        column(3, style="color:grey;",
                                                               selectInput("hcovbox", label = "Mixture hcov",
-                                                                              choices = c("none"), selected = "none", width=160),
-                                                              actionLink("masklink", "Habitat mask"))
+                                                                              choices = c("none"), selected = "none", width=160)
+                                                              )
                                                    ),
                                                    fluidRow(
                                                        column(8, textInput("model", "Model", value = "D~1, g0~1, sigma~1")),
                                                        column(4, 
-                                                              uiOutput("maskdetailui1"), uiOutput("maskdetailui2"))
+                                                           actionLink("masklink", "Habitat mask"),
+                                                           uiOutput("maskdetailui1"), 
+                                                           uiOutput("maskdetailui2")
+                                                       )
                                                    ),
                                                    fluidRow(
                                                        column(12, textInput("otherargs", "Other arguments", value = "", 
@@ -192,7 +195,6 @@ ui <- function(request) {
                                              column(3, helpText(HTML("F11 full screen")))
                                                     
                                          ),
-                                         br(),
                                          fluidRow(
                                              column(11, textInput("title", "", value = "", 
                                                                   placeholder = "note for Summary")))
@@ -741,18 +743,18 @@ server <- function(input, output, session) {
      })
 
      output$maskdetailui1 <- renderUI({
-         if (is.null(mask()))  {
-             if (is.null(capthist()))
-                 x <- HTML("")  
-             else
-                 x <- HTML("No valid habitat mask")  
-         }
-         else {
+         # if (is.null(mask()))  {
+         #     if (is.null(capthist()))
+         #         x <- HTML("")  
+         #     else
+         #         x <- HTML("No valid habitat mask")  
+         # }
+         # else {
              if (input$masktype == 'Build')
-                 x <- HTML(paste0(input$buffer, " m  buffer"))
+                 x <- HTML(paste0(input$buffer, "-m  buffer, nx = ", input$habnx))
              else
                  x <- HTML(paste0("Habitat mask from file"))
-         }
+         #}
          helpText(x)
      })
      
