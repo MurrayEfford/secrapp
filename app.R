@@ -80,7 +80,7 @@ ui <- function(request) {
                                   "You can also run it on your own machine directly from ",
                                   a(href="https://github.com/MurrayEfford/secrapp", target="_blank", "GitHub"), ".",
                                   
-                                  strong("secrapp"), "provides code for basic operations that may be copied to the command line in R.",
+                                  strong("secrapp"), "provides code that may be copied to the command line in R.",
                                   hr(),
                                   
                                   h2("Where can I get help?"),
@@ -163,14 +163,14 @@ ui <- function(request) {
                                                                                      )
                                                                                  ),
                                                                                  fluidRow(
-                                                                                     column(12, 
+                                                                                     column(12, style="color:grey;",
                                                                                             div(#style="height: 25px;",
                                                                                                 textInput("trapcovnames", "Covariate names",
                                                                                                           value = "", placeholder = "e.g., traptype, habitat"))
                                                                                      )
                                                                                  ),
                                                                                  fluidRow(
-                                                                                     column(12,
+                                                                                     column(12,  style="color:grey;",
                                                                                             div(# style="height: 25px;",
                                                                                                 textInput("trapargs", "Other arguments",value = "", placeholder = "e.g., skip = 1"))
                                                                                      )
@@ -195,11 +195,13 @@ ui <- function(request) {
                                                                                  ),
                                                                                  # uiOutput("captfilehelp"),
                                                                                  fluidRow(
-                                                                                     column(12, textInput("covnames", "Covariate names",
+                                                                                     column(12, style="color:grey;",
+                                                                                            textInput("covnames", "Covariate names",
                                                                                                           value = "", placeholder = "e.g., sex"))
                                                                                  ),
                                                                                  fluidRow(
-                                                                                     column(12,textInput("captargs", "Other arguments",
+                                                                                     column(12, style="color:grey;",
+                                                                                            textInput("captargs", "Other arguments",
                                                                                                          value = "", placeholder = "e.g., skip = 1"))
                                                                                  )
                                                                        )
@@ -244,7 +246,8 @@ ui <- function(request) {
                                                        )
                                                    ),
                                                    fluidRow(
-                                                       column(12, textInput("otherargs", "Other arguments", value = "", 
+                                                       column(12,  style="color:grey;",
+                                                              textInput("otherargs", "Other arguments", value = "", 
                                                                             placeholder = "e.g., details = list(fastproximity = FALSE), binomN = 1"))
                                                    )
                                          ),
