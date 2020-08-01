@@ -132,6 +132,7 @@ ui <- function(request) {
                                          img(src = "tinydetectfn.png", width = 200, alt = "code", align = "left"),
                                          img(src = "tinybuffer.png", width = 200, alt = "code", align = "left"),
                                          img(src = "tinypxy.png", width = 200, alt = "code", align = "left", vspace = 10),
+                                         img(src = "tinyDxy.png", width = 200, alt = "code", align = "left", vspace = 10),
                                          img(src = "tinypower.png", width = 200, alt = "code", align = "left")
                                   )
                               )
