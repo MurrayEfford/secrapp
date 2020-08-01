@@ -239,8 +239,8 @@ ui <- function(request) {
                                                    ),
                                                    fluidRow(
                                                        column(8, textInput("model", "Model", value = "D~1, g0~1, sigma~1")),
-                                                       column(4, 
-                                                           actionLink("masklink", "Habitat mask"),
+                                                       column(4, HTML("<small><strong>Habitat mask</strong></small>","&nbsp;"),
+                                                           actionLink("masklink", " edit"),
                                                            uiOutput("maskdetailui1"), 
                                                            uiOutput("maskdetailui2")
                                                        )
