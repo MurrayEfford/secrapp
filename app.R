@@ -53,85 +53,95 @@ ui <- function(request) {
                               # withMathJax(includeMarkdown("intro.rmd"))  # alternative Rmarkdown 
                               fluidRow(
                                   column(8,
-                                  h2("What is secrapp?"),
-                                  
-                                  "Spatially explicit capture--recapture (SECR or SCR) (Efford 2004, Borchers and Efford 2008, 
+                                         h2("What is secrapp?"),
+                                         
+                                         "Spatially explicit capture--recapture (SECR or SCR) (Efford 2004, Borchers and Efford 2008, 
                                   Efford et al. 2009) is used to estimate animal population density from data on marked animals 
                                   at arrays of passive detectors (traps, cameras, hair snags etc.).",
-                                  br(),br(),
-                                  
-                                  "SECR is computer-intensive, with both Bayesian and frequentist (maximum likelihood) flavours. 
+                                         br(),br(),
+                                         
+                                         "SECR is computer-intensive, with both Bayesian and frequentist (maximum likelihood) flavours. 
                                   Here we focus on data from closed populations (no births, deaths, immigration or emigration 
                                   during sampling) and model fitting by maximum likelihood.",
-                                  br(), br(),
-                                  
-                                  strong("secrapp"), "is an interactive interface to parts of the R package", strong("secr"), 
-                                  "(Efford 2020). ", strong("secr"), " and ", strong("secrapp"), "together supercede the Windows", 
-                                  " software DENSITY (Efford et al. 2004)." ,
-                                  hr(),
-                                  
-                                  h2("What does secrapp do?"),
-                                      
-                                  "The Shiny application runs simple SECR analyses on a ", 
-                                  a(href="https://www.stats.otago.ac.nz/secrapp/", target="_blank", "University of Otago machine"), 
-                                  "through your web browser. No setup is required.",
-                                  br(), br(),
-                                  
-                                  "You can also run it on your own machine directly from ",
-                                  a(href="https://github.com/MurrayEfford/secrapp", target="_blank", "GitHub"), ".",
-                                  
-                                  strong("secrapp"), "provides code that may be copied to the command line in R.",
-                                  hr(),
-                                  
-                                  h2("Where can I get help?"),
-                                  
-                                  "The internal", 
-                                  actionLink("helplink", "Help screen"),
-                                  "details the options available in", strong("secrapp"), ".",
-                                  "There is also a step-by-step guide ", 
-                                  a(href="https://www.otago.ac.nz/density/pdfs/secrapp-tutorial.html", target="_blank", "here."),
-                                  
-                                  "The",  a(href="https://www.otago.ac.nz/density", target="_blank", "DENSITY"),
-                                  "webpage has other resources and links. These include", br(),
-                                  
-                                  a(href="https://www.otago.ac.nz/density/pdfs/secr-datainput.pdf", target="_blank", "secr-datainput.pdf"), br(),
-                                  a(href="https://www.otago.ac.nz/density/pdfs/secr-overview.pdf", target="_blank", "secr-overview.pdf"), br(),  
-                                  a(href="https://www.otago.ac.nz/density/pdfs/secr-tutorial.pdf", target="_blank", "secr-tutorial.pdf"), br(),
-                                  a(href="https://www.otago.ac.nz/density/pdfs/secr-manual.pdf", target="_blank", "secr-manual.pdf"), "(details of each", strong("secr"), "function)", br(),  
-                                  br(),
-                                  "Online help is available on the", a(href="http://www.phidot.org/forum/index.php", target="_blank", "phidot"),
-                                  "forum and the", a(href="https://groups.google.com/forum/#%21forum/secrgroup", target="_blank", "secr"), 
-                                  "Google group.",
-                                  hr(),
-                                  
-                                  h2("References"),
-                                  
-                                  "Borchers, D. L. and Efford, M. G. (2008) Spatially explicit maximum likelihood methods 
+                                         br(), br(),
+                                         
+                                         strong("secrapp"), "is an interactive interface to parts of the R package", strong("secr"), 
+                                         "(Efford 2020). ", strong("secr"), " and ", strong("secrapp"), "together supercede the Windows", 
+                                         " software DENSITY (Efford et al. 2004)." ,
+                                         hr(),
+                                         
+                                         h2("What does secrapp do?"),
+                                         
+                                         "The Shiny application runs simple SECR analyses on a ", 
+                                         a(href="https://www.stats.otago.ac.nz/secrapp/", target="_blank", "University of Otago machine"), 
+                                         "through your web browser. No setup is required.",
+                                         br(), br(),
+                                         
+                                         "You can also run it on your own machine directly from ",
+                                         a(href="https://github.com/MurrayEfford/secrapp", target="_blank", "GitHub"), ".",
+                                         
+                                         strong("secrapp"), "provides code that may be copied to the command line in R.",
+                                         hr(),
+                                         
+                                         h2("Where can I get help?"),
+                                         
+                                         "The internal", 
+                                         actionLink("helplink", "Help screen"),
+                                         "details the options available in", strong("secrapp"), ".",
+                                         "There is also a step-by-step guide ", 
+                                         a(href="https://www.otago.ac.nz/density/pdfs/secrapp-tutorial.html", target="_blank", "here."),
+                                         
+                                         "The",  a(href="https://www.otago.ac.nz/density", target="_blank", "DENSITY"),
+                                         "webpage has other resources and links. These include", br(),
+                                         
+                                         a(href="https://www.otago.ac.nz/density/pdfs/secr-datainput.pdf", target="_blank", "secr-datainput.pdf"), br(),
+                                         a(href="https://www.otago.ac.nz/density/pdfs/secr-overview.pdf", target="_blank", "secr-overview.pdf"), br(),  
+                                         a(href="https://www.otago.ac.nz/density/pdfs/secr-tutorial.pdf", target="_blank", "secr-tutorial.pdf"), br(),
+                                         a(href="https://www.otago.ac.nz/density/pdfs/secr-manual.pdf", target="_blank", "secr-manual.pdf"), "(details of each", strong("secr"), "function)", br(),  
+                                         br(),
+                                         "Online help is available on the", a(href="http://www.phidot.org/forum/index.php", target="_blank", "phidot"),
+                                         "forum and the", a(href="https://groups.google.com/forum/#%21forum/secrgroup", target="_blank", "secr"), 
+                                         "Google group.",
+                                         hr(),
+                                         
+                                         h2("References"),
+                                         
+                                         "Borchers, D. L. and Efford, M. G. (2008) Spatially explicit maximum likelihood methods 
                                   for capture-recapture studies.", em("Biometrics"), "64: 377-385.", br(),
-                                  
-                                  "Efford, M. G. (2004) Density estimation in live-trapping studies.", em("Oikos"), "106: 598-610.", br(),
-                                  
-                                  "Efford, M. G., Borchers D. L. and Byrom, A. E. (2009) Density estimation by spatially explicit 
+                                         
+                                         "Efford, M. G. (2004) Density estimation in live-trapping studies.", em("Oikos"), "106: 598-610.", br(),
+                                         
+                                         "Efford, M. G., Borchers D. L. and Byrom, A. E. (2009) Density estimation by spatially explicit 
                                   capture--recapture: likelihood-based methods. In: D. L. Thomson, E. G. Cooch, M. J. Conroy (eds)",
-                                  em("Modeling Demographic Processes in Marked Populations."), "Springer. Pp 255-269.", br(),
-                                  
-                                  "Efford, M. G. (2020) secr: Spatially explicit capture-recapture models. R package version 4.3.0.",
-                                  a(href = "https://CRAN.R-project.org/package=secr"), br(),
-                                  
-                                  "Efford, M. G., Dawson, D. K. and Robbins, C. R. (2004) DENSITY: software for analysing 
+                                         em("Modeling Demographic Processes in Marked Populations."), "Springer. Pp 255-269.", br(),
+                                         
+                                         "Efford, M. G. (2020) secr: Spatially explicit capture-recapture models. R package version 4.3.0.",
+                                         a(href = "https://CRAN.R-project.org/package=secr"), br(),
+                                         
+                                         "Efford, M. G., Dawson, D. K. and Robbins, C. R. (2004) DENSITY: software for analysing 
                                   capture-recapture data from passive detector arrays.", em("Animal Biodiversity and Conservation"), "27.1: 217-228.",
-                                  
-                                  br(), br(),
-                                  
-                                  actionLink("mainlink3", "Go to Main screen")
-                              ))
+                                         
+                                         br(), br(),
+                                         
+                                         actionLink("mainlink3", "Go to Main screen")
+                                  ),   # end column 8
+                                  column(4, 
+                                         ## img(src = "tinycode.png", width = 200, alt = "code", align = "left")),
+                                         img(src = "tinyarray.png", width = 200, alt = "code", align = "left"),
+                                         img(src = "tinymoves.png", width = 200, alt = "code", align = "left"),
+                                         img(src = "tinydetectfn.png", width = 200, alt = "code", align = "left"),
+                                         img(src = "tinybuffer.png", width = 200, alt = "code", align = "left"),
+                                         img(src = "tinypxy.png", width = 200, alt = "code", align = "left", vspace = 10),
+                                         img(src = "tinypower.png", width = 200, alt = "code", align = "left")
+                                  )
+                              )
                      ),
                      tabPanel("Main screen",
                               fluidRow(
                                   column (5, # offset = 0, style='padding:15px;',
                                           h2("Data input"),
                                           fluidRow(
-                                            column(12, radioButtons("datasource", "", inline = TRUE, choices = c("Text files", "Stored capthist object")))
+                                              column(12, radioButtons("datasource", "", inline = TRUE, choices = c("Text files", "Stored capthist object")))
                                           ),
                                           conditionalPanel( condition = "input.datasource == 'Text files'",
                                                             
