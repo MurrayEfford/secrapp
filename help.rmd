@@ -180,6 +180,16 @@ A session selector is shown for multi-session data. Changing the session changes
 
 Once a model has been fitted, ticking 'fxi contour' displays a contour plot of probability density contours for the activity centre of the current animal. This may fail if the mask spacing is too small.
 
+### Moves
+
+Histogram of distances between the successive detections of each animal. The bar width is determined internally from an integer value provided to the 'breaks' argument of `hist`. You can vary the 'Nominal breaks' setting (small changes have no effect because of the algorithm used by `hist`).
+
+Summary statistics appear in a box to the right. "Approx HN sigma" is computed with the **secr** function `RPSV(capthist, CC = TRUE)`; the approximation is an underestimate, especially when the detector array is small.
+
+Non-exclusive detector types (proximity, count etc.) allow multiple detections on a single occasion, and the order of these detections is unknown. The distances then depend on the arbitrary within-occasion ordering of detections.
+
+For multi-session data the displayed histogram is for the current session (see Array tab), unless 'Combine sessions' has been selected on the Options screen. When sessions are combined, the default is to include session-session movements. This may be changed on the Options screen. 
+
 ### Detectfn   <a name="detectfnplot"></a>
 
 Fitted detection function on the hazard and probability scales.
