@@ -42,17 +42,89 @@ ui <- function(request) {
         withMathJax(),
         tags$head(tags$style(".mypanel{margin-top:5px; margin-bottom:10px; padding-bottom: 5px;}")),
         tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 250px; background: ghostwhite;}")),
-        #tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 250px; background: ghostwhite;}")),
         tags$head(tags$style("#codePrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 300px; background: ghostwhite;}")),
         tags$head(tags$style("#maskPrint{color:blue; font-size:12px; background: ghostwhite;}")),
         tags$head(tags$style(type="text/css", "input.shiny-bound-input { font-size:14px; height:30px; margin-top:0px; margin-bottom:2px; padding-top:0px; padding-bottom:0px;}")),
-        #tags$head(tags$style(type="text/css", "input.shiny-bound-input { font-size:14px; height:20px; margin-top:0px; margin-bottom:2px; padding-top:0px; padding-bottom:0px;}")),
         br(),
         navlistPanel(id = "navlist", widths = c(2,10), well=TRUE,
                      
                      "secr app 1.3",
                      tabPanel("Introduction",
-                              withMathJax(includeMarkdown("intro.rmd"))
+                              # withMathJax(includeMarkdown("intro.rmd"))  # alternative Rmarkdown 
+                              fluidRow(
+                                  column(8,
+                                  h2("What is secrapp?"),
+                                  
+                                  "Spatially explicit capture--recapture (SECR or SCR) (Efford 2004, Borchers and Efford 2008, 
+                                  Efford et al. 2009) is used to estimate animal population density from data on marked animals 
+                                  at arrays of passive detectors (traps, cameras, hair snags etc.).",
+                                  br(),br(),
+                                  
+                                  "SECR is computer-intensive, with both Bayesian and frequentist (maximum likelihood) flavours. 
+                                  Here we focus on data from closed populations (no births, deaths, immigration or emigration 
+                                  during sampling) and model fitting by maximum likelihood.",
+                                  br(), br(),
+                                  
+                                  strong("secrapp"), "is an interactive interface to parts of the R package", strong("secr"), 
+                                  "(Efford 2020). ", strong("secr"), " and ", strong("secrapp"), "together supercede the Windows", 
+                                  " software DENSITY (Efford et al. 2004)." ,
+                                  hr(),
+                                  
+                                  h2("What does secrapp do?"),
+                                      
+                                  "The Shiny application runs simple SECR analyses on a ", 
+                                  a(href="https://www.stats.otago.ac.nz/secrapp/", target="_blank", "University of Otago machine"), 
+                                  "through your web browser. No setup is required.",
+                                  br(), br(),
+                                  
+                                  "You can also run it on your own machine directly from ",
+                                  a(href="https://github.com/MurrayEfford/secrapp", target="_blank", "GitHub"), ".",
+                                  
+                                  strong("secrapp"), "provides code for basic operations that may be copied to the command line in R.",
+                                  hr(),
+                                  
+                                  h2("Where can I get help?"),
+                                  
+                                  "The internal", 
+                                  actionLink("helplink", "Help screen"),
+                                  "details the options available in", strong("secrapp"), ".",
+                                  "There is also a step-by-step guide ", 
+                                  a(href="https://www.otago.ac.nz/density/pdfs/secrapp-tutorial.html", target="_blank", "here."),
+                                  
+                                  "The",  a(href="https://www.otago.ac.nz/density", target="_blank", "DENSITY"),
+                                  "webpage has other resources and links. These include", br(),
+                                  
+                                  a(href="https://www.otago.ac.nz/density/pdfs/secr-datainput.pdf", target="_blank", "secr-datainput.pdf"), br(),
+                                  a(href="https://www.otago.ac.nz/density/pdfs/secr-overview.pdf", target="_blank", "secr-overview.pdf"), br(),  
+                                  a(href="https://www.otago.ac.nz/density/pdfs/secr-tutorial.pdf", target="_blank", "secr-tutorial.pdf"), br(),
+                                  a(href="https://www.otago.ac.nz/density/pdfs/secr-manual.pdf", target="_blank", "secr-manual.pdf"), "(details of each", strong("secr"), "function)", br(),  
+                                  br(),
+                                  "Online help is available on the", a(href="http://www.phidot.org/forum/index.php", target="_blank", "phidot"),
+                                  "forum and the", a(href="https://groups.google.com/forum/#%21forum/secrgroup", target="_blank", "secr"), 
+                                  "Google group.",
+                                  hr(),
+                                  
+                                  h2("References"),
+                                  
+                                  "Borchers, D. L. and Efford, M. G. (2008) Spatially explicit maximum likelihood methods 
+                                  for capture-recapture studies.", em("Biometrics"), "64: 377-385.", br(),
+                                  
+                                  "Efford, M. G. (2004) Density estimation in live-trapping studies.", em("Oikos"), "106: 598-610.", br(),
+                                  
+                                  "Efford, M. G., Borchers D. L. and Byrom, A. E. (2009) Density estimation by spatially explicit 
+                                  capture--recapture: likelihood-based methods. In: D. L. Thomson, E. G. Cooch, M. J. Conroy (eds)",
+                                  em("Modeling Demographic Processes in Marked Populations."), "Springer. Pp 255-269.", br(),
+                                  
+                                  "Efford, M. G. (2020) secr: Spatially explicit capture-recapture models. R package version 4.3.0.",
+                                  a(href = "https://CRAN.R-project.org/package=secr"), br(),
+                                  
+                                  "Efford, M. G., Dawson, D. K. and Robbins, C. R. (2004) DENSITY: software for analysing 
+                                  capture-recapture data from passive detector arrays.", em("Animal Biodiversity and Conservation"), "27.1: 217-228.",
+                                  
+                                  br(), br(),
+                                  
+                                  actionLink("mainlink3", "Go to Main screen")
+                              ))
                      ),
                      tabPanel("Main screen",
                               fluidRow(
@@ -184,7 +256,8 @@ ui <- function(request) {
                                                                     title = "Fit spatially explicit capture-recapture model to estimate density and update Results")),
                                              column(3, actionButton("helpbtn", "secr help",  width = 130,
                                                                     title = "Open secr help index")),
-                                             column(3, uiOutput("secrdesignurl"))  ## switch to secrdesign, with parameters
+                                             column(3, uiOutput("secrdesignurl")),  ## switch to secrdesign, with parameters
+                                             column(3, actionLink("optionslink", "Options"))
                                          ),
                                          
                                          br(),
@@ -193,10 +266,9 @@ ui <- function(request) {
                                                                     title = "Reset all inputs to initial values")),
                                              column(3, bookmarkButton(width = 130)),
                                              column(3, helpText(HTML("F11 full screen")))
-                                                    
                                          ),
                                          fluidRow(
-                                             column(11, textInput("title", "", value = "", 
+                                             column(6, textInput("title", "", value = "", 
                                                                   placeholder = "note for Summary")))
                                   ),
                                   
@@ -250,6 +322,22 @@ ui <- function(request) {
                                                                                                                       step = 1, value = 1)))
                                                                           ))
                                                                  ),
+                                                                 tabPanel("Moves", 
+                                                                          fluidRow(
+                                                                              column(8, plotOutput("movesHist", height = 360)),
+                                                                              column(4, br(), br(),
+                                                                                     numericInput("nbar", "Nominal breaks",
+                                                                                                  min = 0,
+                                                                                                  max = 100,
+                                                                                                  value = 10,
+                                                                                                  step = 1,
+                                                                                                  width = 120),
+                                                                                     uiOutput("sessionnumberui"),
+                                                                                     verbatimTextOutput("movesPrint"),
+                                                                                     conditionalPanel("output.nontrap == 'true'",
+                                                                                                      uiOutput("moveswarningui") )
+                                                                                     )
+                                                                          )),
                                                                  tabPanel("Detectfn", plotOutput("detnPlot", height = 320)),
                                                                  tabPanel("Buffer", plotOutput("esaPlot", height = 320)),
                                                                  tabPanel("Pxy",
@@ -593,17 +681,27 @@ ui <- function(request) {
                                   ),
                                   
                                   column(3,
+                                         h2("Moves histogram"),
+                                         wellPanel(class = "mypanel", 
+                                                   fluidRow(
+                                                       column(6,  checkboxInput("movesallbox", "Combine sessions",
+                                                                                value = FALSE,
+                                                                                width = 180),
+                                                              checkboxInput("withinsessiononly", "Within-session only",
+                                                                            value = FALSE,
+                                                                            width = 180)
+                                                   ))),
                                          h2("Power plot"),
                                          wellPanel(class = "mypanel", 
                                                    fluidRow(
                                                        column(6, numericInput("alpha", "alpha",
                                                                               min = 0.001,
-                                                                              max = 0.200,
-                                                                              value = 0.05,
-                                                                              step = 0.001,
-                                                                              width = 120))
-                                                   ),
-                                                   fluidRow(
+                                                                                        max = 0.200,
+                                                                                        value = 0.05,
+                                                                                        step = 0.001,
+                                                                                        width = 120))
+                                                             ),
+                                                             fluidRow(
                                                        column(6, numericInput("minEffect", "xmin",
                                                                               min = -99,
                                                                               max = 0,
@@ -633,7 +731,9 @@ ui <- function(request) {
                                                                               step = 1,
                                                                               width = 180))
                                                    )
-                                         )
+                                         ),
+                                         actionLink("mainlink2", "Return to Main screen")
+                                         
                                   )
                               )
                      ),
@@ -693,9 +793,11 @@ server <- function(input, output, session) {
                      closeButton = FALSE, type = "message", duration = seconds)
      output$selectingfields <- renderText('false')
      output$multisession <- renderText('false')
+     output$nontrap <- renderText('false')
      outputOptions(output, "selectingfields", suspendWhenHidden = FALSE)
      outputOptions(output, "multisession", suspendWhenHidden = FALSE)
-
+     outputOptions(output, "nontrap", suspendWhenHidden = FALSE)
+     
      output$maskready <- reactive({
          return(!is.null(mask()))
      })
@@ -741,20 +843,49 @@ server <- function(input, output, session) {
          else x <- ''
          helpText(x)
      })
-
-     output$maskdetailui1 <- renderUI({
-         # if (is.null(mask()))  {
-         #     if (is.null(capthist()))
-         #         x <- HTML("")  
-         #     else
-         #         x <- HTML("No valid habitat mask")  
-         # }
-         # else {
-             if (input$masktype == 'Build')
-                 x <- HTML(paste0(input$buffer, "-m  buffer, nx = ", input$habnx))
+     
+     output$moveswarningui <- renderUI({
+         if (ms(capthist())) {
+             if (input$movesallbox) 
+                 ch <- join(capthist())
              else
-                 x <- HTML(paste0("Habitat mask from file"))
-         #}
+                 ch <- capthist()[[input$sess]]
+         }
+         else {
+             ch <- capthist()
+         }
+         captperoccasion <- table(apply(ch != 0, c(1,2), sum))
+         ncap <- as.numeric(names(captperoccasion))
+         withinoccasionrecap <- 0
+         if (any (ncap>1)) {
+             withinoccasionrecap <- sum(captperoccasion[ncap>1] * (ncap[ncap>1]-1))
+         }
+         x <- NULL
+         if (withinoccasionrecap>0) {
+             x <- HTML("Warning: detector allows within-occasion re-detections ( n = ", withinoccasionrecap, 
+                       ") whose order in time is unknown; corresponding movements are unreliable.")
+         }
+         helpText(x)
+     })
+     
+     output$sessionnumberui <- renderUI({
+         x <- NULL
+         if (ms(capthist())) {
+             if (input$movesallbox) {
+                 x <- HTML("Sessions combined")
+             }
+             else {
+                 x <- HTML("Session ", input$sess, " selected on Array tab")
+             }
+         }
+         helpText(x)
+     })
+     
+     output$maskdetailui1 <- renderUI({
+         if (input$masktype == 'Build')
+             x <- HTML(paste0(input$buffer, "-m  buffer, nx = ", input$habnx))
+         else
+             x <- HTML(paste0("Habitat mask from file"))
          helpText(x)
      })
      
@@ -2414,9 +2545,28 @@ server <- function(input, output, session) {
         updateNavlistPanel(session, "navlist", "Main screen")
     })
     
+    observeEvent(input$mainlink2, ignoreInit = TRUE, {
+        ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
+        updateNavlistPanel(session, "navlist", "Main screen")
+    })
+    
+    observeEvent(input$mainlink3, ignoreInit = TRUE, {
+        ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
+        updateNavlistPanel(session, "navlist", "Main screen")
+    })
+    
+    observeEvent(input$optionslink, ignoreInit = TRUE, {
+        ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
+        updateNavlistPanel(session, "navlist", "Options")
+    })
+    
     observeEvent(input$masklink, ignoreInit = TRUE, {
         ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
         updateNavlistPanel(session, "navlist", "Habitat mask")
+    })
+    observeEvent(input$helplink, ignoreInit = TRUE, {
+        ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
+        updateNavlistPanel(session, "navlist", "Help")
     })
     
     observeEvent(input$showcaptfilebtn, ignoreInit = TRUE, {
@@ -2665,6 +2815,12 @@ server <- function(input, output, session) {
         updateNumericInput(session, "animal", value = 1)
         updateNumericInput(session, "sess", value = 1)
         
+        ## Moves plot
+        updateNumericInput(session, "nbar", value = 10)
+        
+        updateCheckboxInput(session, "movesallbox", value = FALSE)
+        updateCheckboxInput(session, "withinsessiononly", value = FALSE)
+        
         ## pop plot
         updateCheckboxInput(session, "showHRbox", "Display 95% home range", value = FALSE)
 
@@ -2839,6 +2995,7 @@ server <- function(input, output, session) {
                 showTab(inputId = "plottabs", target = tab)
         }
         hideplotif (is.null(traprv$data), "Array")
+        hideplotif (is.null(capthist()), "Moves")
         hideplotif (is.null(fitrv$value), "Detectfn")
         hideplotif (is.null(fitrv$value), "Buffer")
         hideplotif (is.null(fitrv$value), "Pxy")
@@ -2949,9 +3106,27 @@ server <- function(input, output, session) {
     })
     ##############################################################################
     
+    output$movesPrint <- renderPrint({
+        m <- movements()
+        if (!is.null(m)) {
+            maxm <- max(unlist(m))
+            maxbyanimal <- suppressWarnings(sapply(m, max))
+            nmax <- match(maxm, maxbyanimal)
+            IDmax <- names(m)[nmax] 
+            rpsv <- unlist(RPSV(capthist(), CC = TRUE))[input$sess]
+            cat("Number of moves", length(unlist(m)), "\n")
+            cat("Median move", round(median(unlist(m)),1), "m\n")
+            cat("Approx HN sigma", round(rpsv,1), "m\n")
+            cat("Longest move", round(maxm,1), "m\n")
+            cat("by animal ID", IDmax, "\n")
+        }
+    })
+    ##############################################################################
+    
     ## renderPlot
     
     ## arrayPlot
+    ## movesHist  
     ## detnPlot
     ## esaPlot
     ## pxyPlot
@@ -3048,6 +3223,51 @@ server <- function(input, output, session) {
                 axis(4, at = -log(1 - p), label = p, xpd = FALSE, las = 1)
                 mtext(side = 4, line = 3.7, "Detection probability    g")
             }
+        }
+    })
+    ##############################################################################
+    
+    movements <- reactive( {
+        req(capthist())
+        if (ms(capthist())) {
+            if (input$movesallbox) {
+                ch <- capthist()
+                if (input$withinsessiononly) {
+                    for (i in 1:length(ch)) rownames(ch[[i]]) <- paste(rownames(ch[[i]]), i, sep='.')
+                }
+                ch <- join(ch)
+            }
+            else
+                ch <- capthist()[[input$sess]]
+        }
+        else
+            ch <- capthist()
+        
+        captperoccasion <- table(apply(ch != 0, c(1,2), sum))
+        ncap <- as.numeric(names(captperoccasion))
+        withinoccasionrecap <- 0
+        if (any (ncap>1)) {
+            withinoccasionrecap <- sum(captperoccasion[ncap>1] * (ncap[ncap>1]-1))
+        }
+        
+        if (! all(detector(traps(ch)) %in% c('single','multi', 'polygonX', 'transectX'))
+            && withinoccasionrecap>0) {
+            output$nontrap <- renderText("true")
+        }
+        moves(ch, names = TRUE)
+    })
+    ##############################################################################
+    
+    output$movesHist <- renderPlot( {
+        invalidateOutputs()
+        m <- unlist(movements())
+        if (!is.null(m)) {
+            if (input$nbar == 0) 
+                nbar <- length(m) %/% 10
+            else
+                nbar <- input$nbar
+            par(mar = c(3.2,4,3,2), mgp = c(2.1,0.6,0))  # reduce margins
+            hist(m, breaks = nbar, xlab = "Movement  m", main = "")
         }
     })
     ##############################################################################
