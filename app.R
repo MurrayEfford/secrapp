@@ -690,6 +690,14 @@ ui <- function(request) {
                                                                             value = TRUE,
                                                                             width = 180))
                                                    )
+                                         ),
+                                         h2("Dxy plot"),
+                                         wellPanel(class = "mypanel", 
+                                                   fluidRow(
+                                                       column(12, textInput("Dxycol", "R code for colours",
+                                                                        value = "heat.colors(15, alpha = 1, rev = TRUE)")
+                                                              )
+                                                   )
                                          )
                                   ),
                                   
@@ -2840,6 +2848,9 @@ server <- function(input, output, session) {
         ## pxy plot
         updateCheckboxInput(session, "maskedge", value = FALSE)
         
+        ## Dxy plot
+        updateTextInput(session, "Dxycol", value = "heat.colors(15, alpha = 1, rev = TRUE)")
+        
         ## Density plot
         updateCheckboxInput(session, "Dmaskedge", value = FALSE)
         updateCheckboxInput(session, "Dshowdetectors", value = FALSE)
@@ -3434,8 +3445,8 @@ server <- function(input, output, session) {
         invalidateOutputs()
         par(mar=c(1,1,1,5))
         if (input$likelihoodbtn!='CL' && !is.null(fitrv$value)) {
-            #dsurf <- predictDsurface(fitrv$value)
-            plot (fitrv$dsurf, border = 0, scale = 1, title="D(x)")
+            col <- try(eval(parse(text = input$Dxycol)), silent = TRUE)
+            plot (fitrv$dsurf, border = 0, scale = 1, title="D(x)", col = col)
             if (input$Dshowdetectors) {
                 plot(traprv$data, add = TRUE)
             }
