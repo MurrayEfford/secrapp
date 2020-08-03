@@ -27,9 +27,11 @@ FTHLcapt.txt | Flat-tailed horned lizard test data |Data input - Captures |
 FTHL.Rds | Saved flat-tailed horned lizard dataset | Data input |
 hareCH6trap.txt | Snowshow hare data | Data input - Detector layout |
 hareCH6capt.txt | Snowshow hare data | Data input - Captures |
+hareCH6.xlsx | Snowshoe hare data as Excel spreadsheet | Data input |
 hareCH6.Rds | Saved snowshoe hare dataset | Data input |
 ovtrap.txt | Locations of possum traps in the Orongorongo Valley | Data input - Detector layout |
 OVforest.dbf | ESRI polygon shapefile extent of habitat near possum traps | Habitat mask - Mask polygon files |
 OVforest.shp |||
 OVforest.shx |||
+ovenCHp.xlsx | Ovenbird proximity data as Excel spreadsheet | Data input |
 ovenCHp.Rds | Saved ovenbird proximity dataset | Data input |
