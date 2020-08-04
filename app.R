@@ -43,7 +43,7 @@ ui <- function(request) {
     useShinyjs(),
     withMathJax(),
     tags$head(tags$style(".mypanel{margin-top:5px; margin-bottom:10px; padding-bottom: 5px;}")),
-    tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 250px; background: ghostwhite;}")),
+    tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 260px; background: ghostwhite;}")),
     tags$head(tags$style("#codePrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 300px; background: ghostwhite;}")),
     tags$head(tags$style("#maskPrint{color:blue; font-size:12px; background: ghostwhite;}")),
     tags$head(tags$style(type="text/css", "input.shiny-bound-input { font-size:14px; height:30px; margin-top:0px; margin-bottom:2px; padding-top:0px; padding-bottom:0px;}")),
@@ -3224,6 +3224,7 @@ fitcode <- function() {
         if (fncall=="") cat("No function specified\n")
         else {
           fncall <- gsub("fit", "fitrv$value", fncall)
+          fncall <- gsub("ch", "capthist()", fncall)
           out <- try(eval(parse(text = fncall)), silent = TRUE)
           if (inherits(out, "try-error")) {
             err <- attr(out, 'condition')$message
