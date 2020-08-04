@@ -328,7 +328,7 @@ ui <- function(request) {
               column(5, radioButtons("resultsbtn", label = "", 
                 inline = TRUE, choices = c("summary", "predict", "derived", "other"))),
               
-              column(5,  textInput("otherfunction", label="", placeholder = "e.g., vcov(fit)")),
+              column(5,  textInput("otherfunction", label="", placeholder = "e.g., coef(fitted)")),
               conditionalPanel("output.modelFitted", column(2, br(), downloadLink("savebtn", "Save fit")))
             ),
             
@@ -3144,8 +3144,8 @@ fitcode <- function() {
         showTab(inputId = "plottabs", target = tab)
     }
     hideplotif (is.null(traprv$data), "Array")
-    hideplotif (is.null(captrv$data), "Moves")
-    #hideplotif (is.null(capthist()), "Moves")
+    # hideplotif (is.null(captrv$data), "Moves")
+    hideplotif (is.null(capthist()), "Moves")
     hideplotif (is.null(fitrv$value), "Detectfn")
     hideplotif (is.null(fitrv$value), "Buffer")
     hideplotif (is.null(fitrv$value), "Pxy")
@@ -3223,7 +3223,7 @@ fitcode <- function() {
         fncall <- input$otherfunction
         if (fncall=="") cat("No function specified\n")
         else {
-          fncall <- gsub("fit", "fitrv$value", fncall)
+          fncall <- gsub("fitted", "fitrv$value", fncall)
           fncall <- gsub("ch", "capthist()", fncall)
           out <- try(eval(parse(text = fncall)), silent = TRUE)
           if (inherits(out, "try-error")) {
