@@ -1715,7 +1715,7 @@ fitcode <- function() {
     ncores <- paste0(", ncores = ", nc)
     otherargs <- if (input$otherargs=="") "" else paste0(",\n      ", input$otherargs)
     code <- paste0(
-      "fit <- secr.fit(ch, mask = mask, detectfn = ", detfn, CL, hcov, ", \n",
+      "fitted <- secr.fit(ch, mask = mask, detectfn = ", detfn, CL, hcov, ", \n",
       "      ", model, ", trace = FALSE", distn, method, ncores, otherargs, ")\n"
     )
     code
@@ -3256,7 +3256,7 @@ fitcode <- function() {
       cat("\n# fit model\n")
       cat(maskcode())
       cat(fitcode())
-      cat("summary(fit)\n")
+      cat("summary(fitted)\n")
     }
   })
   ##############################################################################
