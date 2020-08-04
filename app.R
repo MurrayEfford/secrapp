@@ -110,7 +110,7 @@ ui <- function(request) {
             
             "Borchers, D. L. and Efford, M. G. (2008) ",
             a(HTML("Spatially explicit maximum likelihood methods for capture&ndash;recapture studies."),
-              href="https://www.otago.ac.nz/density/pdfs/Borchers & Efford preprint.pdf"),
+              href="https://www.otago.ac.nz/density/pdfs/Borchers & Efford Biometrics 2008.pdf"),
               em("Biometrics"), "64: 377-385.", br(),
             
             "Efford, M. G. (2004)",
@@ -181,7 +181,7 @@ ui <- function(request) {
                     fluidRow(
                       column(6, 
                         selectInput("detector", "Detector type", 
-                          choices = c("multi","proximity","count",
+                          choices = c("single", "multi","proximity","count",
                             "polygon", "polygonX", "transect", "transectX"),
                           selected = "multi")
                       ),
