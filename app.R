@@ -70,6 +70,10 @@ ui <- function(request) {
             strong("secrapp"), "is an interactive interface to parts of the R package", strong("secr"), 
             "(Efford 2020). ", strong("secr"), " and ", strong("secrapp"), "together supercede the Windows", 
             " software DENSITY (Efford et al. 2004)." ,
+            br(), br(),
+
+            "NOTE: Many features of ", strong("secr"), "are available only from the R command line.",
+                 "This application is sufficient for simple analyses, but in the long run you may need to master R.",
             hr(),
             
             h2("What does secrapp do?"),
@@ -2259,7 +2263,8 @@ fitcode <- function() {
     # progress$set(message = 'Computing derived estimates ...', detail = '')
     showNotification("Computing derived estimates ...",
       id = "derived", duration = seconds)
-    der <- derived(fitrv$value, distribution = tolower(input$distributionbtn))
+    der <- derived(fitrv$value, distribution = tolower(input$distributionbtn),
+      se.esa = TRUE)
     if (ms(capthist()))
       lapply(der, round, input$dec)
     else 
