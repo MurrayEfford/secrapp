@@ -848,8 +848,9 @@ server <- function(input, output, session) {
   clickno <- 0
   
   disable("fitbtn")
+  disable("captfilename")
   
-  showNotification(paste("secr", desc$Version, desc$Date),
+  showNotification(paste("secr", desc$Version, desc$Date), id = "lastaction",
     closeButton = FALSE, type = "message", duration = seconds)
   output$selectingfields <- renderText('false')
   output$multisession <- renderText('false')
@@ -1427,7 +1428,8 @@ server <- function(input, output, session) {
             type = "error", id = "nofile", duration = seconds)
         }
         else  if (!requireNamespace("rgdal"))
-          showNotification("need package rgdal to read shapefile", type = "error", id = "norgdal", duration = seconds)
+          showNotification("need package rgdal to read shapefile", 
+            type = "error", id = "norgdal", duration = seconds)
         else {
           removeNotification(id = "nofile")
           removeNotification(id = "norgdal")
@@ -1604,6 +1606,8 @@ server <- function(input, output, session) {
   ##############################################################################
   
   maskcode <- function () {
+    removeNotification("badpoly")
+    
     if (input$masktype == 'Build') {
       if (is.null(traprv$data))
         return("\n")
@@ -1672,9 +1676,10 @@ server <- function(input, output, session) {
         
         if (input$datasource == 'Text files') {
           filename <- input$captfilename[1,"name"]
+          nfield <- count.fields(filename)[1]
+          mincol <- (input$fmt == "XY") + 4
           # ensure correct type for trapID
-          if (input$fmt == "trapID" && ! grepl("colClasses", args)) {
-            nfield <- count.fields(filename)[1]
+          if (nfield>=mincol && input$fmt == "trapID" && ! grepl("colClasses", args)) {
             colClass <- c('"character"', '"character"','"integer"','"character"', rep(NA, nfield-4))
             args <- paste0(args, ", colClasses = c(", paste0(colClass, collapse = ","), ")")
           }
@@ -1736,6 +1741,7 @@ fitcode <- function() {
   
   fitmodel <- function(LLonly = FALSE) {
     
+    removeNotification("nofit")
     if (!LLonly) {
       progress <- Progress$new(session, min = 1, max = 15)
       on.exit(progress$close())
@@ -1748,7 +1754,7 @@ fitcode <- function() {
     otherargs <- try(eval(parse(text = paste0("list(", input$otherargs, ")"))), silent = TRUE)
     if (inherits(otherargs, "try-error") && !LLonly) {
       showNotification("model fit failed - check other arguments",
-        type = "error", id = "nofit", duration = seconds)
+        type = "error", id = "nofit")
       fit <- NULL
     }
     else {
@@ -1772,7 +1778,7 @@ fitcode <- function() {
       isolate(fit <- try(do.call("secr.fit", args), silent = TRUE))
       if (inherits(fit, "try-error") && !LLonly) {
         showNotification("model fit failed - check data, formulae and mask",
-          type = "error", id = "nofit", duration = seconds)
+          type = "error", id = "nofit")
         fit <- NULL
       }
     }
@@ -1781,11 +1787,16 @@ fitcode <- function() {
     }
     else {
       fitrv$value <- fit
-      if (length(fit)>0)
+      if (length(fit)>0) {
         fitrv$dsurf <- predictDsurface(fit)
-      else 
+      }
+      else {
         fitrv$dsurf <- NULL
+      }
       addtosummary()
+      showNotification("Model fitted", id = "lastaction",
+        closeButton = FALSE, type = "message", duration = seconds)
+      
     }
   }
   ##############################################################################
@@ -1913,6 +1924,9 @@ fitcode <- function() {
     else {
       req(input$trapxlsname)
     }
+    removeNotification("badtrapargs")
+    removeNotification("badtrap")
+    removeNotification("badcapt")
     reset('importfilename')
     reset('captfilename')
     reset('captxlsname')
@@ -1938,7 +1952,6 @@ fitcode <- function() {
       showNotification("trap arguments incomplete or invalid", type = "error", id = "badtrapargs")
     }
     else {
-      removeNotification(id = "badtrapargs")
       args <- input$trapargs
       if (args != "") {
         args <- paste0(", ", args)
@@ -1948,7 +1961,7 @@ fitcode <- function() {
       temp <- try(eval(parse(text = readtrapcall)))
       if (!inherits(temp, "traps")) {
         showNotification("invalid trap file or arguments; try again",
-          type = "error", id = "badtrap", duration = seconds)
+          type = "error", id = "badtrap")
         traprv$data <- NULL
         #traprv$clear <- TRUE
       }
@@ -1962,15 +1975,17 @@ fitcode <- function() {
         #     args <- paste0(", covnames = ", covnames)
         # }
         traprv$data <- temp
+        enable("captfilename")
+        showNotification("detector file loaded", closeButton = FALSE, 
+          type = "message", id = "lastaction", duration = seconds)
       }
     }
-    showNotification("debug: traprv eval", closeButton = FALSE, type = "message", duration = 0.2)
-    
   })
   ##############################################################################
   ## read import file
   observe({
     req(input$importfilename)
+    removeNotification("badcapt")
     req(!importrv$clear)
     ch <- readRDS(input$importfilename[1,"datapath"])
     if (inherits(ch, 'capthist')) {
@@ -1986,7 +2001,8 @@ fitcode <- function() {
           selected = "HN")
         enable('suggestbuffer')
       }
-      
+      showNotification("capthist imported", closeButton = FALSE, 
+        type = "message", id = "lastaction", duration = seconds)
     }
     else {
       stop("not a valid capthist Rds")
@@ -1997,6 +2013,7 @@ fitcode <- function() {
   ## read capture file
   observe({
     req(!captrv$clear)
+    removeNotification("badcapt")
     sheet <- ""
     if (input$datasource == 'Text files') {
       req(input$captfilename)
@@ -2013,6 +2030,7 @@ fitcode <- function() {
       }
     }
     args <- input$captargs
+    mincol <- (input$fmt == "XY") + 4
     tempargs <- try(eval(parse(text = paste0("list(", args, ")"))), silent = TRUE)
     if (inherits(tempargs, "try-error")) {
       showNotification("arguments incomplete or invalid", type = "error", id = "badcaptargs")
@@ -2026,24 +2044,26 @@ fitcode <- function() {
       }
       else {
         # ensure correct type for trapID
-        if (input$fmt == "trapID" && ! grepl("colClasses", args)) {
-          nfield <- count.fields(dataname)[1]
+        nfield <- count.fields(dataname)[1]
+        if (nfield >= mincol && input$fmt == "trapID" && ! grepl("colClasses", args)) {
           colClass <- c("character", "character","integer","character", rep(NA, nfield-4))
           args <- paste0(args, ", colClasses = colClass")
         }
         readcaptcall <- paste0("read.table (dataname", args, ")")
       }
-      mincol <- (input$fmt == "XY") + 4
       captrv$data <- try(eval(parse(text = readcaptcall)))
       captrv$data <- as.data.frame(captrv$data)
       captrv$clear <- TRUE
       if (!inherits(captrv$data, "data.frame") || ncol(captrv$data) < mincol) {
         showNotification("invalid capture file or arguments; try again",
-          type = "error", id = "badcapt", duration = seconds)
+          type = "error", id = "badcapt")
         captrv$data <- NULL
       }
+      else {
+        showNotification("capture file loaded", closeButton = FALSE, 
+          type = "message", id = "lastaction", duration = seconds)
+      }
     }
-    showNotification("debug: captrv eval", closeButton = FALSE, type = "message", duration = 0.1)
     
   })
   ##############################################################################
@@ -2052,10 +2072,11 @@ fitcode <- function() {
   observe({
     req(input$polyfilename)
     req(!polyrv$clear)
+    removeNotification("badpoly")
     polyrv$data <- readpolygon(input$polyfilename)
     if (!inherits(polyrv$data, "SpatialPolygons")) {
       showNotification("invalid polygon file; try again",
-        type = "error", id = "badpoly", duration = seconds)
+        type = "error", id = "badpoly")
       polyrv$data <- NULL
     }
   })
@@ -2161,8 +2182,7 @@ fitcode <- function() {
       }
       if (inherits(ch, 'try-error')) {
         showNotification("invalid capture file or arguments; try again",
-          type = "error", id = "badcapt", duration = seconds)
-        showNotification(ch, type = "error", id = "capterror", duration = seconds)
+          type = "error", id = "badcapt")
         ch <- NULL
       }
       else {
@@ -2174,8 +2194,6 @@ fitcode <- function() {
           if (length(ncov)>0 && ncov>0) {
             for (i in 1:length(ch)) names(covariates(ch[[i]])) <- covnames
           }
-          showNotification("multisession data - may cause problems", 
-            type = "warning", id = "mswarning", duration = seconds)
           updateNumericInput(session, "animal", max = nrow(ch[[input$sess]]))
           output$multisession <- renderText("true")
         }
@@ -2437,16 +2455,16 @@ fitcode <- function() {
     {
       poprv$v
       input$Dshowpopn
+      removeNotification("bigpop")
       core <- if (ms(traprv$data)) traprv$data[input$sess] else traprv$data
       if (is.null(core) || (density() == 0) || is.na(density())) {
         return (NULL)
       }
       if (density() * maskarea(mask()) > 10000) {
         showNotification("population exceeds 10000; try again",
-          type = "error", id = "bigpop", duration = seconds)
+          type = "error", id = "bigpop")
         return(NULL)
       }
-      else removeNotification("bigpop")
       Ndist <- if (input$distributionbtn == 'Poisson') 'poisson' else 'fixed'
       
       dsurf <- if(ms(fitrv$dsurf)) fitrv$dsurf[[input$sess]] else fitrv$dsurf
@@ -2630,6 +2648,8 @@ fitcode <- function() {
     
     reset('trapfilename')
     reset('captfilename')
+    disable("captfilename")  # waiting for trap file
+    disable("captxlsname")  # waiting for trap xls
     reset('importfilename')
     
     updateSelectInput(session, "detectfnbox", choices = c('HN','HR','EX', hazarddetectfn), 
@@ -3056,7 +3076,8 @@ fitcode <- function() {
     captrv$data <- NULL
     captrv$clear <- TRUE
     reset('captfilename')
-    
+    disable("captfilename")
+
     polyrv$data <- NULL
     polyrv$clear <- TRUE
     reset('polyfilename')
@@ -3070,6 +3091,9 @@ fitcode <- function() {
     reset('importfilename')
     
     detectrv$value <- 'g0'
+    
+    showNotification("All inputs reset", id = "lastaction",
+      closeButton = FALSE, type = "message", duration = seconds)
     
   }, priority = 1000)
   
@@ -3296,6 +3320,7 @@ fitcode <- function() {
   ##############################################################################
   
   output$arrayPlot <- renderPlot( { # height = 340, width = 340, {
+    removeNotification("arrayploterror")
     if (ms(traprv$data))
       tmpgrid <- traprv$data[[input$sess]]
     else 
@@ -3338,7 +3363,8 @@ fitcode <- function() {
             tmp <- try(fxi.contour(fitrv$value, i = NULL, sessnum = input$sess, add = TRUE), silent = TRUE)
           }
           if (inherits(tmp, 'try-error')) {
-            showNotification("error in fxi.contour; consider smaller mask spacing")
+            showNotification("error in fxi.contour; consider smaller mask spacing", 
+              id="arrayploterror", type="error")
           }
         }
       }
