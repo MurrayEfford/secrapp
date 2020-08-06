@@ -3278,7 +3278,9 @@ fitcode <- function() {
       cat("\n# input data\n")
       cat(arraycode())
     }
-    cat(captcode())
+    if (!is.null(captrv$data)) {
+      cat(captcode())
+    }
     
     if (!is.null(capthist())) {
       cat("summary(ch)\n")
