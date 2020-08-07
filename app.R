@@ -2005,7 +2005,10 @@ fitcode <- function() {
         type = "message", id = "lastaction", duration = seconds)
     }
     else {
-      stop("not a valid capthist Rds")
+      importrv$data <- NULL
+      traprv$data <- NULL
+      showNotification("not a valid capthist Rds", closeButton = TRUE, 
+        type = "error", id = "badcapt", duration = NULL)
     }
   })
   
