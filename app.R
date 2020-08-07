@@ -2120,9 +2120,20 @@ fitcode <- function() {
   ##############################################################################
   
   observeEvent(input$navlist, {
+    removeNotification("lastaction")
     if (input$navlist == "Main screen") {
       if (is.null(traprv$data))
         showNotification("waiting for input", id = "lastaction", 
+          closeButton = FALSE, type = "message", duration = NULL)
+    }
+    else if (input$navlist == "Habitat mask") {
+      if (is.null(traprv$data))
+        showNotification("waiting for detector layout on Main screen", id = "lastaction", 
+          closeButton = FALSE, type = "message", duration = NULL)
+    }
+    else if (input$navlist == "Summary") {
+      if (is.null(sumrv$value) || nrow(sumrv$value)==0)
+        showNotification("no model has been fitted", id = "lastaction", 
           closeButton = FALSE, type = "message", duration = NULL)
     }
   })
@@ -2788,10 +2799,10 @@ fitcode <- function() {
   observeEvent(input$secrhelpbtn, ignoreInit = TRUE, {
     secrhelp <- file.path(path.package("secr"), "html",  "00Index.html")
     if (file.exists(secrhelp)) {
-         browseURL(secrhelp) 
+      browseURL(secrhelp)
     }
     else {
-      browseURL("https://CRAN.R-project.org/package=secr/secr.pdf") 
+      browseURL("https://www.otago.ac.nz/density/pdfs/secr-manual.pdf")
     }
   })
   ##############################################################################
