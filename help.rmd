@@ -119,7 +119,7 @@ Model formulae may be edited using pre-defined predictors or covariate names as 
 
 ## Time limits
 
-The application is designed for small- to medium-sized models. An internal algorithm predicts the execution time by evaluating the likelihood once and making a simple extrapolation. The prediction is quite rough. When the predicted time exceeds a lower threshold ('timewarning', default 0.2 minutes) a dialog box asks the user for confirmation before proceeding. If the predicted time exceeds an upper threshold ('timelimit', default 5 minutes) then execution aborts, with a notification at the lower right of the screen. The thresholds may be changed in the R code of the app.R file (near the top).
+The application is designed for small- to medium-sized models. An internal algorithm predicts the execution time by evaluating the likelihood once and making a simple extrapolation. The prediction is quite rough. When the predicted time exceeds a lower threshold ('timewarning', default 0.5 minutes) a dialog box asks the user for confirmation before proceeding. If the predicted time exceeds an upper threshold ('timelimit', default 10 minutes) then execution aborts, with a notification at the lower right of the screen. The thresholds may be changed in the R code of the app.R file (near the top).
 
 ## Actions
 
