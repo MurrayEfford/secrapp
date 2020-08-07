@@ -734,7 +734,8 @@ ui <- function(request) {
             wellPanel(class = "mypanel", 
               fluidRow(
                 column(12, textInput("Dxycol", "R code for colours",
-                  value = "heat.colors(15, alpha = 1, rev = TRUE)")
+                  value = "heat.colors(15, alpha = 1, rev = TRUE)"), br(),
+                  textInput("showHRcol", "Colour of 95% HR", value = "grey50")
                 )
               )
             )
@@ -2139,6 +2140,13 @@ fitcode <- function() {
         showNotification("no model has been fitted", id = "lastaction", 
           closeButton = FALSE, type = "message", duration = NULL)
     }
+  })
+  ##############################################################################
+  
+  observeEvent(c(input$detectfnbox, input$likelihoodbtn, input$distributionbtn,
+    input$hcovbox, input$model, input$otherargs), {
+    showNotification("model modified, yet to be fitted", id="lastaction", 
+      closeButton = FALSE,type="message", duration = NULL)
   })
   ##############################################################################
   
@@ -3690,8 +3698,9 @@ fitcode <- function() {
           plot(tmppop, add = TRUE, pch = 16, cex = 0.7, xpd = TRUE, frame = FALSE)
           if (input$showHRbox) {
             rad <- secr::circular.r(p = 0.95, detectfn = input$detectfnbox, sigma = sigma())
+            col <- input$showHRcol
             symbols(tmppop$x, tmppop$y, circles = rep(rad, n),
-              inches = FALSE, fg = grey(0.95), add = TRUE, xpd = FALSE)
+              inches = FALSE, fg = col, add = TRUE, xpd = FALSE)
           }
         }
       }
