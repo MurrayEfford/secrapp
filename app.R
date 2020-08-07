@@ -26,8 +26,8 @@ designurl <- "https://www.stats.otago.ac.nz/secrdesignapp/"   # secrdesignapp 1.
 linewidth <- 2  # for various plots 
 seconds <- 6   ## default duration for showNotification()
 
-timewarning <- 0.2  ## minutes
-timelimit <- 5.0    ## minutes
+timewarning <- 0.5  ## minutes
+timelimit <- 10.0    ## minutes
 
 availablecores <- min(24, parallel::detectCores())
 defaultcores <- max(1, availablecores/2)
