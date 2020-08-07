@@ -306,7 +306,7 @@ ui <- function(request) {
             fluidRow(
               column(3, actionButton("fitbtn", "Fit model",  width = 130,
                 title = "Fit spatially explicit capture-recapture model to estimate density and update Results")),
-              column(3, actionButton("helpbtn", "secr help",  width = 130,
+              column(3, actionButton("secrhelpbtn", "secr help",  width = 130,
                 title = "Open secr help index")),
               column(3, uiOutput("secrdesignurl")),  ## switch to secrdesign, with parameters
               column(3, actionLink("optionslink", HTML("<small>Go to Options</small>")))
@@ -1976,7 +1976,7 @@ fitcode <- function() {
         # }
         traprv$data <- temp
         enable("captfilename")
-        showNotification("detector file loaded", closeButton = FALSE, 
+        showNotification("detector layout loaded", closeButton = FALSE, 
           type = "message", id = "lastaction", duration = seconds)
       }
     }
@@ -2060,7 +2060,7 @@ fitcode <- function() {
         captrv$data <- NULL
       }
       else {
-        showNotification("capture file loaded", closeButton = FALSE, 
+        showNotification("capthist loaded", closeButton = FALSE, 
           type = "message", id = "lastaction", duration = seconds)
       }
     }
@@ -2117,6 +2117,15 @@ fitcode <- function() {
     maskrv$clear <- FALSE
   }, priority = 1000)
   
+  ##############################################################################
+  
+  observeEvent(input$navlist, {
+    if (input$navlist == "Main screen") {
+      if (is.null(traprv$data))
+        showNotification("waiting for input", id = "lastaction", 
+          closeButton = FALSE, type = "message", duration = NULL)
+    }
+  })
   ##############################################################################
   
   observeEvent(input$arrayClick, {
@@ -2776,8 +2785,14 @@ fitcode <- function() {
   
   ##############################################################################
   
-  observeEvent(input$helpbtn, ignoreInit = TRUE, {
-    browseURL(file.path(path.package("secr"), "html",  "00Index.html")) 
+  observeEvent(input$secrhelpbtn, ignoreInit = TRUE, {
+    secrhelp <- file.path(path.package("secr"), "html",  "00Index.html")
+    if (file.exists(secrhelp)) {
+         browseURL(secrhelp) 
+    }
+    else {
+      browseURL("https://CRAN.R-project.org/package=secr/secr.pdf") 
+    }
   })
   ##############################################################################
   
@@ -3092,7 +3107,7 @@ fitcode <- function() {
     
     detectrv$value <- 'g0'
     
-    showNotification("All inputs reset", id = "lastaction",
+    showNotification("all inputs reset", id = "lastaction",
       closeButton = FALSE, type = "message", duration = seconds)
     
   }, priority = 1000)
@@ -3199,39 +3214,65 @@ fitcode <- function() {
       value = rse,
       step = 0.1)
     disable("resultsbtn")  ## shinyjs
+    
+    minchar <- 50
     if (traptextrv$value) {
-      cat("Detector layout file :", input$trapfilename[1,'name'], "\n")
-      cat("----------------------------------------------------------------\n")
+      header <- paste("Detector layout file :", input$trapfilename[1,'name'])
+    }
+    else if (capttextrv$value) {
+      header <- paste("Capture file :", input$captfilename[1,'name'])
+    }
+    else if (is.null(traprv$data)) {
+      header <- "No data loaded"
+    }
+    else if (is.null(capthist())) {
+      header <- paste("Summary of detector layout from", input$trapfilename[1,'name'])
+    }
+    else if (is.null(fitrv$value)) {
+      if (input$datasource == 'Text files') {
+        header <- paste("Summary of capthist object from", input$trapfilename[1,'name'], "and", 
+          input$captfilename[1,'name'])
+      }
+      else if (input$datasource == 'Excel files') {
+        header <- paste("Summary of capthist object from", input$trapxlsname[1,'name'], "and", 
+          input$captxlsname[1,'name'])
+      }
+      else {
+        header <- paste("Summary of capthist object from", input$importfilename[1,'name'])
+      }
+    }
+    else if (inherits(fitrv$value, "secr")) {
+      if (input$resultsbtn=='summary') {
+        minchar <- nchar(summary(fitrv$value)$versiontime)+6
+        header <- paste("Summary of fitted model", input$model)
+      }
+      else if (input$resultsbtn=='predict') {
+        minchar <- 48
+        header <- paste("Parameter estimates")
+      }
+      else if (input$resultsbtn=='derived')
+        header <- paste("Derived estimates of effective sampling area 'esa' and density 'D'")
+      else header <- ""
+    }
+    if (nchar(header)>0) {
+      cat(header, "\n")
+      if (substring(header,1,2)!="No") cat(strrep('-', max(minchar,nchar(header))), "\n")
+    }    
+    if (traptextrv$value) {
       rawText <- readLines(input$trapfilename[1,"datapath"]) # get raw text
       writeLines(rawText)
     }
     else if (capttextrv$value) {
-      cat("Capture file :", input$captfilename[1,'name'], "\n")
-      cat("----------------------------------------------------------------\n")
       rawText <- readLines(input$captfilename[1,"datapath"]) # get raw text
       writeLines(rawText)
     }
     else if (is.null(traprv$data)) {
-      cat("No data loaded\n")
+      cat("")
     }
     else if (is.null(capthist())) {
-      cat("Summary of detector layout from", input$trapfilename[1,'name'], "\n")
-      cat("----------------------------------------------------------------\n")
       summary(traprv$data)
     }
     else if (is.null(fitrv$value)) {
-      if (input$datasource == 'Text files') {
-        cat("Summary of capthist object from", input$trapfilename[1,'name'], "and", 
-          input$captfilename[1,'name'], "\n")
-      }
-      else if (input$datasource == 'Excel files') {
-          cat("Summary of capthist object from", input$trapxlsname[1,'name'], "and", 
-            input$captxlsname[1,'name'], "\n")
-        }
-      else {
-          cat("Summary of capthist object from", input$importfilename[1,'name'], "\n")
-      }
-      cat("----------------------------------------------------------------\n")
       if (ms(capthist())) {
         list(terse = summary(capthist(), terse = TRUE), bysession = summary(capthist(), moves = TRUE))            }
       else {
