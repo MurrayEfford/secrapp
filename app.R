@@ -94,8 +94,8 @@ ui <- function(request) {
             "The internal", 
             actionLink("helplink", "Help screen"),
             "details the options available in", strong("secrapp"), ".",
-            "There is also a step-by-step guide ", 
-            a(href="https://www.otago.ac.nz/density/pdfs/secrapp-tutorial.html", target="_blank", "here."),
+            "There is also a ", 
+            a(href="https://www.otago.ac.nz/density/pdfs/secrapp-tutorial.html", target="_blank", "step-by-step guide."),
             
             "The",  a(href="https://www.otago.ac.nz/density", target="_blank", "DENSITY"),
             "webpage has other resources and links. These include", br(),
@@ -317,11 +317,8 @@ ui <- function(request) {
               column(3, actionButton("resetbtn", "Reset all", width = 130, 
                 title = "Reset all inputs to initial values")),
               column(3, bookmarkButton(width = 130)),
+              column(3),
               column(3, helpText(HTML("F11 full screen")))
-            ),
-            fluidRow(
-              column(6, textInput("title", "", value = "", 
-                placeholder = "note for Summary"))
             )
           ), # end left side column (5, )
           
@@ -679,6 +676,10 @@ ui <- function(request) {
             wellPanel(class = "mypanel",
               fluidRow(
                 column(12, numericInput("dec", "Decimal places", min = 0, max = 8, value = 4, width=160))
+              ),
+              fluidRow(
+                column(12, textInput("title", "", value = "", 
+                  placeholder = "note for Summary"))
               )
             )
           ),
@@ -2813,6 +2814,7 @@ fitcode <- function() {
       browseURL(secrhelp)
     }
     else {
+      # revert to pdf manual if html help not found
       browseURL("https://www.otago.ac.nz/density/pdfs/secr-manual.pdf")
     }
   })
