@@ -1798,7 +1798,31 @@ fitcode <- function() {
       addtosummary()
       showNotification("Model fitted", id = "lastaction",
         closeButton = FALSE, type = "message", duration = seconds)
+      if (input$masktype == "Build") {
+        x <- suppressWarnings(secr:::bufferbiascheck(fit, 
+          buffer = round(input$buffer,2), biasLimit=0.01))
+        if (!is.null(x)) {
+          showNotification(x, id = "lastaction",
+            closeButton = TRUE, type = "warning", duration = NULL)
+          
+        }
+      }
       
+      
+      if (!is.null(fit$fit$hessian)) {
+        svtol <- 1e-5
+        eigH <- eigen(fit$fit$hessian)$values
+        eigH <- abs(eigH)/max(abs(eigH))   
+        
+        eig <- round(eigH, -log10(svtol))
+        rankH <- length(which(eigH > svtol))
+        nbeta <- nrow(fit$beta.vcv)
+        if (rankH < nbeta) {
+          showNotification("at least one beta parameter is not identifiable (svtol=1e-5)", 
+            id='lastaction', closeButton = TRUE, type = "warning", duration = NULL)
+        }
+      }
+
     }
   }
   ##############################################################################
