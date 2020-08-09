@@ -2151,9 +2151,14 @@ fitcode <- function() {
   observeEvent(input$navlist, {
     removeNotification("lastaction")
     if (input$navlist == "Main screen") {
-      if (is.null(traprv$data))
+      if (is.null(traprv$data)) {
         showNotification("waiting for input", id = "lastaction", 
           closeButton = FALSE, type = "message", duration = NULL)
+      }
+      # else if (fitrv$value=="modelchanged") {
+      #   showNotification("model modified, yet to be fitted", id="lastaction", 
+      #     closeButton = FALSE,type="message", duration = NULL)
+      # }
     }
     else if (input$navlist == "Habitat mask") {
       if (is.null(traprv$data))
@@ -2169,10 +2174,13 @@ fitcode <- function() {
   ##############################################################################
   
   observeEvent(c(input$detectfnbox, input$likelihoodbtn, input$distributionbtn,
-    input$hcovbox, input$model, input$otherargs), {
-    showNotification("model modified, yet to be fitted", id="lastaction", 
-      closeButton = FALSE,type="message", duration = NULL)
-  })
+    input$hcovbox, input$model, input$otherargs,
+    input$masktype, input$buffer, input$habnx, input$maskshapebtn, 
+    input$polyfilename, input$polygonbox, input$maskfilename), {
+      fitrv$value <- NULL
+      showNotification("model modified, yet to be fitted", id="lastaction", 
+        closeButton = FALSE,type="message", duration = NULL)
+    })
   ##############################################################################
   
   observeEvent(input$arrayClick, {
@@ -2321,13 +2329,16 @@ fitcode <- function() {
   ##############################################################################
   
   predictresult <- reactive({
-    pred <- predict(fitrv$value, all.levels = TRUE)
-    roundpr <- function (pr) {pr[,-1] <- round(pr[,-1], input$dec); pr}
-    if (is.data.frame(pred))
-      pred <- roundpr(pred)
-    else 
-      pred <- lapply(pred, roundpr)
-    pred
+    if (inherits(fitrv$value, 'secr')) {
+      pred <- predict(fitrv$value, all.levels = TRUE)
+      roundpr <- function (pr) {pr[,-1] <- round(pr[,-1], input$dec); pr}
+      if (is.data.frame(pred))
+        pred <- roundpr(pred)
+      else 
+        pred <- lapply(pred, roundpr)
+      pred
+    }
+    else NULL
   })
   ##############################################################################
   
@@ -2335,14 +2346,17 @@ fitcode <- function() {
     # progress <- Progress$new(session, min = 1, max = 15)
     # on.exit(progress$close())
     # progress$set(message = 'Computing derived estimates ...', detail = '')
-    showNotification("Computing derived estimates ...",
-      id = "derived", duration = seconds)
-    der <- derived(fitrv$value, distribution = tolower(input$distributionbtn),
-      se.esa = TRUE)
-    if (ms(capthist()))
-      lapply(der, round, input$dec)
-    else 
-      round(der, input$dec)
+    if (inherits(fitrv$value, 'secr')) {
+      showNotification("Computing derived estimates ...",
+        id = "derived", duration = seconds)
+      der <- derived(fitrv$value, distribution = tolower(input$distributionbtn),
+        se.esa = TRUE)
+      if (ms(capthist()))
+        lapply(der, round, input$dec)
+      else 
+        round(der, input$dec)
+    }
+    else NULL
   })
   ##############################################################################
   
@@ -2355,9 +2369,7 @@ fitcode <- function() {
   ##############################################################################
   
   predictparm <- function(parm = 'D', stat = 'estimate') {
-    if (!inherits(fitrv$value, "secr"))
-      NA
-    else {
+    if (inherits(fitrv$value, "secr")) {
       pred <- predict(fitrv$value, newdata = newdata())
       if (is.data.frame(pred)) {
         pred[parm, stat]
@@ -2366,6 +2378,7 @@ fitcode <- function() {
         pred[[1]][parm,stat]
       }
     }
+    else NA
   }
   ##############################################################################
   
@@ -2472,11 +2485,11 @@ fitcode <- function() {
   ##############################################################################
   
   newdata <- reactive({
-    if (is.null(fitrv$value))
-      NULL   ## no model
-    else {
+    if (inherits(fitrv$value, "secr")) {
+      
       secr.make.newdata(fitrv$value, all.levels = TRUE)
     }
+    else NULL  ## no model
   })
   ##############################################################################
   
@@ -2541,20 +2554,16 @@ fitcode <- function() {
   ##############################################################################
   
   RSE <- reactive ({
-    if (!inherits(fitrv$value, "secr") || (input$likelihoodbtn != "Full") )
-      return (NULL)
-    else {
+    if (inherits(fitrv$value, "secr") && (input$likelihoodbtn == "Full") ) {
       V <- vcov(fitrv$value)['D','D']   ## FAILS IF HAVE JUST SWITCHED BUTTON
       sqrt(exp(V)-1) * 100
     }
+    else NULL
   })
   ##############################################################################
   
   se.density <- reactive( {
-    if (!inherits(fitrv$value, "secr")) {
-      NA
-    }
-    else {
+    if (inherits(fitrv$value, "secr")) {
       if (input$likelihoodbtn == "Full") {
         se.D <- predictparm('D', 'SE.estimate')
       }
@@ -2568,6 +2577,7 @@ fitcode <- function() {
       }
       se.D
     }
+    else NA
   })
   ##############################################################################
   
@@ -3563,7 +3573,7 @@ fitcode <- function() {
       spscale <- secr:::spatialscale(fitrv$value, detectfn = input$detectfnbox, 
         session = input$sess)
       max.buffer <- max(input$buffer, 5*spscale)
-      esa.plot(fitrv$value, session = input$sess, max.buffer = max.buffer)
+      esa.plot(fitrv$value, session = input$sess, max.buffer = max.buffer, thin = 1)
       abline(v = input$buffer, col = "red")
     }
     else {
