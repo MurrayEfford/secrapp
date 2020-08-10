@@ -43,6 +43,7 @@ ui <- function(request) {
     useShinyjs(),
     withMathJax(),
     tags$head(tags$style(".mypanel{margin-top:5px; margin-bottom:10px; padding-bottom: 5px;}")),
+    tags$head(tags$style("#maskdetailPrint{color:black; font-size:12px; min-height: 20px; max-height: 50px;}")),  #  background: ghostwhite;
     tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 260px; background: ghostwhite;}")),
     tags$head(tags$style("#codePrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 300px; background: ghostwhite;}")),
     tags$head(tags$style("#maskPrint{color:blue; font-size:12px; background: ghostwhite;}")),
@@ -287,11 +288,10 @@ ui <- function(request) {
                 )
               ),
               fluidRow(
-                column(8, textInput("model", "Model", value = "D~1, g0~1, sigma~1")),
-                column(4, HTML("<small><strong>Habitat mask</strong></small>","&nbsp;"),
-                  actionLink("masklink", HTML("<small> edit</small>")),
-                  uiOutput("maskdetailui1"), 
-                  uiOutput("maskdetailui2")
+                column(7, textInput("model", "Model", value = "D~1, g0~1, sigma~1")),
+                column(5, HTML("<small><strong>Habitat mask</strong></small>","&nbsp;"),
+                  actionLink("masklink", HTML("<small> edit</small>")), br(),
+                  verbatimTextOutput("maskdetailPrint")
                 )
               ),
               fluidRow(
@@ -947,27 +947,6 @@ server <- function(input, output, session) {
   })
   #-----------------------------------------------------------------------------
   
-  output$maskdetailui1 <- renderUI({
-    if (input$masktype == 'Build')
-      x <- HTML(paste0(input$buffer, "-m  buffer, nx = ", input$habnx))
-    else
-      x <- HTML(paste0("Habitat mask from file"))
-    helpText(x)
-  })
-  #-----------------------------------------------------------------------------
-  
-  output$maskdetailui2 <- renderUI({
-    if (is.null(mask()))  
-      x <- HTML("")  
-    else 
-      if (ms(mask()))
-        x <- HTML(paste0("Session 1 ", nrow(mask()[[1]]), " points, spacing ", signif(spacing(mask()[[1]]),3), " m"))
-      else
-        x <- HTML(paste0(nrow(mask()), " points, spacing ", signif(spacing(mask()),3), " m"))
-      helpText(x)
-  })
-  #-----------------------------------------------------------------------------
-  
   output$timelimitui <- renderUI({
     req(timerv)
     x <- paste0("Time limit ", timerv$timelimit, " minutes")
@@ -1427,11 +1406,11 @@ server <- function(input, output, session) {
             any(grepl(".dbf", fileupload[,1])) &&
             any(grepl(".shx", fileupload[,1])))) {
           showNotification("need shapefile components .shp, .dbf, .shx",
-            type = "error", id = "nofile", duration = seconds)
+            type = "error", id = "nofile", duration = NULL)
         }
         else  if (!requireNamespace("rgdal"))
           showNotification("need package rgdal to read shapefile", 
-            type = "error", id = "norgdal", duration = seconds)
+            type = "error", id = "norgdal", duration = NULL)
         else {
           removeNotification(id = "nofile")
           removeNotification(id = "norgdal")
@@ -1683,7 +1662,7 @@ server <- function(input, output, session) {
           mincol <- (input$fmt == "XY") + 4
           # ensure correct type for trapID
           if (nfield>=mincol && input$fmt == "trapID" && ! grepl("colClasses", args)) {
-            colClass <- c('"character"', '"character"','"integer"','"character"', rep(NA, nfield-4))
+            colClass <- c("'character'", "'character'","'integer'","'character'", rep(NA, nfield-4))
             args <- paste0(args, ", colClasses = c(", paste0(colClass, collapse = ","), ")")
           }
           code <- paste0("capt <- read.table('", filename, "'", args, ")\n")
@@ -1757,7 +1736,7 @@ fitcode <- function() {
     otherargs <- try(eval(parse(text = paste0("list(", input$otherargs, ")"))), silent = TRUE)
     if (inherits(otherargs, "try-error") && !LLonly) {
       showNotification("model fit failed - check other arguments",
-        type = "error", id = "nofit")
+        type = "error", id = "nofit", duration = NULL)
       fit <- NULL
     }
     else {
@@ -1781,7 +1760,7 @@ fitcode <- function() {
       isolate(fit <- try(do.call("secr.fit", args), silent = TRUE))
       if (inherits(fit, "try-error") && !LLonly) {
         showNotification("model fit failed - check data, formulae and mask",
-          type = "error", id = "nofit")
+          type = "error", id = "nofit", duration = NULL)
         fit <- NULL
       }
     }
@@ -1797,30 +1776,37 @@ fitcode <- function() {
         fitrv$dsurf <- NULL
       }
       addtosummary()
-      showNotification("Model fitted", id = "lastaction",
-        closeButton = FALSE, type = "message", duration = seconds)
-      if (input$masktype == "Build") {
-        x <- suppressWarnings(secr:::bufferbiascheck(fit, 
-          buffer = round(input$buffer,2), biasLimit=0.01))
-        if (!is.null(x)) {
-          showNotification(x, id = "lastaction",
-            closeButton = TRUE, type = "warning", duration = NULL)
-          
-        }
+      
+      if (fit$fit$minimum == 1e+10) {
+        showNotification("Model failed to fit", id = "lastaction",
+          type = "error", duration = NULL)
       }
-      
-      
-      if (!is.null(fit$fit$hessian)) {
-        svtol <- 1e-5
-        eigH <- eigen(fit$fit$hessian)$values
-        eigH <- abs(eigH)/max(abs(eigH))   
+      else {
+        showNotification("Model fitted", id = "lastaction",
+          closeButton = FALSE, type = "message", duration = seconds)
         
-        eig <- round(eigH, -log10(svtol))
-        rankH <- length(which(eigH > svtol))
-        nbeta <- nrow(fit$beta.vcv)
-        if (rankH < nbeta) {
-          showNotification("at least one beta parameter is not identifiable (svtol=1e-5)", 
-            id='lastaction', closeButton = TRUE, type = "warning", duration = NULL)
+        if (input$masktype == "Build") {
+          x <- suppressWarnings(secr:::bufferbiascheck(fit, 
+            buffer = round(input$buffer,2), biasLimit=0.01))
+          if (!is.null(x)) {
+            showNotification(x, id = "lastaction",
+              type = "warning", duration = NULL)
+            
+          }
+        }
+        
+        if (!is.null(fit$fit$hessian) && !is.null(fit$beta.vcv)) {
+          svtol <- 1e-5
+          eigH <- eigen(fit$fit$hessian)$values
+          eigH <- abs(eigH)/max(abs(eigH))   
+          
+          eig <- round(eigH, -log10(svtol))
+          rankH <- length(which(eigH > svtol))
+          nbeta <- nrow(fit$beta.vcv)
+          if (rankH < nbeta) {
+            showNotification("at least one beta parameter is not identifiable (svtol=1e-5)", 
+              id='lastaction', type = "warning", duration = NULL)
+          }
         }
       }
 
@@ -1976,7 +1962,8 @@ fitcode <- function() {
     }
     tempargs <- try(eval(parse(text = paste0("list(", input$trapargs, ")"))), silent = TRUE)
     if (inherits(tempargs, "try-error")) {
-      showNotification("trap arguments incomplete or invalid", type = "error", id = "badtrapargs")
+      showNotification("trap arguments incomplete or invalid", type = "error", 
+        id = "badtrapargs", duration = NULL)
     }
     else {
       args <- input$trapargs
@@ -1988,7 +1975,7 @@ fitcode <- function() {
       temp <- try(eval(parse(text = readtrapcall)))
       if (!inherits(temp, "traps")) {
         showNotification("invalid trap file or arguments; try again",
-          type = "error", id = "badtrap")
+          type = "error", id = "badtrap", duration = NULL)
         traprv$data <- NULL
         #traprv$clear <- TRUE
       }
@@ -2034,7 +2021,7 @@ fitcode <- function() {
     else {
       importrv$data <- NULL
       traprv$data <- NULL
-      showNotification("not a valid capthist Rds", closeButton = TRUE, 
+      showNotification("not a valid capthist Rds", 
         type = "error", id = "badcapt", duration = NULL)
     }
   })
@@ -2063,7 +2050,8 @@ fitcode <- function() {
     mincol <- (input$fmt == "XY") + 4
     tempargs <- try(eval(parse(text = paste0("list(", args, ")"))), silent = TRUE)
     if (inherits(tempargs, "try-error")) {
-      showNotification("arguments incomplete or invalid", type = "error", id = "badcaptargs")
+      showNotification("arguments incomplete or invalid", type = "error", 
+        id = "badcaptargs", duration = NULL)
     }
     else {
       removeNotification(id = "badcaptargs")
@@ -2086,7 +2074,7 @@ fitcode <- function() {
       captrv$clear <- TRUE
       if (!inherits(captrv$data, "data.frame") || ncol(captrv$data) < mincol) {
         showNotification("invalid capture file or arguments; try again",
-          type = "error", id = "badcapt")
+          type = "error", id = "badcapt", duration = NULL)
         captrv$data <- NULL
       }
       else {
@@ -2156,10 +2144,6 @@ fitcode <- function() {
         showNotification("waiting for input", id = "lastaction", 
           closeButton = FALSE, type = "message", duration = NULL)
       }
-      # else if (fitrv$value=="modelchanged") {
-      #   showNotification("model modified, yet to be fitted", id="lastaction", 
-      #     closeButton = FALSE,type="message", duration = NULL)
-      # }
     }
     else if (input$navlist == "Habitat mask") {
       if (is.null(traprv$data))
@@ -2347,9 +2331,10 @@ fitcode <- function() {
     # progress <- Progress$new(session, min = 1, max = 15)
     # on.exit(progress$close())
     # progress$set(message = 'Computing derived estimates ...', detail = '')
-    if (inherits(fitrv$value, 'secr')) {
+    if (inherits(fitrv$value, 'secr') && (!any(is.na(coef(fitrv$value)[,'beta'])))) {
       showNotification("Computing derived estimates ...",
         id = "derived", duration = seconds)
+      
       der <- derived(fitrv$value, distribution = tolower(input$distributionbtn),
         se.esa = TRUE)
       if (ms(capthist()))
@@ -2422,9 +2407,12 @@ fitcode <- function() {
           keep.poly = FALSE)
         nrw <- if (ms(msk)) nrow(msk[[1]]) else nrow(msk)
         if (nrw > 10000) {
-          showNotification(paste0(nrw, " mask rows is excessive; reduce nx"),
-            type = "warning", id = "maskrows",
-            duration = seconds)
+          showNotification(paste0(nrw, " mask points is excessive; reduce buffer or nx?"),
+            type = "warning", id = "maskrows", duration = NULL)
+        }
+        else if (nrw < 500) {
+          showNotification(paste0("only ", nrw, " mask points; increase buffer or nx?"),
+            type = "warning", id = "maskrows", duration = NULL)
         }
         else {
           removeNotification(id = "maskrows")
@@ -2555,7 +2543,8 @@ fitcode <- function() {
   ##############################################################################
   
   RSE <- reactive ({
-    if (inherits(fitrv$value, "secr") && (input$likelihoodbtn == "Full") ) {
+    if (inherits(fitrv$value, "secr") && (input$likelihoodbtn == "Full") && 
+        !is.null(fitrv$value$beta.vcv)) {
       V <- vcov(fitrv$value)['D','D']   ## FAILS IF HAVE JUST SWITCHED BUTTON
       sqrt(exp(V)-1) * 100
     }
@@ -2583,6 +2572,7 @@ fitcode <- function() {
   ##############################################################################
   
   se.detect0 <- reactive({
+    req(detectrv$value)
     if (detectrv$value == 'lambda0')
       predictparm('lambda0','SE.estimate')
     else 
@@ -3238,6 +3228,28 @@ fitcode <- function() {
     }
   })
   ##############################################################################
+
+  output$maskdetailPrint <- renderPrint({
+    if (input$masktype == 'Build')
+      x1 <- paste0(input$buffer, "-m  buffer, nx = ", input$habnx)
+    else
+      x1 <- paste0("Habitat mask from file")
+
+    cat(x1, "\n")
+    
+    if (is.null(mask()))  
+      x2 <- ""
+    else {
+      if (ms(mask()))
+        x2 <- paste0("Session 1 ", nrow(mask()[[1]]), " points, spacing ", signif(spacing(mask()[[1]]),3), " m")
+      else
+        x2 <- paste0(nrow(mask()), " points, spacing ", signif(spacing(mask()),3), " m")
+      cat(x2, "\n")
+      
+    }
+    
+  })
+  #-----------------------------------------------------------------------------
   
   output$resultsPrint <- renderPrint({
     hideplotif <- function (condition, tab) {
