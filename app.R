@@ -1990,6 +1990,7 @@ fitcode <- function() {
         # }
         traprv$data <- temp
         enable("captfilename")
+        enable("captxlsname")
         showNotification("detector layout loaded", closeButton = FALSE, 
           type = "message", id = "lastaction", duration = seconds)
       }
@@ -3015,12 +3016,14 @@ fitcode <- function() {
       value = "", placeholder = "e.g., skip = 1")
     updateSelectInput(session, "detector", selected = "multi")
     updateTextInput(session, "trapcovnames", value = "", placeholder = "e.g., traptype, habitat")
+    updateSelectInput(session, "trapsheet", "Sheet", choices = c("Sheet1"))
     
     ## Captures
     updateTextInput(session, "captargs", 
       value = "", placeholder = "e.g., skip = 1")
     updateSelectInput(session, "fmt", selected = "trapID")
     updateTextInput(session, "covnames", value = "", placeholder = "e.g., sex")
+    updateSelectInput(session, "captsheet", "Sheet", choices = c("Sheet1"))
     
     ## Model
     
@@ -3136,10 +3139,12 @@ fitcode <- function() {
     traprv$data <- NULL
     traprv$clear <- TRUE
     reset('trapfilename')
+    reset('trapxlsname')
     
     captrv$data <- NULL
     captrv$clear <- TRUE
     reset('captfilename')
+    reset('captxlsname')
     disable("captfilename")
 
     polyrv$data <- NULL
