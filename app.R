@@ -1678,7 +1678,8 @@ server <- function(input, output, session) {
         
         if (input$datasource == 'Text files') {
           filename <- input$captfilename[1,"name"]
-          nfield <- count.fields(filename)[1]
+          dataname <- input$captfilename[1,"datapath"]
+          nfield <- count.fields(dataname)[1]
           mincol <- (input$fmt == "XY") + 4
           # ensure correct type for trapID
           if (nfield>=mincol && input$fmt == "trapID" && ! grepl("colClasses", args)) {
