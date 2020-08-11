@@ -61,7 +61,7 @@ Optional arguments separated by commas may be used to customise input (e.g., `sk
 
 A filter may be applied to captures loaded from text files or spreadsheets. Clicking on the 'filter' link in the Captures panel opens an additional text input. Text entered in this box should be one or more valid argument(s) for the **secr** function [subset.capthist]. Filtering is switched off when 'filter' is clicked again and the text input disappears. It is best to enter the filter criterion before browsing to the captures file or spreadsheet.
 
-**Table 4**. Filtering criteria (main arguments of `subset.capthist`)
+**Table**. Filtering criteria (main arguments of `subset.capthist`)
 
 |  Argument | Selects  |  Example |
 |--------|-------------------------|-----------------------|

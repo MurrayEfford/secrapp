@@ -2255,9 +2255,7 @@ fitcode <- function() {
           fmt = input$fmt)))
         if (filtercaptrv$value && !input$filtercapttext=="") {
           subsetcaptcall <- paste0("subset (ch,",input$filtercapttext, ")")
-          ch <- try(eval(parse(text = subsetcaptcall)))
         }
-        
       }
       if (inherits(ch, 'try-error')) {
         showNotification("invalid capture file or arguments; try again",
@@ -2273,8 +2271,7 @@ fitcode <- function() {
           if (length(ncov)>0 && ncov>0) {
             for (i in 1:length(ch)) names(covariates(ch[[i]])) <- covnames
           }
-          updateNumericInput(session, "animal", max = nrow(ch[[input$sess]]))
-          output$multisession <- renderText("true")
+          nanimal <- nrow(ch[[input$sess]])
         }
         else {
           ncov <- ncol(covariates(ch))
@@ -2284,11 +2281,19 @@ fitcode <- function() {
           if (length(ncov)>0 && ncov>0) {
             names(covariates(ch)) <- covnames
           }
-          updateNumericInput(session, "animal", max = nrow(ch))
-          output$multisession <- renderText("false")
+          nanimal <- nrow(ch)
         }
+        
+        if (filtercaptrv$value && !input$filtercapttext=="") {
+          ch <- try(eval(parse(text = subsetcaptcall)))
+          if (inherits(ch, "try-error")) {
+            ch <- NULL
+          }
+        }
+        updateNumericInput(session, "animal", max = nanimal)
+        output$multisession <- renderText(tolower(ms(ch)))
         updateNumericInput(session, "sess", max = length(ch))
-        updateSelectInput(session, "hcovbox", choices = c("none", names(covariates(ch))))
+        updateSelectInput(session, "hcovbox", choices = c("none", covnames))
       }
     }
     if (is.null(ch)) {
@@ -3477,20 +3482,16 @@ fitcode <- function() {
   
   output$arrayPlot <- renderPlot( { # height = 340, width = 340, {
     removeNotification("arrayploterror")
-    if (ms(traprv$data))
-      tmpgrid <- traprv$data[[input$sess]]
-    else 
-      tmpgrid <- traprv$data
-    if (is.null(tmpgrid)) return (NULL)
     par(mar = c(1,1,1,1), cex = 1.3, xpd = TRUE)
-    plot (tmpgrid, border = border(1), bty='o', xaxs = 'i', yaxs = 'i', detpar = list(cex = input$cex), 
-      gridlines = (input$gridlines != "None"), gridspace = as.numeric(input$gridlines))
     
     if (inherits(capthist(), 'capthist')) {
       if (ms(capthist()))
         ch <- capthist()[[input$sess]]
       else
         ch <- capthist()
+      plot (traps(ch), border = border(1), bty='o', xaxs = 'i', yaxs = 'i', 
+        detpar = list(cex = input$cex), gridlines = (input$gridlines != "None"), 
+        gridspace = as.numeric(input$gridlines))
       plot(ch, varycol = input$varycol, rad = input$rad, cappar = list(cex = input$cex), 
         tracks = input$tracks, add = TRUE, 
         title = "", subtitle = "")
@@ -3525,6 +3526,15 @@ fitcode <- function() {
         }
       }
       
+    }
+    else {
+      if (ms(traprv$data))
+        tmpgrid <- traprv$data[[input$sess]]
+      else 
+        tmpgrid <- traprv$data
+      if (is.null(tmpgrid)) return (NULL)
+      plot (tmpgrid, border = border(1), bty='o', xaxs = 'i', yaxs = 'i', detpar = list(cex = input$cex), 
+        gridlines = (input$gridlines != "None"), gridspace = as.numeric(input$gridlines))
     }
   })
   ##############################################################################
