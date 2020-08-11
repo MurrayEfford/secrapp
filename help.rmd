@@ -61,20 +61,22 @@ Optional arguments separated by commas may be used to customise input (e.g., `sk
 
 A filter may be applied to captures loaded from text files or spreadsheets. Clicking on the 'filter' link in the Captures panel opens an additional text input. Text entered in this box should be one or more valid argument(s) for the **secr** function [subset.capthist]. Filtering is switched off when 'filter' is clicked again and the text input disappears. It is best to enter the filter criterion before browsing to the captures file or spreadsheet.
 
-**Table**. Filtering criteria (main arguments of `subset.capthist`)
+**Table**. Filtering criteria (main arguments of [subset.capthist])
 
-|  Argument | Selects  |  Example |
-|--------|-------------------------|-----------------------|
-|  subset    | individuals  | subset = covariates(ch) == "M" |
-|  occasions | sampling occasions | occasions = 1:3 |
-|  traps     | detectors  | |
-|  sessions  | sessions   | session = 1 |
+|  Argument | Selects  |  Example | Note |
+|--------|--------------|-----------------|----------------------------------|
+|  subset    | individuals  | `covariates(ch) == "M"` | assuming one individual covariate with values "F","M"; &nbsp; == not =. |
+|  occasions | sampling occasions | `occasions = 1:3` | limit to first 3 occasions |
+|  traps     | detectors  | `traps = traps(ch)$x < 500` | only western part of array |
+|  sessions  | sessions   | `sessions = 1` | may select one or more sessions |
 
-Each argument is a vector of subscripts that may be logical- (length equal to the relevant dimension of ch), character- or integer-valued, except that occasions should be specified by their number.
+Each argument is a vector of subscripts that may be logical- (length equal to the relevant dimension of ch), character- or integer-valued, except that occasions should be specified by their number. Arguments `occasions`, `traps` and `sessions` should be named, but may be shortened (e.g. `occ = 1:3`). Criteria may be combined (separated by commas).
 
-Selecting individuals from multi-session data is problematic. Otherwise, criteria may be combined.
+Selecting individuals (argument subset) can be problematic, especially from multi-session data. If `covariates(ch)` has more than one column then specify with, e.g., `covariates(ch)$sex == "M"`. 
 
-The Summary table includes the filter text unless the field is deselected.
+To select individuals from multi-session data on the basis of a covariate it is best to specify the subset as a function. This is illustrated in the Examples for [subset.capthist]. Given a dataset with individual covariate 'Sex' (named in the 'Covariate names' input) we might select males with `function(x,sex) covariates(x)$Sex==sex, sex = "M"`. If filtering fails then check the covariate names, including capitalisation.
+
+The Summary table includes the filter text unless that summary field is deselected.
 
 ## Model
 
