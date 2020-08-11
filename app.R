@@ -182,7 +182,6 @@ ui <- function(request) {
                         column(12, selectInput("trapsheet", "Sheet", choices = c("Sheet1")))
                       )
                     ),
-                    
                     fluidRow(
                       column(6, 
                         selectInput("detector", "Detector type", 
@@ -234,16 +233,18 @@ ui <- function(request) {
                     fluidRow(
                       column(6, selectInput("fmt", label = "Format",
                         choices = c("trapID", "XY"))),
-                      conditionalPanel( condition = "input.datasource == 'Text files'",
+                      
                         column(6, 
                           br(), 
-                          actionLink("showcaptfilebtn", HTML("<small>show file</small>")),
-                          br(),
+                          conditionalPanel( condition = "input.datasource == 'Text files'",
+                            actionLink("showcaptfilebtn", HTML("<small>show file</small>")),
+                            br()
+                          ),
                           actionLink("filtercapt", HTML("<small>filter</small>"))
                         )
-                      )
-                    ),
                     
+                  ),
+                  
                     fluidRow(
                       column(12, style="color:grey;",
                         textInput("covnames", "Covariate names",
@@ -259,12 +260,11 @@ ui <- function(request) {
                     fluidRow(
                       conditionalPanel(condition = "output.filterCapt",
                         column(12, style="color:grey;",
-                          textInput("captfilter", "Filter",
+                          textInput("filtercapttext", "Filter",
                             value = "", placeholder = "e.g., session = 1")
                         )
                       )
                     )
-                    
                   )   # end wellPanel
                 )   # end column(6,)
               )   # end fluidRow
@@ -883,7 +883,7 @@ server <- function(input, output, session) {
   })
 
   output$filterCapt <- reactive({
-    return(captfilterrv$value)
+    return(filtercaptrv$value)
   })
   
   output$capthistLoaded <- reactive({
@@ -1462,7 +1462,7 @@ server <- function(input, output, session) {
       captures = if (input$datasource=="Text files") input$captfilename$name[1]
       else if (input$datasource=="Excel files") input$captxlsname$name[1] 
       else if (is.null(input$importfilename)) "" else input$importfilename$name[1],
-      filter = if (captfilterrv$value && input$captfilter!="") input$captfilter else "",
+      filter = if (filtercaptrv$value && input$filtercapttext!="") input$filtercapttext else "",
       ndetectors = ndetectors()[input$sess],
       noccasions = noccasions()[input$sess],
       usagepct = usagepct()[input$sess],
@@ -1699,8 +1699,8 @@ server <- function(input, output, session) {
         
         code <- paste0(code, "ch <- make.capthist (capt, traps = array", fmt, cov, ")\n")
         
-        if (captfilterrv$value && !input$captfilter=="") {
-          code <- paste0(code, "ch <- subset(capthist = ch, ", input$captfilter, ")\n")
+        if (filtercaptrv$value && !input$filtercapttext=="") {
+          code <- paste0(code, "ch <- subset(capthist = ch, ", input$filtercapttext, ")\n")
         }
         
         if (comment) {
@@ -2185,7 +2185,8 @@ fitcode <- function() {
   observeEvent(c(input$detectfnbox, input$likelihoodbtn, input$distributionbtn,
     input$hcovbox, input$model, input$otherargs,
     input$masktype, input$buffer, input$habnx, input$maskshapebtn, 
-    input$polyfilename, input$polygonbox, input$maskfilename), {
+    input$polyfilename, input$polygonbox, input$maskfilename,
+    input$filtercapt, input$filtercapttext), {
       fitrv$value <- NULL
       showNotification("model modified, yet to be fitted", id="lastaction", 
         closeButton = FALSE,type="message", duration = NULL)
@@ -2252,8 +2253,8 @@ fitcode <- function() {
       else {
         ch <- try(suppressWarnings(make.capthist(captrv$data, traprv$data, 
           fmt = input$fmt)))
-        if (captfilterrv$value && !input$captfilter=="") {
-          subsetcaptcall <- paste0("subset (ch,",input$captfilter, ")")
+        if (filtercaptrv$value && !input$filtercapttext=="") {
+          subsetcaptcall <- paste0("subset (ch,",input$filtercapttext, ")")
           ch <- try(eval(parse(text = subsetcaptcall)))
         }
         
@@ -2646,7 +2647,7 @@ fitcode <- function() {
   detectrv <- reactiveValues(value='g0')
   traptextrv <- reactiveValues(value=FALSE)
   capttextrv <- reactiveValues(value=FALSE)
-  captfilterrv <- reactiveValues(value=FALSE)
+  filtercaptrv <- reactiveValues(value=FALSE)
   
   ##############################################################################
   
@@ -2834,7 +2835,7 @@ fitcode <- function() {
   
   observeEvent(input$filtercapt, ignoreInit = TRUE, {
     ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
-    captfilterrv$value <- (input$filtercapt %% 2) == 1
+    filtercaptrv$value <- (input$filtercapt %% 2) == 1
   })
   
   observeEvent(input$fitbtn, ignoreInit = TRUE, {
@@ -3039,7 +3040,7 @@ fitcode <- function() {
     fitrv$value <- NULL
     traptextrv$value <- FALSE
     capttextrv$value <- FALSE
-    captfilterrv$value <- FALSE
+    filtercaptrv$value <- FALSE
     timerv$timewarning <- timewarning
     timerv$timelimit <- timelimit
     
@@ -3059,6 +3060,7 @@ fitcode <- function() {
     updateSelectInput(session, "fmt", selected = "trapID")
     updateTextInput(session, "covnames", value = "", placeholder = "e.g., sex")
     updateSelectInput(session, "captsheet", "Sheet", choices = c("Sheet1"))
+    updateTextInput(session, "filtercapttext", value = "", placeholder = "e.g., session = 1")
     
     ## Model
     
