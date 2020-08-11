@@ -192,7 +192,7 @@ ui <- function(request) {
                       ),
                       conditionalPanel( condition = "input.datasource == 'Text files'",
                         column(6, 
-                          br(),br(),
+                          br(),
                           actionLink("showtrapfilebtn", HTML("<small>show file</small>"))
                         )
                       )
@@ -236,8 +236,10 @@ ui <- function(request) {
                         choices = c("trapID", "XY"))),
                       conditionalPanel( condition = "input.datasource == 'Text files'",
                         column(6, 
-                          br(), br(),
-                          actionLink("showcaptfilebtn", HTML("<small>show file</small>"))
+                          br(), 
+                          actionLink("showcaptfilebtn", HTML("<small>show file</small>")),
+                          br(),
+                          actionLink("filtercapt", HTML("<small>filter</small>"))
                         )
                       )
                     ),
@@ -245,13 +247,24 @@ ui <- function(request) {
                     fluidRow(
                       column(12, style="color:grey;",
                         textInput("covnames", "Covariate names",
-                          value = "", placeholder = "e.g., sex"))
+                          value = "", placeholder = "e.g., sex")
+                      )
                     ),
                     fluidRow(
                       column(12, style="color:grey;",
                         textInput("captargs", "Other arguments",
-                          value = "", placeholder = "e.g., skip = 1"))
+                          value = "", placeholder = "e.g., skip = 1")
+                      )
+                    ),
+                    fluidRow(
+                      conditionalPanel(condition = "output.filterCapt",
+                        column(12, style="color:grey;",
+                          textInput("captfilter", "Filter",
+                            value = "", placeholder = "e.g., session = 1")
+                        )
+                      )
                     )
+                    
                   )   # end wellPanel
                 )   # end column(6,)
               )   # end fluidRow
@@ -584,12 +597,12 @@ ui <- function(request) {
               column(5, offset=1,
                 conditionalPanel("output.selectingfields == 'TRUE'",
                   checkboxGroupInput("fields1", "",
-                    choices = c("date", "time", "note", "traps", "captures", 
+                    choices = c("date", "time", "note", "traps", "captures", "filter",
                       "n", "r", "ndetectors", "noccasions",
                       "usagepct", "maskbuffer", "masknrow", "maskspace",
                       "likelihood", "distribution","model"
                     ),
-                    selected = c("date", "time", "note", "traps", "captures", 
+                    selected = c("date", "time", "note", "traps", "captures", "filter",
                       "n", "r", "ndetectors", "noccasions",
                       "usagepct", "maskbuffer", "masknrow", "maskspace",
                       "likelihood", "distribution", "model"
@@ -831,7 +844,7 @@ ui <- function(request) {
 server <- function(input, output, session) {
   
   desc <- packageDescription("secr")
-  summaryfields <- c("date", "time", "note", "traps", "captures", "n", "r",
+  summaryfields <- c("date", "time", "note", "traps", "captures", "filter", "n", "r",
     "ndetectors", "noccasions", "usagepct", "maskbuffer", "masknrow", "maskspace",
     "likelihood", "distribution", "model", 
     "hcov", "detectfn", "npar", "logLik", "AIC", "dAIC",
@@ -839,8 +852,8 @@ server <- function(input, output, session) {
     "k", "proctime"
   )
   
-  fieldgroup1 <- 1:16
-  fieldgroup2 <- 17:35
+  fieldgroup1 <- 1:17
+  fieldgroup2 <- 18:36
   
   polygondetectors <- c("polygon", "polygonX", "transect", "transectX")
   hazarddetectfn <- c("HHN", "HHR", "HEX", "HVP")
@@ -868,6 +881,10 @@ server <- function(input, output, session) {
   output$modelFitted <- reactive({
     return(!is.null(fitrv$value))
   })
+
+  output$filterCapt <- reactive({
+    return(captfilterrv$value)
+  })
   
   output$capthistLoaded <- reactive({
     return(!is.null(capthist()))
@@ -876,6 +893,7 @@ server <- function(input, output, session) {
   outputOptions(output, "maskready", suspendWhenHidden=FALSE)
   outputOptions(output, "modelFitted", suspendWhenHidden=FALSE)
   outputOptions(output, "capthistLoaded", suspendWhenHidden=FALSE)
+  outputOptions(output, "filterCapt", suspendWhenHidden=FALSE)
   
   
   ##############################################################################
@@ -1444,6 +1462,7 @@ server <- function(input, output, session) {
       captures = if (input$datasource=="Text files") input$captfilename$name[1]
       else if (input$datasource=="Excel files") input$captxlsname$name[1] 
       else if (is.null(input$importfilename)) "" else input$importfilename$name[1],
+      filter = if (captfilterrv$value && input$captfilter!="") input$captfilter else "",
       ndetectors = ndetectors()[input$sess],
       noccasions = noccasions()[input$sess],
       usagepct = usagepct()[input$sess],
@@ -1679,6 +1698,10 @@ server <- function(input, output, session) {
         }
         
         code <- paste0(code, "ch <- make.capthist (capt, traps = array", fmt, cov, ")\n")
+        
+        if (captfilterrv$value && !input$captfilter=="") {
+          code <- paste0(code, "ch <- subset(capthist = ch, ", input$captfilter, ")\n")
+        }
         
         if (comment) {
           tmp <- lapply(strsplit(code, "\n")[[1]], function(x) paste0("# ", x))
@@ -2229,6 +2252,11 @@ fitcode <- function() {
       else {
         ch <- try(suppressWarnings(make.capthist(captrv$data, traprv$data, 
           fmt = input$fmt)))
+        if (captfilterrv$value && !input$captfilter=="") {
+          subsetcaptcall <- paste0("subset (ch,",input$captfilter, ")")
+          ch <- try(eval(parse(text = subsetcaptcall)))
+        }
+        
       }
       if (inherits(ch, 'try-error')) {
         showNotification("invalid capture file or arguments; try again",
@@ -2618,6 +2646,7 @@ fitcode <- function() {
   detectrv <- reactiveValues(value='g0')
   traptextrv <- reactiveValues(value=FALSE)
   capttextrv <- reactiveValues(value=FALSE)
+  captfilterrv <- reactiveValues(value=FALSE)
   
   ##############################################################################
   
@@ -2801,6 +2830,11 @@ fitcode <- function() {
     ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
     traptextrv$value <- FALSE
     capttextrv$value <- !is.null(input$captfilename) && (input$showcaptfilebtn %% 2 == 1)
+  })
+  
+  observeEvent(input$filtercapt, ignoreInit = TRUE, {
+    ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
+    captfilterrv$value <- (input$filtercapt %% 2) == 1
   })
   
   observeEvent(input$fitbtn, ignoreInit = TRUE, {
@@ -3005,6 +3039,7 @@ fitcode <- function() {
     fitrv$value <- NULL
     traptextrv$value <- FALSE
     capttextrv$value <- FALSE
+    captfilterrv$value <- FALSE
     timerv$timewarning <- timewarning
     timerv$timelimit <- timelimit
     
@@ -3445,7 +3480,7 @@ fitcode <- function() {
     else 
       tmpgrid <- traprv$data
     if (is.null(tmpgrid)) return (NULL)
-    par(mar = c(1,1,2,1), cex = 1.3, xpd = TRUE)
+    par(mar = c(1,1,1,1), cex = 1.3, xpd = TRUE)
     plot (tmpgrid, border = border(1), bty='o', xaxs = 'i', yaxs = 'i', detpar = list(cex = input$cex), 
       gridlines = (input$gridlines != "None"), gridspace = as.numeric(input$gridlines))
     
