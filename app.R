@@ -569,13 +569,13 @@ ui <- function(request) {
       tabPanel("Summary",
         br(),
         fluidRow(
-          column(3, 
+          column(2, 
             wellPanel(
               h2("Fields"),
               fluidRow(
-                column(4, actionButton("selectfieldsbtn", "Select", title = "Choose fields to display")), 
-                column(4, actionButton("selectnonebtn", "None", title = "Unselect all fields")), 
-                column(4, actionButton("selectallbtn", "All", title = "Select all fields"))
+                column(6, actionButton("selectfieldsbtn", "Select", title = "Choose fields to display")), 
+                column(6, actionLink("selectnonebtn", "None", title = "Unselect all fields"), br(), 
+                          actionLink("selectallbtn", "All", title = "Select all fields"))
               ),
               br(),
               h2("Analyses"),
@@ -628,7 +628,7 @@ ui <- function(request) {
             )
             
           ),
-          column(9, 
+          column(10, 
             # h2("Results"),
             div(tableOutput("summarytable"), style = "width:800px; overflow-x: scroll")
           )
