@@ -2242,6 +2242,7 @@ fitcode <- function() {
   capthist <- reactive( {
     # showNotification("debug: capthist eval", closeButton = FALSE, type = "message", duration = 0.1)
     ch <- NULL
+    covnames <- character(0)
     if ((is.null(traprv$data) || is.null(captrv$data)) && is.null(importrv$data)) {
       updateNumericInput(session, "animal", max = 0)
       ch <- NULL
