@@ -372,11 +372,11 @@ ui <- function(request) {
                     )
                   ),
                   tabPanel("Array",
-                    #br(),
                     fluidRow(
-                      column(10, style='padding:0px;', plotOutput("arrayPlot", 
-                        click = clickOpts(id="arrayClick", clip = FALSE),
-                        hover = hoverOpts(id ="arrayHover", delayType = "throttle"))),
+                      column(10, style = 'padding:0px;', 
+                        plotOutput("arrayPlot", 
+                          click = clickOpts(id = "arrayClick", clip = FALSE),
+                          hover = hoverOpts(id ="arrayHover", delayType = "throttle"))),
                       column(2, br(), conditionalPanel("input.gridlines != 'None'",
                         uiOutput("uigridlines") ),
                         br(), uiOutput('xycoord'))
@@ -480,6 +480,7 @@ ui <- function(request) {
                           width = "90%"))
                     )
                   )
+                  
                 )
               )
             )
@@ -3541,8 +3542,29 @@ fitcode <- function() {
   ## powerPlot
   
   ##############################################################################
+
+  # 2020-08-14 
+  # increasing height from default 400 does not work because 
+  # other elements for conditionalPanel("output.capthistLoaded", ... remain fixed in position
+  # (i.e. placed assuming original tabPanel height)
+  # and plot does not centre
   
-  output$arrayPlot <- renderPlot( { 
+  # this applies even if the new height is hardwired 
+  # e.g.  renderPlot(height = 500,
+  
+  # plotheightfn <- function () {
+  #   if (input$resultsbtn == "hide") 600 else 400
+  # }
+  # 
+  # plotwidthfn <- function () {
+  #   if (input$resultsbtn == "hide") 600 else 400
+  # }
+  # 
+  # output$arrayPlot <- renderPlot(height = plotheightfn,
+  #   width = plotwidthfn, {
+
+  output$arrayPlot <- renderPlot( {
+    
     removeNotification("arrayploterror")
     par(mar = c(1,1,1,1), cex = 1.3, xpd = TRUE)
     
@@ -3551,17 +3573,11 @@ fitcode <- function() {
         ch <- capthist()[[input$sess]]
       else
         ch <- capthist()
-      if (!is.null(mask()) && input$entireregionbox) {
-        plot(mask(), col = 'grey97', dots = FALSE)
-        plot (traps(ch), add = TRUE, bty='o', xaxs = 'i', yaxs = 'i', 
-          detpar = list(cex = input$cex), gridlines = (input$gridlines != "None"), 
+      add <- !is.null(mask()) && input$entireregionbox
+      if (add) plot(mask(), col = 'grey97', dots = FALSE)
+      plot (traps(ch), add = add, border = border(1), bty='o', xaxs = 'i', yaxs = 'i', 
+        detpar = list(cex = input$cex), gridlines = (input$gridlines != "None"), 
           gridspace = as.numeric(input$gridlines))
-      }
-      else {
-        plot (traps(ch), border = border(1), bty='o', xaxs = 'i', yaxs = 'i', 
-          detpar = list(cex = input$cex), gridlines = (input$gridlines != "None"), 
-          gridspace = as.numeric(input$gridlines))
-      }
       plot(ch, varycol = input$varycol, rad = input$rad, cappar = list(cex = input$cex), 
         tracks = input$tracks, add = TRUE, 
         title = "", subtitle = "")
@@ -3607,8 +3623,16 @@ fitcode <- function() {
       else 
         tmpgrid <- traprv$data
       if (is.null(tmpgrid)) return (NULL)
-      plot (tmpgrid, border = border(1), bty='o', xaxs = 'i', yaxs = 'i', detpar = list(cex = input$cex), 
-        gridlines = (input$gridlines != "None"), gridspace = as.numeric(input$gridlines))
+
+      add <- !is.null(mask()) && input$entireregionbox
+      if (add) plot(mask(), col = 'grey97', dots = FALSE)
+      plot (tmpgrid, add = add, 
+        border = border(1), 
+        bty = 'o', 
+        xaxs = 'i', yaxs = 'i', 
+        detpar = list(cex = input$cex), 
+        gridlines = (input$gridlines != "None"), 
+        gridspace = as.numeric(input$gridlines))
     }
   })
   ##############################################################################
