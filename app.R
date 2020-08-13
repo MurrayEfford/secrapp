@@ -3562,7 +3562,7 @@ fitcode <- function() {
         pars = pars,
         xval = 0:(3 * sigma()),
         ylab = "",
-        hazard = TRUE,       
+        hazard = detectrv$value == 'lambda0',     # changed from TRUE 2020-08-13      
         ylim = c(0, detect0()*1.2),
         las=1, col = 'red', lwd = linewidth,
         xaxs='i', yaxs='i')
