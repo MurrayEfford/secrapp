@@ -2162,6 +2162,8 @@ fitcode <- function() {
   
   observeEvent(c(input$trapfilename,  input$trapxlsname, input$trapsheet), {
     traprv$clear <- FALSE
+    updateRadioButtons(session, "resultsbtn", label = "", 
+      inline = TRUE, choices=c("summary", "other"))
   }, priority = 1000)
   
   observeEvent(c(input$captfilename, input$captxlsname, input$captsheet), {
@@ -2170,6 +2172,8 @@ fitcode <- function() {
   
   observeEvent(input$importfilename, {
     importrv$clear <- FALSE
+    updateRadioButtons(session, "resultsbtn", label = "", 
+      inline = TRUE, choices=c("summary", "other"))
   }, priority = 1000)
   
   observeEvent(input$polyfilename, {
