@@ -369,7 +369,7 @@ ui <- function(request) {
                     )
                   ),
                   tabPanel("Array",
-                    br(),
+                    #br(),
                     fluidRow(
                       column(10, style='padding:0px;', plotOutput("arrayPlot", 
                         click = clickOpts(id="arrayClick", clip = FALSE),
@@ -718,7 +718,7 @@ ui <- function(request) {
                 choices = c("None", "100", "1000", "10000", "100000"),
                 selected = "None", inline = TRUE),
               fluidRow(
-                column(6, checkboxInput("entireregionbox", "Show entire region", value = TRUE, width = 160)),
+                column(6, checkboxInput("entireregionbox", "Show entire region", value = FALSE, width = 160)),
                 column(5, checkboxInput("snaptodetector", "Snap to detector", value = FALSE, width = 160))
               ),
               br(),
@@ -3549,11 +3549,10 @@ fitcode <- function() {
       else
         ch <- capthist()
       if (!is.null(mask()) && input$entireregionbox) {
-        plot(mask(), col='white')
+        plot(mask(), col = 'grey97', dots = FALSE)
         plot (traps(ch), add = TRUE, bty='o', xaxs = 'i', yaxs = 'i', 
           detpar = list(cex = input$cex), gridlines = (input$gridlines != "None"), 
           gridspace = as.numeric(input$gridlines))
-        
       }
       else {
         plot (traps(ch), border = border(1), bty='o', xaxs = 'i', yaxs = 'i', 
