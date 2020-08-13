@@ -339,10 +339,16 @@ ui <- function(request) {
             h2("Results"),
             
             fluidRow(
-              column(5, radioButtons("resultsbtn", label = "", 
-                inline = TRUE, choices = c("summary", "predict", "derived", "other"))),
+              column(5, 
+                radioButtons("resultsbtn", label = "", 
+                  inline = TRUE, choices = c("summary", "other"))
+                ## inline = TRUE, choices = c("summary", "predict", "derived", "other"))
+            ),
               
-              column(5,  textInput("otherfunction", label="", placeholder = "e.g., coef(fitted)")),
+              column(5,  
+                textInput("otherfunction", label="", placeholder = "e.g., RPSV(ch, CC=TRUE)")
+                ## textInput("otherfunction", label="", placeholder = "e.g., coef(fitted)")
+              ),
               conditionalPanel("output.modelFitted", column(2, br(), downloadLink("savebtn", "Save fit")))
             ),
             
@@ -1799,6 +1805,9 @@ fitcode <- function() {
       return(fit)
     }
     else {
+      updateRadioButtons(session, "resultsbtn", label = "", 
+        inline = TRUE, choices = c("summary", "predict", "derived", "other"))
+      
       fitrv$value <- fit
       if (length(fit)>0) {
         fitrv$dsurf <- predictDsurface(fit)
@@ -1841,6 +1850,10 @@ fitcode <- function() {
         }
       }
 
+    }
+    if (is.null(fitrv$value)) {
+      updateRadioButtons (session, "resultsbtn", label = "", 
+        inline = TRUE, choices = c("summary", "other"))
     }
   }
   ##############################################################################
@@ -3095,8 +3108,9 @@ fitcode <- function() {
       value = "", placeholder = "e.g., vcov(fit)")
     
     ## Results
-    updateRadioButtons(session, "resultsbtn", selected = "summary")
-    
+    updateRadioButtons(session, "resultsbtn", label = "", 
+      inline = TRUE, choices = c("summary", "other"), selected = "summary")
+
     ## Array plot
     updateCheckboxInput(session, "tracks", value = FALSE)
     updateCheckboxInput(session, "fxi", value = FALSE)
@@ -3307,6 +3321,23 @@ fitcode <- function() {
   })
   #-----------------------------------------------------------------------------
   
+  otherfn <- function (fncall, ch, fitted) {
+    if (fncall=="") cat("No function specified\n")
+    else {
+      if (fitted) fncall <- gsub("fitted", "fitrv$value", fncall)
+      if (ch) fncall <- gsub("ch", "capthist()", fncall)
+      out <- try(eval(parse(text = fncall)), silent = TRUE)
+      if (inherits(out, "try-error")) {
+        err <- attr(out, 'condition')$message
+        cat("Did not compute\n")
+        err
+      }
+      else {
+        out
+      }
+    }  
+  }
+  
   output$resultsPrint <- renderPrint({
     hideplotif <- function (condition, tab) {
       if (condition)
@@ -3340,7 +3371,8 @@ fitcode <- function() {
       max = maxRSE,
       value = rse,
       step = 0.1)
-    disable("resultsbtn")  ## shinyjs
+    
+    ## disable("resultsbtn")  ## shinyjs
     
     minchar <- 50
     if (traptextrv$value) {
@@ -3351,6 +3383,9 @@ fitcode <- function() {
     }
     else if (is.null(traprv$data)) {
       header <- "No data loaded"
+    }
+    else if (input$resultsbtn == "other") {
+      header <- input$otherfunction
     }
     else if (is.null(capthist())) {
       header <- paste("Summary of detector layout from", input$trapfilename[1,'name'])
@@ -3397,17 +3432,26 @@ fitcode <- function() {
       cat("")
     }
     else if (is.null(capthist())) {
-      summary(traprv$data)
+      if (input$resultsbtn == "summary")
+        summary(traprv$data)
+      else
+        otherfn(input$otherfunction, FALSE, FALSE)
     }
     else if (is.null(fitrv$value)) {
-      if (ms(capthist())) {
+      if (input$resultsbtn == "summary") {
+        if (ms(capthist())) {
         list(terse = summary(capthist(), terse = TRUE), bysession = summary(capthist(), moves = TRUE))            }
       else {
         summary(capthist(), moves = TRUE)
       }
+      }
+      else {
+        otherfn(input$otherfunction, TRUE, FALSE)
+      }
     }
     else if (inherits(fitrv$value, "secr")) {
-      enable("resultsbtn")    ## shinyjs
+      ## enable("resultsbtn")    ## shinyjs
+      
       if (input$resultsbtn == "summary")
         summary(fitrv$value)
       else if (input$resultsbtn == "predict") {
@@ -3417,21 +3461,7 @@ fitcode <- function() {
         derivedresult()
       }
       else {
-        fncall <- input$otherfunction
-        if (fncall=="") cat("No function specified\n")
-        else {
-          fncall <- gsub("fitted", "fitrv$value", fncall)
-          fncall <- gsub("ch", "capthist()", fncall)
-          out <- try(eval(parse(text = fncall)), silent = TRUE)
-          if (inherits(out, "try-error")) {
-            err <- attr(out, 'condition')$message
-            cat("Did not compute\n")
-            err
-          }
-          else {
-            out
-          }
-        }
+        otherfn(input$otherfunction, TRUE, TRUE)
       }
     }
     else {
