@@ -3105,7 +3105,7 @@ fitcode <- function() {
     updateTextInput(session, "title", "", value = "",
       placeholder = "label for Summary")
     updateTextInput(session, "otherfunction", 
-      value = "", placeholder = "e.g., vcov(fit)")
+      value = "", placeholder = "e.g., RPSV(ch, CC = TRUE)")
     
     ## Results
     updateRadioButtons(session, "resultsbtn", label = "", 
@@ -3326,6 +3326,7 @@ fitcode <- function() {
     else {
       if (fitted) fncall <- gsub("fitted", "fitrv$value", fncall)
       if (ch) fncall <- gsub("ch", "capthist()", fncall)
+      tr <- traprv$data
       out <- try(eval(parse(text = fncall)), silent = TRUE)
       if (inherits(out, "try-error")) {
         err <- attr(out, 'condition')$message
