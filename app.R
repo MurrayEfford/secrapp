@@ -3646,7 +3646,7 @@ fitcode <- function() {
     if (input$masktype == "Build") {
       spscale <- secr:::spatialscale(fitrv$value, detectfn = input$detectfnbox, 
         session = input$sess)
-      max.buffer <- max(input$buffer, 5*spscale)
+      max.buffer <- max(input$buffer*1.5, 5*spscale)  # 2020-08-13 *1.5
       esa.plot(fitrv$value, session = input$sess, max.buffer = max.buffer, thin = 1)
       abline(v = input$buffer, col = "red")
     }
