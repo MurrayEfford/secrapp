@@ -1,7 +1,7 @@
+## imports stringr, readxl
+
 library(secr)
 library(shinyjs)
-library(stringr)
-library(readxl)
 
 secrversion <- packageVersion('secr')
 if (compareVersion(as.character(secrversion), '4.0.1') < 0)
@@ -1938,7 +1938,7 @@ fitcode <- function() {
       if (cov != "") {
         cov <- gsub("(')|(\")", "", cov)   # remove quotes
         cov <- gsub(",", " ", cov)         # comma to space
-        nam <- strsplit(str_squish(cov), '[ ,]')
+        nam <- strsplit(stringr::str_squish(cov), '[ ,]')
         if (length(nam[[1]]) >= ncov) {
           covnames <- nam[[1]][1:ncov]
         }
