@@ -34,6 +34,9 @@ timelimit <- 10.0    ## minutes
 availablecores <- min(24, parallel::detectCores())
 defaultcores <- max(1, availablecores/2)
 
+defaultresultsbtn <- c("summary", "hide", "other")
+fittedresultsbtn <- c("summary", "hide", "predict", "derived", "other")
+
 ##############################################################################
 
 # Define UI 
@@ -343,7 +346,7 @@ ui <- function(request) {
             fluidRow(
               column(6, 
                 radioButtons("resultsbtn", label = "", 
-                  inline = TRUE, choices = c("summary", "other", "hide"))
+                  inline = TRUE, choices = defaultresultsbtn)
                 ),
               
               column(4,  
@@ -1814,7 +1817,7 @@ fitcode <- function() {
     }
     else {
       updateRadioButtons(session, "resultsbtn", label = "", 
-        inline = TRUE, choices = c("summary", "predict", "derived", "other", "hide"))
+        inline = TRUE, choices = fittedresultsbtn)
       updateTextInput(session, "otherfunction", placeholder = "e.g., vcov(fitted)")
 
       fitrv$value <- fit
@@ -1862,7 +1865,7 @@ fitcode <- function() {
     }
     if (is.null(fitrv$value)) {
       updateRadioButtons (session, "resultsbtn", label = "", 
-        inline = TRUE, choices = c("summary", "other", "hide"))
+        inline = TRUE, choices = defaultresultsbtn)
     }
   }
   ##############################################################################
@@ -2172,7 +2175,7 @@ fitcode <- function() {
   observeEvent(c(input$trapfilename,  input$trapxlsname, input$trapsheet), {
     traprv$clear <- FALSE
     updateRadioButtons(session, "resultsbtn", label = "", 
-      inline = TRUE, choices=c("summary", "other", "hide"))
+      inline = TRUE, choices = defaultresultsbtn)
   }, priority = 1000)
   
   observeEvent(c(input$captfilename, input$captxlsname, input$captsheet), {
@@ -2182,7 +2185,7 @@ fitcode <- function() {
   observeEvent(input$importfilename, {
     importrv$clear <- FALSE
     updateRadioButtons(session, "resultsbtn", label = "", 
-      inline = TRUE, choices=c("summary", "other", "hide"))
+      inline = TRUE, choices = defaultresultsbtn)
   }, priority = 1000)
   
   observeEvent(input$polyfilename, {
@@ -2223,7 +2226,7 @@ fitcode <- function() {
     input$filtercapt, input$filtercapttext), {
       fitrv$value <- NULL
       updateRadioButtons(session, "resultsbtn", label = "", 
-        inline = TRUE, choices=c("summary", "other", "hide"))
+        inline = TRUE, choices = defaultresultsbtn)
       showNotification("model modified, yet to be fitted", id="lastaction", 
         closeButton = FALSE,type="message", duration = NULL)
     })
@@ -3132,7 +3135,7 @@ fitcode <- function() {
     
     ## Results
     updateRadioButtons(session, "resultsbtn", label = "", 
-      inline = TRUE, choices = c("summary", "other", "hide"), selected = "summary")
+      inline = TRUE, choices = defaultresultsbtn, selected = "summary")
 
     ## Array plot
     updateCheckboxInput(session, "tracks", value = FALSE)
