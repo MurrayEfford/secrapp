@@ -494,23 +494,27 @@ ui <- function(request) {
                         value = 100,
                         step = 5,
                         width = 180),
-                      numericInput("habnx", "Mesh dimension nx",
+                      tags$div(title = "Resolution of mesh - number of columns in x-direction",
+                        numericInput("habnx", "Mesh dimension nx",
                         min = 10,
                         max = 1000,
                         value = 32,
                         step = 1,
                         width = 180)
+                      )
                     ),
                     column(6,
                       br(),
                       actionButton("suggestbuffer", "Suggest width", width = 130,
-                        title = "Based on either fitted model or RPSV"))
+                        title = "Based on fitted model, if available, otherwise RPSV. Seeks buffer truncation bias <= 1%"))
                   ),
                   fluidRow(
                     column(12, 
-                      radioButtons("maskshapebtn", label = "Shape",
+                      tags$div(title = "Mask type 'trapbuffer' is trimmed to exclude points further than the buffer distance from any detector",
+                        radioButtons("maskshapebtn", label = "Shape",
                         choices = c("Rectangular", "Trap buffer"), 
                         selected = "Trap buffer", inline = TRUE)
+                      )
                     )
                   )
                 ),
@@ -525,9 +529,13 @@ ui <- function(request) {
                   fluidRow(
                     column(10, 
                       checkboxInput("polygonbox", "Clip to polygon(s)", value = TRUE),
-                      radioButtons("includeexcludebtn", label = "",
+                      
+                      tags$div(title = "Do polygons represent habitat ('include') or non-habitat ('exclude')?",
+                        radioButtons("includeexcludebtn", label = "",
                         choices = c("Include", "Exclude"), 
                         selected = "Include", inline = TRUE)
+                      )
+                      
                     )
                   )
                 )
