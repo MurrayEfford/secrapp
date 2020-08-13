@@ -2209,6 +2209,8 @@ fitcode <- function() {
     input$polyfilename, input$polygonbox, input$maskfilename,
     input$filtercapt, input$filtercapttext), {
       fitrv$value <- NULL
+      updateRadioButtons(session, "resultsbtn", label = "", 
+        inline = TRUE, choices=c("summary", "other"))
       showNotification("model modified, yet to be fitted", id="lastaction", 
         closeButton = FALSE,type="message", duration = NULL)
     })
