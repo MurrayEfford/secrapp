@@ -16,6 +16,8 @@ designurl <- "https://www.stats.otago.ac.nz/secrdesignapp/"   # secrdesignapp 1.
 # requires package sp for bbox and plot method for SpatialPolygons
 # requires package parallel for max cores in simulate options (distributed with base R)
 # requires package tools for file path when reading shapefiles (distributed with base R)
+# requires package stringr for some string operations
+# requires package readxl for reading Excel files
 
 # interrupt is hard -
 # see http://htmlpreview.github.io/?https://github.com/fellstat/ipc/blob/master/inst/doc/shinymp.html
@@ -234,17 +236,17 @@ ui <- function(request) {
                       column(6, selectInput("fmt", label = "Format",
                         choices = c("trapID", "XY"))),
                       
-                        column(6, 
-                          br(), 
-                          conditionalPanel( condition = "input.datasource == 'Text files'",
-                            actionLink("showcaptfilebtn", HTML("<small>show file</small>")),
-                            br()
-                          ),
-                          actionLink("filtercapt", HTML("<small>filter</small>"))
-                        )
+                      column(6, 
+                        br(), 
+                        conditionalPanel( condition = "input.datasource == 'Text files'",
+                          actionLink("showcaptfilebtn", HTML("<small>show file</small>")),
+                          br()
+                        ),
+                        actionLink("filtercapt", HTML("<small>filter</small>"))
+                      )
+                      
+                    ),
                     
-                  ),
-                  
                     fluidRow(
                       column(12, style="color:grey;",
                         textInput("covnames", "Covariate names",
@@ -297,7 +299,7 @@ ui <- function(request) {
                   choices = c("Poisson", "Binomial"))),
                 column(3, style="color:grey;",
                   selectInput("hcovbox", label = "Mixture hcov",
-                    choices = c("none"), selected = "none", width=160)
+                    choices = c("none"), selected = "none", width = 160)
                 )
               ),
               fluidRow(
@@ -335,21 +337,20 @@ ui <- function(request) {
             )
           ), # end left side column (5, )
           
-          column (6, # style='padding:0px;',
+          column (6,
             h2("Results"),
             
             fluidRow(
-              column(5, 
+              column(6, 
                 radioButtons("resultsbtn", label = "", 
-                  inline = TRUE, choices = c("summary", "other"))
-                ## inline = TRUE, choices = c("summary", "predict", "derived", "other"))
-            ),
+                  inline = TRUE, choices = c("summary", "other", "hide"))
+                ),
               
-              column(5,  
+              column(4,  
                 textInput("otherfunction", label="", placeholder = "e.g., RPSV(ch, CC=TRUE)")
-                ## textInput("otherfunction", label="", placeholder = "e.g., coef(fitted)")
               ),
-              conditionalPanel("output.modelFitted", column(2, br(), downloadLink("savebtn", "Save fit")))
+              conditionalPanel("output.modelFitted", 
+                column(2, br(), downloadLink("savebtn", HTML("<small>Save fitted model</small>"))))
             ),
             
             fluidRow(
@@ -370,10 +371,10 @@ ui <- function(request) {
                   tabPanel("Array",
                     br(),
                     fluidRow(
-                      column(9, style='padding:0px;', plotOutput("arrayPlot", 
+                      column(10, style='padding:0px;', plotOutput("arrayPlot", 
                         click = clickOpts(id="arrayClick", clip = FALSE),
                         hover = hoverOpts(id ="arrayHover", delayType = "throttle"))),
-                      column(3, br(), conditionalPanel("input.gridlines != 'None'",
+                      column(2, br(), conditionalPanel("input.gridlines != 'None'",
                         uiOutput("uigridlines") ),
                         br(), uiOutput('xycoord'))
                     ),
@@ -664,14 +665,6 @@ ui <- function(request) {
             #           )
             # ),
             h2("Data Import/Export"),
-            # wellPanel(class = "mypanel",
-            #           fluidRow(
-            #               column(8, fileInput("importfilename", 
-            #                                   "Import capthist from Rds file")),
-            #               column(4, br(), actionLink("clearimportbtn", "Clear"))
-            #               
-            #           )
-            # ),
             conditionalPanel("output.capthistLoaded", 
               wellPanel(class = "mypanel",
                 fluidRow(
@@ -690,9 +683,12 @@ ui <- function(request) {
                 column(1, br(), br(), actionLink("incrementtime", label = "."))
               ),
               fluidRow(
-                column(6, numericInput("ncores", "Number of cores", width = 100,
-                  min = 1, max = availablecores, 
-                  step = 1, value = defaultcores)),
+                column(6, numericInput("ncores", "Number of cores", 
+                  min = 1, 
+                  max = availablecores, 
+                  step = 1, 
+                  value = defaultcores,
+                  width = 100)),
                 column(6, br(), uiOutput("ncoresui") )
               ),
               fluidRow(
@@ -702,7 +698,11 @@ ui <- function(request) {
             h2("Summary"),
             wellPanel(class = "mypanel",
               fluidRow(
-                column(12, numericInput("dec", "Decimal places", min = 0, max = 8, value = 4, width=160))
+                column(12, numericInput("dec", "Decimal places", 
+                  min = 0, 
+                  max = 8, 
+                  value = 4, 
+                  width=160))
               ),
               fluidRow(
                 column(12, textInput("title", "", value = "", 
@@ -724,9 +724,17 @@ ui <- function(request) {
               br(),
               fluidRow(
                 column(6, numericInput("rad", "Radial displ. (m)", 
-                  value = 5, min = 0, max = 5000, step = 1, width = 160)),
-                column(6, numericInput("cex", "Point size (cex)", value = 1, 
-                  min = 0.1, max = 5, step = 0.1, width = 160))
+                  value = 5,
+                  min = 0, 
+                  max = 5000, 
+                  step = 1, 
+                  width = 160)),
+                column(6, numericInput("cex", "Point size (cex)", 
+                  value = 1, 
+                  min = 0.1, 
+                  max = 5, 
+                  step = 0.1, 
+                  width = 160))
               )
               
             ),
@@ -1806,8 +1814,9 @@ fitcode <- function() {
     }
     else {
       updateRadioButtons(session, "resultsbtn", label = "", 
-        inline = TRUE, choices = c("summary", "predict", "derived", "other"))
-      
+        inline = TRUE, choices = c("summary", "predict", "derived", "other", "hide"))
+      updateTextInput(session, "otherfunction", placeholder = "e.g., vcov(fitted)")
+
       fitrv$value <- fit
       if (length(fit)>0) {
         fitrv$dsurf <- predictDsurface(fit)
@@ -1853,7 +1862,7 @@ fitcode <- function() {
     }
     if (is.null(fitrv$value)) {
       updateRadioButtons (session, "resultsbtn", label = "", 
-        inline = TRUE, choices = c("summary", "other"))
+        inline = TRUE, choices = c("summary", "other", "hide"))
     }
   }
   ##############################################################################
@@ -2163,7 +2172,7 @@ fitcode <- function() {
   observeEvent(c(input$trapfilename,  input$trapxlsname, input$trapsheet), {
     traprv$clear <- FALSE
     updateRadioButtons(session, "resultsbtn", label = "", 
-      inline = TRUE, choices=c("summary", "other"))
+      inline = TRUE, choices=c("summary", "other", "hide"))
   }, priority = 1000)
   
   observeEvent(c(input$captfilename, input$captxlsname, input$captsheet), {
@@ -2173,7 +2182,7 @@ fitcode <- function() {
   observeEvent(input$importfilename, {
     importrv$clear <- FALSE
     updateRadioButtons(session, "resultsbtn", label = "", 
-      inline = TRUE, choices=c("summary", "other"))
+      inline = TRUE, choices=c("summary", "other", "hide"))
   }, priority = 1000)
   
   observeEvent(input$polyfilename, {
@@ -2214,7 +2223,7 @@ fitcode <- function() {
     input$filtercapt, input$filtercapttext), {
       fitrv$value <- NULL
       updateRadioButtons(session, "resultsbtn", label = "", 
-        inline = TRUE, choices=c("summary", "other"))
+        inline = TRUE, choices=c("summary", "other", "hide"))
       showNotification("model modified, yet to be fitted", id="lastaction", 
         closeButton = FALSE,type="message", duration = NULL)
     })
@@ -2851,6 +2860,14 @@ fitcode <- function() {
     updateNavlistPanel(session, "navlist", "Options")
   })
   
+  observeEvent(input$resultsbtn, ignoreInit = TRUE, {
+    ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
+    if (input$resultsbtn == "hide") 
+      hide("resultsPrint")
+    else
+      show("resultsPrint")
+  })
+  
   observeEvent(input$masklink, ignoreInit = TRUE, {
     ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
     updateNavlistPanel(session, "navlist", "Habitat mask")
@@ -3115,7 +3132,7 @@ fitcode <- function() {
     
     ## Results
     updateRadioButtons(session, "resultsbtn", label = "", 
-      inline = TRUE, choices = c("summary", "other"), selected = "summary")
+      inline = TRUE, choices = c("summary", "other", "hide"), selected = "summary")
 
     ## Array plot
     updateCheckboxInput(session, "tracks", value = FALSE)
@@ -3353,7 +3370,6 @@ fitcode <- function() {
         showTab(inputId = "plottabs", target = tab)
     }
     hideplotif (is.null(traprv$data), "Array")
-    # hideplotif (is.null(captrv$data), "Moves")
     hideplotif (is.null(capthist()), "Moves")
     hideplotif (is.null(fitrv$value), "Detectfn")
     hideplotif (is.null(fitrv$value), "Buffer")
@@ -3378,8 +3394,6 @@ fitcode <- function() {
       max = maxRSE,
       value = rse,
       step = 0.1)
-    
-    ## disable("resultsbtn")  ## shinyjs
     
     minchar <- 50
     if (traptextrv$value) {
@@ -3457,8 +3471,7 @@ fitcode <- function() {
       }
     }
     else if (inherits(fitrv$value, "secr")) {
-      ## enable("resultsbtn")    ## shinyjs
-      
+
       if (input$resultsbtn == "summary")
         summary(fitrv$value)
       else if (input$resultsbtn == "predict") {
@@ -3526,7 +3539,7 @@ fitcode <- function() {
   
   ##############################################################################
   
-  output$arrayPlot <- renderPlot( { # height = 340, width = 340, {
+  output$arrayPlot <- renderPlot( { 
     removeNotification("arrayploterror")
     par(mar = c(1,1,1,1), cex = 1.3, xpd = TRUE)
     
@@ -3535,9 +3548,18 @@ fitcode <- function() {
         ch <- capthist()[[input$sess]]
       else
         ch <- capthist()
-      plot (traps(ch), border = border(1), bty='o', xaxs = 'i', yaxs = 'i', 
-        detpar = list(cex = input$cex), gridlines = (input$gridlines != "None"), 
-        gridspace = as.numeric(input$gridlines))
+      if (!is.null(mask()) && input$entireregionbox) {
+        plot(mask(), col='white')
+        plot (traps(ch), add = TRUE, bty='o', xaxs = 'i', yaxs = 'i', 
+          detpar = list(cex = input$cex), gridlines = (input$gridlines != "None"), 
+          gridspace = as.numeric(input$gridlines))
+        
+      }
+      else {
+        plot (traps(ch), border = border(1), bty='o', xaxs = 'i', yaxs = 'i', 
+          detpar = list(cex = input$cex), gridlines = (input$gridlines != "None"), 
+          gridspace = as.numeric(input$gridlines))
+      }
       plot(ch, varycol = input$varycol, rad = input$rad, cappar = list(cex = input$cex), 
         tracks = input$tracks, add = TRUE, 
         title = "", subtitle = "")
@@ -3560,10 +3582,14 @@ fitcode <- function() {
           showNotification("fxi.contour requires point detector type")
         else {
           if (input$animal>0) {
-            tmp <- try(fxi.contour(fitrv$value, i = input$animal, sessnum = input$sess, add = TRUE), silent = TRUE)
+            tmp <- try(fxi.contour(fitrv$value, i = input$animal, 
+              sessnum = input$sess, border = input$buffer, add = TRUE), 
+              silent = TRUE)
           }
           else {
-            tmp <- try(fxi.contour(fitrv$value, i = NULL, sessnum = input$sess, add = TRUE), silent = TRUE)
+            tmp <- try(fxi.contour(fitrv$value, i = NULL, 
+              sessnum = input$sess,  border = input$buffer, add = TRUE), 
+              silent = TRUE)
           }
           if (inherits(tmp, 'try-error')) {
             showNotification("error in fxi.contour; consider smaller mask spacing", 
@@ -3805,7 +3831,6 @@ fitcode <- function() {
       rect(xr[1],yr[1],xr[2],yr[2], col = NA, border = "black") 
     }
     if (input$pxyfillbox) {
-      # strip.legend("right", legend = seq(0,1,0.1), title = "p.(x)", xpd = TRUE,
       strip.legend("right", legend = c(0,lev[1:10],1), title = "p.(x)", xpd = TRUE,
         legendtype='breaks', inset = 0.01, col = cols[1:11])
     }
