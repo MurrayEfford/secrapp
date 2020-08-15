@@ -1,7 +1,7 @@
 ---
 title: "secr app 1.3"
 author: "Murray Efford"
-date: '2020-07-31'
+date: '2020-08-15'
 output:
   html_document:
     toc: yes
@@ -23,7 +23,10 @@ output:
 
 # Introduction  <a name="introduction"></a>
 
-This Shiny application is an interactive interface to parts of the R package **secr** ([Efford 2020](#references)). The current source code is available from https://GitHub.com/MurrayEfford/secrapp. Documentation of **secr** is available at www.otago.ac.nz/density. For example:
+This Shiny application is an interactive interface to parts of the R package **secr** ([Efford 2020](#references)). The current source code is available from https://GitHub.com/MurrayEfford/secrapp.
+The [step-by-step guide] overlaps in scope with this document and may ultimately replace it.
+
+Documentation of **secr** is available at www.otago.ac.nz/density. For example:
 
 <a href="https://www.otago.ac.nz/density/pdfs/secr-manual.pdf"; target="_blank";>secr-manual.pdf</a>   (details of each function)  
 <a href="https://www.otago.ac.nz/density/pdfs/secr-datainput.pdf"; target="_blank";>secr-datainput.pdf</a>  
@@ -39,7 +42,7 @@ TIP: on small displays, running your browser in full-screen mode will avoid the 
 
 ## Data input
 
-By default, input is from two text files, one for the detector layout and one for detections ('captures') of known individuals. Alternatively, secrapp may  read the secr capthist object from a .rds file.
+By default, input is from two text files, one for the detector layout and one for detections ('captures') of known individuals. Excel files may also be used. Alternatively, secrapp may  read the secr capthist object from a .rds file.
 
 ### Detector layout
 
@@ -336,3 +339,5 @@ spatially explicit capture--recapture. *Methods in Ecology and Evolution* **10**
 [pdot.contour]: https://www.otago.ac.nz/density/html/contour.html
 [esa.plot]: https://www.otago.ac.nz/density/html/esaplot.html
 [subset.capthist]: https://www.otago.ac.nz/density/html/subset.capthist.html
+
+[step-by-step guide]: https://www.otago.ac.nz/density/pdfs/secrapp-tutorial.html
