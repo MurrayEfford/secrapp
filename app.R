@@ -594,13 +594,16 @@ ui <- function(request) {
               fluidRow(
                 column(6, actionButton("selectfieldsbtn", "Select", title = "Choose fields to display")), 
                 column(6, actionLink("selectnonebtn", "None", title = "Unselect all fields"), br(), 
-                          actionLink("selectallbtn", "All", title = "Select all fields"))
+                  actionLink("selectallbtn", "All", title = "Select all fields"))
               ),
               br(),
               h2("Analyses"),
               fluidRow(
-                column(6, actionButton("clearallbtn", "Clear all", title = "Delete all analyses")), 
-                column(6, actionButton("clearlastbtn", "Delete last", title = "Delete last analysis"))
+                column(6, actionButton("selectanalysesbtn", "Select", title = "Choose analyses to display")), 
+                column(4, 
+                  actionLink("selectnonelink", "None", title = "Select no analyses"), br(),
+                  actionLink("selectalllink",  "All",  title = "Select all analyses")
+                )
               ), 
               br(), 
               h2("Download"),
@@ -609,6 +612,9 @@ ui <- function(request) {
                   title = "Save as RDS file; restore in R with e.g., readRDS(`summary.rds')")), 
                 column(6, downloadButton("downloadSummary", ".csv", 
                   title = "Save as comma-delimited text (csv) file"))
+              ),
+              fluidRow(
+                column(12, checkboxInput("keepselectedbox", "Keep only selected analyses", FALSE ))
               )
             ),
             
@@ -626,7 +632,9 @@ ui <- function(request) {
                       "usagepct", "maskbuffer", "masknrow", "maskspace",
                       "likelihood", "distribution", "model"
                     )
-                  ))),
+                  )
+                )
+              ),
               column(6,
                 conditionalPanel("output.selectingfields == 'TRUE'",
                   checkboxGroupInput("fields2", "",
@@ -644,17 +652,24 @@ ui <- function(request) {
                   )
                 )
               )
+            ),
+            fluidRow(
+              column(6, offset = 1,
+                conditionalPanel("output.selectinganalyses == 'TRUE'",
+                checkboxGroupInput("analyses", "", choices = character(0))
+              )
+              )
             )
             
           ),
           column(10, 
             # h2("Results"),
             div(tableOutput("summarytable"), style = "width:800px; overflow-x: scroll")
+            )
           )
-        )
-      ),
-      #################################################################################################
-      
+        ),
+        #################################################################################################
+        
       tabPanel("Options",
         
         fluidRow(
@@ -894,9 +909,11 @@ server <- function(input, output, session) {
   showNotification(paste("secr", desc$Version, desc$Date), id = "lastaction",
     closeButton = FALSE, type = "message", duration = seconds)
   output$selectingfields <- renderText('false')
+  output$selectinganalyses <- renderText('false')
   output$multisession <- renderText('false')
   output$nontrap <- renderText('false')
   outputOptions(output, "selectingfields", suspendWhenHidden = FALSE)
+  outputOptions(output, "selectinganalyses", suspendWhenHidden = FALSE)
   outputOptions(output, "multisession", suspendWhenHidden = FALSE)
   outputOptions(output, "nontrap", suspendWhenHidden = FALSE)
   
@@ -1546,8 +1563,15 @@ server <- function(input, output, session) {
       df[,20:35] <- round(df[,20:35], input$dec)
     }
     sumrv$value <- rbind (sumrv$value, df)
-    if (nrow(sumrv$value)>1) sumrv$value$dAIC <- sumrv$value$AIC - min(sumrv$value$AIC)
-    rownames(sumrv$value) <- paste0("Analysis", 1:nrow(sumrv$value))
+    
+    if (nrow(sumrv$value)>0) {
+      rownames(sumrv$value) <- paste0("Analysis", 1:nrow(sumrv$value))
+      
+      updateCheckboxGroupInput(session, "analyses", 
+        choices = rownames(sumrv$value),
+        selected = c(input$analyses, paste0("Analysis", nrow(sumrv$value)))
+      )
+    }
   }
   ##############################################################################
   
@@ -2689,6 +2713,7 @@ fitcode <- function() {
   Drv <- reactiveValues(current = FALSE, xy = NULL, value = NULL)
   RSErv <- reactiveValues(current = FALSE, value = NULL, adjRSE = NULL)
   selecting <- reactiveValues(v=FALSE)
+  selectinganalyses <- reactiveValues(v=FALSE)
   sumrv <- reactiveValues(value = read.csv(text = paste(summaryfields, collapse = ", ")))
   detectrv <- reactiveValues(value='g0')
   traptextrv <- reactiveValues(value=FALSE)
@@ -2702,9 +2727,9 @@ fitcode <- function() {
   # alpha
   # areaunit
   # CIclick
-  # clearallbtn
   # clearimportbtn, datasource
-  # clearlastbtn
+  # selectalllink
+  # selectnonelink
   # detector
   # detectfnbox
   # distributionbtn
@@ -2729,6 +2754,7 @@ fitcode <- function() {
   # resetbtn
   # selectallbtn
   # selectfieldsbtn
+  # selectanalysesbtn
   # selectnonebtn
   # suggestbuffer
   
@@ -2772,8 +2798,19 @@ fitcode <- function() {
   })
   ##############################################################################
   
-  observeEvent(input$clearallbtn, {
-    sumrv$value <- sumrv$value[0,]
+  observeEvent(input$selectnonelink, {
+    updateCheckboxGroupInput(session, "analyses", 
+      selected = "")
+  })
+  
+  ##############################################################################
+  
+  observeEvent(input$selectalllink, {
+    if (nrow(sumrv$value) == 0) 
+      selected <- character(0)
+    else
+      selected <-  paste0("Analysis", 1:nrow(sumrv$value))
+    updateCheckboxGroupInput(session, "analyses", selected =  selected)
   })
   
   ##############################################################################
@@ -2798,13 +2835,6 @@ fitcode <- function() {
     captrv$data <- NULL
     captrv$clear <- TRUE
     
-  })
-  
-  ##############################################################################
-  
-  observeEvent(input$clearlastbtn, {
-    if (nrow(sumrv$value)>0)
-      sumrv$value <- sumrv$value[-nrow(sumrv$value),]
   })
   
   ##############################################################################
@@ -3187,9 +3217,12 @@ fitcode <- function() {
     ## Summary
     
     # safer to leave this for manual reset using Summary page buttons        
-    # updateCheckboxGroupInput(session, "fields1", selected = summaryfields[fieldgroup1])
-    # updateCheckboxGroupInput(session, "fields2", selected = summaryfields[fieldgroup2])
-    # sumrv$value <- sumrv$value[0,]
+    sumrv$value <- sumrv$value[0,]
+    
+    updateCheckboxGroupInput(session, "analyses", 
+      choices = character(0), selected = character(0)
+    )
+    updateCheckboxInput(session, "keepselectedbox", value = FALSE)
     
     ## Options
     
@@ -3269,6 +3302,13 @@ fitcode <- function() {
   observeEvent(input$selectfieldsbtn, {
     selecting$v <- ! selecting$v
     output$selectingfields <- renderText(selecting$v)
+    
+  }   )
+  ##############################################################################
+  
+  observeEvent(input$selectanalysesbtn, {
+    selectinganalyses$v <- ! selectinganalyses$v
+    output$selectinganalyses <- renderText(selectinganalyses$v)
     
   }   )
   ##############################################################################
@@ -3937,8 +3977,13 @@ fitcode <- function() {
   
   output$summarytable <- renderTable({
     fields <- c(input$fields1, input$fields2)
-    tmp <- t(sumrv$value[,fields])
-    if (ncol(tmp)>0) colnames(tmp) <- paste0('Analysis', 1:ncol(tmp))
+    analyses <- input$analyses
+    tmp <- sumrv$value[analyses,fields]
+    if (length(analyses)>1) {
+      tmp$dAIC <- tmp$AIC - min(tmp$AIC, na.rm = TRUE)
+    }
+    tmp <- t(tmp)
+    # if (ncol(tmp)>0) colnames(tmp) <- paste0('Analysis', 1:ncol(tmp))
     tmp <- cbind(Field = fields, tmp)
     tmp } , spacing = "xs"
   )
@@ -3952,14 +3997,22 @@ fitcode <- function() {
   output$downloadSummary <- downloadHandler(
     filename = "summary.csv",
     content = function(file) {
-      write.csv(sumrv$value, file, row.names = TRUE)
+      if (input$keepselectedbox) 
+        df <- sumrv$value[input$analyses,]
+      else 
+        df <- sumrv$value
+      write.csv(df, file, row.names = TRUE)
     }
   )
   
   output$downloadSummaryrds <- downloadHandler(
     filename = "summary.rds",
     content = function(file) {
-      saveRDS(sumrv$value, file)
+      if (input$keepselectedbox) 
+        df <- sumrv$value[input$analyses,]
+      else 
+        df <- sumrv$value
+      saveRDS(df, file)
     }
   )
   
@@ -3997,9 +4050,10 @@ fitcode <- function() {
   ##############################################################################
   
   setBookmarkExclude(c("fitbtn", 
-    "clearallbtn", "clearlastbtn", "selectnonebtn", "selectallbtn",
+    "selectalllink", "selectnonelink", "selectnonebtn", "selectallbtn",
     "resetbtn", 
-    "selectfieldsbtn", "selecting"))
+    "selectfieldsbtn", "selecting",
+    "selectanalysesbtn", "selectinganalyses"))
   
   # Save extra values in state$values when we bookmark
   onBookmark(function(state) {
