@@ -625,7 +625,7 @@ ui <- function(request) {
                     choices = c("date", "time", "note", "traps", "captures", "filter",
                       "n", "r", "ndetectors", "noccasions",
                       "usagepct", "maskbuffer", "masknrow", "maskspace",
-                      "likelihood", "distribution","model"
+                      "likelihood", "distribution","model", "hcov"
                     ),
                     selected = c("date", "time", "note", "traps", "captures", "filter",
                       "n", "r", "ndetectors", "noccasions",
@@ -639,13 +639,13 @@ ui <- function(request) {
                 conditionalPanel("output.selectingfields == 'TRUE'",
                   checkboxGroupInput("fields2", "",
                     choices = c("detectfn", 
-                      "hcov", "npar", "logLik", "AIC", "dAIC",
+                      "npar", "logLik", "AIC", "dAIC",
                       "D", "se.D", "RSE.D", 
                       "g0", "se.g0", "lambda0", "se.lambda0","sigma", "se.sigma", "z", "se.z",
                       "k", "proctime"
                     ),
                     selected = c("detectfn",
-                      "hcov", "npar", "logLik", "AIC", "dAIC",
+                      "npar", "logLik", "AIC", "dAIC",
                       "D", "se.D", "RSE.D", "g0", "se.g0", "lambda0", "se.lambda0", "sigma", "se.sigma",
                       "k", "proctime"
                     )
@@ -887,14 +887,14 @@ server <- function(input, output, session) {
   desc <- packageDescription("secr")
   summaryfields <- c("date", "time", "note", "traps", "captures", "filter", "n", "r",
     "ndetectors", "noccasions", "usagepct", "maskbuffer", "masknrow", "maskspace",
-    "likelihood", "distribution", "model", 
-    "hcov", "detectfn", "npar", "logLik", "AIC", "dAIC",
+    "likelihood", "distribution", "model", "hcov", 
+    "detectfn", "npar", "logLik", "AIC", "dAIC",
     "D", "se.D", "RSE.D", "g0", "se.g0", "lambda0", "se.lambda0", "sigma", "se.sigma", "z", "se.z",
     "k", "proctime"
   )
   
-  fieldgroup1 <- 1:17
-  fieldgroup2 <- 18:36
+  fieldgroup1 <- 1:18
+  fieldgroup2 <- 19:36
   
   polygondetectors <- c("polygon", "polygonX", "transect", "transectX")
   hazarddetectfn <- c("HHN", "HHR", "HEX", "HVP")
