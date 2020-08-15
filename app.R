@@ -48,9 +48,9 @@ ui <- function(request) {
     useShinyjs(),
     withMathJax(),
     tags$head(tags$style(".mypanel{margin-top:5px; margin-bottom:10px; padding-bottom: 5px;}")),
-    tags$head(tags$style("#maskdetailPrint{color:black; font-size:12px; min-height: 20px; max-height: 50px;}")),  #  background: ghostwhite;
+    tags$head(tags$style("#maskdetailPrint{color:black; font-size:12px; min-height: 20px; max-height: 70px;}")),  #  background: ghostwhite;
     tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 260px; background: ghostwhite;}")),
-    tags$head(tags$style("#codePrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 300px; background: ghostwhite;}")),
+    tags$head(tags$style("#codePrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 320px; background: ghostwhite;}")),
     tags$head(tags$style("#maskPrint{color:blue; font-size:12px; background: ghostwhite;}")),
     tags$head(tags$style(type="text/css", "input.shiny-bound-input { font-size:14px; height:30px; margin-top:0px; margin-bottom:2px; padding-top:0px; padding-bottom:0px;}")),
     br(),
@@ -176,7 +176,9 @@ ui <- function(request) {
                     
                     conditionalPanel( condition = "input.datasource == 'Text files'",
                       div(style="height: 80px;",  # non-breaking space ASCII 160
-                        fileInput("trapfilename", paste0("1.", strrep(intToUtf8(160),2), "Detector layout"),   # Detector layout file
+                        fileInput("trapfilename", # Detector layout file
+                          paste0("1.", strrep(intToUtf8(160),2), "Detector layout"),   
+                          multiple = TRUE,
                           accept = c("text/plain")))),
                     
                     conditionalPanel( condition = "input.datasource == 'Excel files'",
@@ -211,7 +213,7 @@ ui <- function(request) {
                     fluidRow(
                       column(12,  style="color:grey;",
                         div(# style="height: 25px;",
-                          textInput("trapargs", "Other arguments",value = "", placeholder = "e.g., skip = 1"))
+                          textInput("trapotherargs", "Other arguments",value = "", placeholder = "e.g., skip = 1"))
                       )
                     )
                   )  # end wellPanel  
@@ -258,7 +260,7 @@ ui <- function(request) {
                     ),
                     fluidRow(
                       column(12, style="color:grey;",
-                        textInput("captargs", "Other arguments",
+                        textInput("captotherargs", "Other arguments",
                           value = "", placeholder = "e.g., skip = 1")
                       )
                     ),
@@ -377,21 +379,23 @@ ui <- function(request) {
                         plotOutput("arrayPlot", 
                           click = clickOpts(id = "arrayClick", clip = FALSE),
                           hover = hoverOpts(id ="arrayHover", delayType = "throttle"))),
-                      column(2, br(), conditionalPanel("input.gridlines != 'None'",
+                      column(2, br(),
+                        conditionalPanel("output.multisession=='true'",
+                          numericInput("sess", "Session", min = 1, max = 2000, 
+                            step = 1, value = 1)),
+                        br(),
+                        conditionalPanel("input.gridlines != 'None'",
                         uiOutput("uigridlines") ),
                         br(), uiOutput('xycoord'))
                     ),
                     conditionalPanel("output.capthistLoaded",
                       fluidRow(
-                        column(2, offset = 1, checkboxInput("tracks", "All tracks", FALSE),
-                          conditionalPanel("output.modelFitted", checkboxInput("fxi", "fxi contour", FALSE))),
+                        column(2, offset = 1, checkboxInput("tracks", "All tracks", FALSE)),
                         column(2, checkboxInput("varycol", "Vary colours", FALSE)),
                         column(2, numericInput("animal", "Select animal", min = 0, max = 2000, 
                           step = 1, value = 1)),
                         column(3, br(), conditionalPanel("input.animal>0", uiOutput("uianimalID"))),
-                        column(2, conditionalPanel("output.multisession=='true'",
-                          numericInput("sess", "Session", min = 1, max = 2000, 
-                            step = 1, value = 1)))
+                        column(2, conditionalPanel("output.modelFitted", checkboxInput("fxi", "fxi contour", FALSE)))
                       ))
                   ),
                   tabPanel("Moves", 
@@ -1044,7 +1048,7 @@ server <- function(input, output, session) {
       
       if (!is.null(input$trapfilename)) {
         parm <- c(parm,
-          paste0("trapargs=", input$trapargs))
+          paste0("trapotherargs=", input$trapotherargs))
       }
       
       if (!is.null(input$captfilename)) {
@@ -1192,6 +1196,7 @@ server <- function(input, output, session) {
   output$xycoord <- renderUI({
     xy <- c(input$arrayHover$x, input$arrayHover$y)
     tmpgrid <- isolate(traprv$data)
+    if (ms(tmpgrid)) tmpgrid <- tmpgrid[[input$sess]]   ## 2020-08-16
     tmpcapt <- capthist()
     if (ms(tmpcapt)) {
       tmpcapt <- tmpcapt[[input$sess]]
@@ -1499,7 +1504,8 @@ server <- function(input, output, session) {
       time = format(Sys.time(), "%H:%M:%S"),
       note = input$title,
       
-      traps = if (input$datasource=="Text files") input$trapfilename$name[1]
+      traps = if (input$datasource=="Text files") 
+        paste(input$trapfilename$name[1], if (nrow(input$trapfilename)>1) "etc." else "")
       else if (input$datasource=="Excel files") input$trapxlsname$name[1] 
       else "",
       captures = if (input$datasource=="Text files") input$captfilename$name[1]
@@ -1617,13 +1623,13 @@ server <- function(input, output, session) {
     # as a character value
     code <- ""  
     sheet <- ""
-    args <- input$trapargs
+    args <- input$trapotherargs
     if (args != "") {
       args <- paste0(", ", args)
     }
     if (!is.null(traprv$data) && is.null(importrv$data)) {
       if (input$datasource == "Text files") {
-        filename <- input$trapfilename[1,"name"]
+        filename <- input$trapfilename[,"name"]
       }
       else {
         filename <- input$trapxlsname[1,"name"]
@@ -1633,9 +1639,17 @@ server <- function(input, output, session) {
           sheet <- paste0(", sheet = '", input$trapsheet, "'")
         }
       }
-      code <- paste0("array <- read.traps ('",
+      
+      ## 2020-08-16
+      if (length(filename)>1) {
+        filename <- paste0("c('", paste(filename, collapse = "','"), "')")
+      }
+      else {
+        filename <- paste0("'", filename, "'")
+      }
+      code <- paste0("array <- read.traps (",
         filename,
-        "', detector = '", input$detector, "'", 
+        ",\n    detector = '", input$detector, "'", 
         args, sheet, ")\n")
       cov <- covariates(traprv$data)
       if (!is.null(cov) && !ms(cov)) {     # defer hard case
@@ -1699,7 +1713,7 @@ server <- function(input, output, session) {
     }
     else {
       if (!is.null(captrv$data)) {
-        args <- input$captargs
+        args <- input$captotherargs
 
         if (args != "") {
           args <- paste0(", ", args)
@@ -2018,7 +2032,7 @@ fitcode <- function() {
     else {
       req(input$trapxlsname)
     }
-    removeNotification("badtrapargs")
+    removeNotification("badtrapotherargs")
     removeNotification("badtrap")
     removeNotification("badcapt")
     reset('importfilename')
@@ -2032,35 +2046,42 @@ fitcode <- function() {
 
     sheet <- ""
     if (input$datasource == 'Text files') {
-      dataname <- input$trapfilename[1,"datapath"]
+      dataname <- input$trapfilename[,"datapath"]
     }
     else {
       dataname <- input$trapxlsname[1,"datapath"]
       if (! input$trapsheet %in% readxl::excel_sheets(dataname)) return()
-      if (!grepl('sheet', input$trapargs)) {
+      if (!grepl('sheet', input$trapotherargs)) {
         sheet <- paste0(", sheet = '", input$trapsheet, "'")
       }
     }
-    tempargs <- try(eval(parse(text = paste0("list(", input$trapargs, ")"))), silent = TRUE)
+    
+    tempargs <- try(eval(parse(text = paste0("list(", input$trapotherargs, ")"))), silent = TRUE)
     if (inherits(tempargs, "try-error")) {
       showNotification("trap arguments incomplete or invalid", type = "error", 
-        id = "badtrapargs", duration = NULL)
+        id = "badtrapotherargs", duration = NULL)
     }
     else {
-      args <- input$trapargs
+      args <- input$trapotherargs
       if (args != "") {
         args <- paste0(", ", args)
       }
       
       readtrapcall <-  paste0("read.traps (dataname, detector = input$detector", args, sheet, ")")
+      
       temp <- try(eval(parse(text = readtrapcall)))
       if (!inherits(temp, "traps")) {
         showNotification("invalid trap file or arguments; try again",
           type = "error", id = "badtrap", duration = NULL)
         traprv$data <- NULL
-        #traprv$clear <- TRUE
       }
       else {
+        if (ms(temp)) {
+          ## temporary session names
+          names(temp) <- paste('Session', 1:length(temp))  
+          updateNumericInput(session, "sess", max = length(temp))
+        }
+        output$multisession <- renderText(tolower(ms(temp)))
         ncov <- ncol(covariates(temp))
         if (length(ncov)>0 && ncov>0) {
           covnames <- getcovnames(input$trapcovnames, ncov, 'T', TRUE, FALSE)
@@ -2124,19 +2145,19 @@ fitcode <- function() {
       dataname <- input$captxlsname[1,"datapath"]
       filename <- input$captxlsname[1,"name"]
       if (!input$captsheet %in% readxl::excel_sheets(dataname)) return()
-      if (!grepl('sheet', input$captargs)) {
+      if (!grepl('sheet', input$captotherargs)) {
         sheet <- paste0(", sheet = '", input$captsheet, "'")
       }
     }
-    args <- input$captargs
+    args <- input$captotherargs
     mincol <- (input$fmt == "XY") + 4
     tempargs <- try(eval(parse(text = paste0("list(", args, ")"))), silent = TRUE)
     if (inherits(tempargs, "try-error")) {
       showNotification("arguments incomplete or invalid", type = "error", 
-        id = "badcaptargs", duration = NULL)
+        id = "badcaptotherargs", duration = NULL)
     }
     else {
-      removeNotification(id = "badcaptargs")
+      removeNotification(id = "badcaptotherargs")
       if (args != "")
         args <- paste0(", ", args)
       if (grepl('.xls', dataname)) {
@@ -2505,6 +2526,7 @@ fitcode <- function() {
           poly = if (input$polygonbox) polyrv$data else NULL,
           poly.habitat = input$includeexcludebtn == "Include",
           keep.poly = FALSE)
+        if (ms(msk) && !is.null(capthist())) names(msk) <- names(capthist())
         nrw <- if (ms(msk)) nrow(msk[[1]]) else nrow(msk)
         if (nrw > 10000) {
           showNotification(paste0(nrw, " mask points is excessive; reduce buffer or nx?"),
@@ -3029,7 +3051,7 @@ fitcode <- function() {
   })
   ##############################################################################
   
-  observeEvent(input$trapargs, ignoreInit = TRUE, {
+  observeEvent(input$trapotherargs, ignoreInit = TRUE, {
     fitrv$value <- NULL
     traprv$value <- NULL
     captrv$value <- NULL
@@ -3042,7 +3064,7 @@ fitcode <- function() {
     captrv$value <- NULL
   })
   
-  observeEvent(input$captargs, ignoreInit = TRUE, {
+  observeEvent(input$captotherargs, ignoreInit = TRUE, {
     fitrv$value <- NULL
     captrv$value <- NULL
   })
@@ -3132,14 +3154,14 @@ fitcode <- function() {
     updateRadioButtons(session, "datasource", selected = "Text files")
     
     ## Trap layout
-    updateTextInput(session, "trapargs", 
+    updateTextInput(session, "trapotherargs", 
       value = "", placeholder = "e.g., skip = 1")
     updateSelectInput(session, "detector", selected = "multi")
     updateTextInput(session, "trapcovnames", value = "", placeholder = "e.g., traptype, habitat")
     updateSelectInput(session, "trapsheet", "Sheet", choices = c("Sheet1"))
     
     ## Captures
-    updateTextInput(session, "captargs", 
+    updateTextInput(session, "captotherargs", 
       value = "", placeholder = "e.g., skip = 1")
     updateSelectInput(session, "fmt", selected = "trapID")
     updateTextInput(session, "covnames", value = "", placeholder = "e.g., sex")
@@ -3454,10 +3476,15 @@ fitcode <- function() {
     }
     else if (is.null(capthist())) {
       header <- paste("Summary of detector layout from", input$trapfilename[1,'name'])
+      if (nrow(input$trapfilename)>1) {
+        header <- paste0(header, " etc.")
+      }
     }
     else if (is.null(fitrv$value)) {
       if (input$datasource == 'Text files') {
-        header <- paste("Summary of capthist object from", input$trapfilename[1,'name'], "and", 
+        header <- paste("Summary of capthist object from", input$trapfilename[1,'name'], 
+          if (nrow(input$trapfilename)>1) "etc." else "",
+          "and", 
           input$captfilename[1,'name'])
       }
       else if (input$datasource == 'Excel files') {
