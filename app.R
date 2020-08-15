@@ -664,7 +664,7 @@ ui <- function(request) {
           ),
           column(10, 
             # h2("Results"),
-            div(tableOutput("summarytable"), style = "width:800px; overflow-x: scroll")
+            div(tableOutput("summarytable"), style = "width:100%; overflow-x: scroll")
             )
           )
         ),
