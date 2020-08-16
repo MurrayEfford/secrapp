@@ -13,7 +13,7 @@ if (compareVersion(as.character(secrversion), '4.0.1') < 0)
 designurl <- "https://www.stats.otago.ac.nz/secrdesignapp/"   # secrdesignapp 1.2 and above reads parameters
 
 # requires package rgdal to read shapefiles
-# requires package sp for bbox and plot method for SpatialPolygons
+# requires package sp for bbox and  %>%  method for SpatialPolygons
 # requires package parallel for max cores in simulate options (distributed with base R)
 # requires package tools for file path when reading shapefiles (distributed with base R)
 # requires package stringr for some string operations
@@ -577,9 +577,13 @@ ui <- function(request) {
           ),
           column(5, plotOutput("maskPlot"),
             conditionalPanel ("output.maskready", fluidRow(
-              column(3, offset = 1, checkboxInput("dotsbox", "dots", value = FALSE, width = 180)),
-              column(3, offset = 1, checkboxInput("xpdbox", "xpd", value = FALSE, width = 180)),
-              column(4, checkboxInput("maskedge2", "show mask edge", value = FALSE))
+              column(2, offset = 1, checkboxInput("dotsbox", "dots", value = FALSE)),
+              column(2, checkboxInput("xpdbox", "xpd", value = FALSE)),
+              column(3, checkboxInput("maskedge2", "show edge", value = FALSE)),
+              column(3, conditionalPanel("output.multisession=='true'",
+                numericInput("masksess", "Session", min = 1, max = 2000, 
+                  step = 1, value = 1)),
+              )
             ))   
           ),
           column(3, 
@@ -2090,6 +2094,7 @@ fitcode <- function() {
           ## temporary session names
           names(temp) <- paste('Session', 1:length(temp))  
           updateNumericInput(session, "sess", max = length(temp))
+          updateNumericInput(session, "masksess", max = length(temp))
         }
         output$multisession <- renderText(tolower(ms(temp)))
         ncov <- ncol(covariates(temp))
@@ -2389,6 +2394,7 @@ fitcode <- function() {
         updateNumericInput(session, "animal", max = nanimal)
         output$multisession <- renderText(tolower(ms(ch)))
         updateNumericInput(session, "sess", max = length(ch))
+        updateNumericInput(session, "masksess", max = length(ch))
         updateSelectInput(session, "hcovbox", choices = c("none", covnames))
       }
     }
@@ -3206,6 +3212,7 @@ fitcode <- function() {
     updateCheckboxInput(session, "varycol", value = FALSE)
     updateNumericInput(session, "animal", value = 1)
     updateNumericInput(session, "sess", value = 1)
+    updateNumericInput(session, "masksess", value = 1)
     
     ## Moves plot
     updateNumericInput(session, "nbar", value = 10)
@@ -3835,6 +3842,10 @@ fitcode <- function() {
     
     core <- traprv$data
     msk <- mask()
+    if (ms(core)) {
+      core <- core[[input$masksess]]
+      msk <- msk[[input$masksess]]
+    }
     par(mar=c(2,2,2,2), xaxs='i', yaxs='i', xpd = input$xpdbox)
     
     if (input$masktype == "Build") {
