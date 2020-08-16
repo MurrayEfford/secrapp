@@ -183,10 +183,13 @@ ui <- function(request) {
                     
                     conditionalPanel( condition = "input.datasource == 'Excel files'",
                       div(style="height: 80px;",  # non-breaking space ASCII 160
-                        fileInput("trapxlsname", paste0("1.", strrep(intToUtf8(160),2), "Detector layout"),   # Detector layout file
+                        fileInput("trapxlsname", paste0("1.", strrep(intToUtf8(160),2), "Detector layout"), 
+                          multiple = TRUE,
                           accept = c(".xls", ".xlsx"))),
                       fluidRow(
-                        column(12, selectInput("trapsheet", "Sheet", choices = c("Sheet1")))
+                        column(12, selectInput("trapsheet", "Sheet", 
+                          choices = c("Sheet1"),
+                          multiple = FALSE))   ## WARNING: MULTIPLE SHEETS NOT IMPLEMENTED; REQUIRES CHANGE TO read.traps
                       )
                     ),
                     fluidRow(
@@ -1506,7 +1509,8 @@ server <- function(input, output, session) {
       
       traps = if (input$datasource=="Text files") 
         paste(input$trapfilename$name[1], if (nrow(input$trapfilename)>1) "etc." else "")
-      else if (input$datasource=="Excel files") input$trapxlsname$name[1] 
+      else if (input$datasource=="Excel files") 
+        paste(input$trapxlsname$name[1], if (nrow(input$trapxlsname)>1) "etc." else "")
       else "",
       captures = if (input$datasource=="Text files") input$captfilename$name[1]
       else if (input$datasource=="Excel files") input$captxlsname$name[1] 
@@ -1632,11 +1636,13 @@ server <- function(input, output, session) {
         filename <- input$trapfilename[,"name"]
       }
       else {
-        filename <- input$trapxlsname[1,"name"]
-        dataname <- input$trapxlsname[1,"datapath"]
-        if (!input$trapsheet %in% readxl::excel_sheets(dataname)) return()
-        if(!grepl("sheet", args)) {
-          sheet <- paste0(", sheet = '", input$trapsheet, "'")
+        filename <- input$trapxlsname[,"name"]
+        if (length(filename)==1) {
+          dataname <- input$trapxlsname[1,"datapath"]
+          if (!input$trapsheet %in% readxl::excel_sheets(dataname)) return()
+          if(!grepl("sheet", args)) {
+            sheet <- paste0(", sheet = '", input$trapsheet, "'")
+          }
         }
       }
       
@@ -2049,8 +2055,12 @@ fitcode <- function() {
       dataname <- input$trapfilename[,"datapath"]
     }
     else {
-      dataname <- input$trapxlsname[1,"datapath"]
-      if (! input$trapsheet %in% readxl::excel_sheets(dataname)) return()
+      dataname <- input$trapxlsname[,"datapath"]
+      # assume common sheet name for now
+      checksheet <- function(dname) {
+        input$trapsheet %in% readxl::excel_sheets(dname)
+      }
+      if (!all(sapply(dataname, checksheet))) return()
       if (!grepl('sheet', input$trapotherargs)) {
         sheet <- paste0(", sheet = '", input$trapsheet, "'")
       }
@@ -3475,9 +3485,17 @@ fitcode <- function() {
       header <- input$otherfunction
     }
     else if (is.null(capthist())) {
-      header <- paste("Summary of detector layout from", input$trapfilename[1,'name'])
-      if (nrow(input$trapfilename)>1) {
-        header <- paste0(header, " etc.")
+      if (input$datasource == 'Text files') {
+        header <- paste("Summary of detector layout from", input$trapfilename[1,'name'])
+        if (nrow(input$trapfilename)>1) {
+          header <- paste0(header, " etc.")
+        }
+      }
+      else if (input$datasource == 'Excel files') {
+        header <- paste("Summary of detector layout from", input$trapxlsname[1,'name'])
+        if (nrow(input$trapxlsname)>1) {
+          header <- paste0(header, " etc.")
+        }
       }
     }
     else if (is.null(fitrv$value)) {
