@@ -13,7 +13,7 @@ if (compareVersion(as.character(secrversion), '4.0.1') < 0)
 designurl <- "https://www.stats.otago.ac.nz/secrdesignapp/"   # secrdesignapp 1.2 and above reads parameters
 
 # requires package rgdal to read shapefiles
-# requires package sp for bbox and  %>%  method for SpatialPolygons
+# requires package sp for bbox and plot method for SpatialPolygons
 # requires package parallel for max cores in simulate options (distributed with base R)
 # requires package tools for file path when reading shapefiles (distributed with base R)
 # requires package stringr for some string operations
@@ -3741,7 +3741,7 @@ fitcode <- function() {
       par(mar=c(4,5,2,5))
       detectfnplot (detectfn = input$detectfnbox,
         pars = pars,
-        xval = 0:(3 * sigma()),
+        xval = seq(0, 3 * sigma(), sigma()/40),
         ylab = "",
         hazard = detectrv$value == 'lambda0',     # changed from TRUE 2020-08-13      
         ylim = c(0, detect0()*1.2),
