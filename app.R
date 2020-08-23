@@ -536,26 +536,6 @@ ui <- function(request) {
                     )
                   )
                 ),
-                wellPanel(class = "mypanel",
-                  div(style="height: 80px;",
-                    fileInput("covariatefilename",
-                      paste0("Spatial data source for covariates (optional)"),
-                      accept = c('.shp','.dbf','.sbn','.sbx',
-                        '.shx',".prj", ".rds"),
-                      multiple = TRUE)),
-                  uiOutput("covariatefile"),
-                  conditionalPanel ("output.maskcovariatesready", 
-                    fluidRow(
-                    column(6, 
-                      checkboxGroupInput("availablecovariates", "Covariate(s) to add",
-                        choices = character(0))
-                    ),
-                    column(6, br(), 
-                      checkboxInput("dropmissing", 
-                      "Drop point if any covariate missing", value = FALSE))
-                  )
-                  )
-                ),
                 wellPanel(class = "mypanel", 
                   div(style="height: 80px;",
                     fileInput("polyfilename", 
@@ -589,7 +569,29 @@ ui <- function(request) {
                 )
               ) 
             ),
-            actionLink("mainlink", "Return to Main screen")
+            wellPanel(class = "mypanel",
+              div(style="height: 80px;",
+                fileInput("covariatefilename",
+                  paste0("Spatial data source for covariates (optional)"),
+                  accept = c('.shp','.dbf','.sbn','.sbx',
+                    '.shx',".prj", ".rds"),
+                  multiple = TRUE)),
+              uiOutput("covariatefile"),
+              conditionalPanel ("output.maskcovariatesready", 
+                fluidRow(
+                  column(6, 
+                    checkboxGroupInput("availablecovariates", "Covariate(s) to add",
+                      choices = character(0))
+                  ),
+                  column(6, br(), 
+                    checkboxInput("dropmissing", 
+                      "Drop point if any covariate missing", value = FALSE))
+                )
+              )
+            ),
+            actionLink("mainlink", "Return to Main screen"),
+            HTML("&nbsp;&nbsp;&nbsp;&nbsp;"),
+            downloadLink("savemask", "Save to text file")
           ),
           column(5, plotOutput("maskPlot"),
             conditionalPanel ("output.maskready", 
@@ -2640,6 +2642,7 @@ fitcode <- function() {
     }
     else {
       msk <- maskrv$data
+      covariaterv$data <- covariates(msk)
     }
     cov <- input$availablecovariates
     if (!is.null(covariaterv$data) && length(cov)>0) {
@@ -4206,6 +4209,18 @@ fitcode <- function() {
     filename = "ch.rds",
     content = function(file) {
       saveRDS(capthist(), file)
+    }
+  )
+  
+  output$savemask <- downloadHandler(
+    filename = "mask.txt",
+    content = function(file) {
+      if (ms(mask()))
+        msk <- mask()[[input$masksess]]
+      else 
+        msk <- mask()
+      df <- cbind(msk, covariates(msk))
+      write.table(df, file = file)
     }
   )
   
