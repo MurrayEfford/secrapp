@@ -545,16 +545,18 @@ ui <- function(request) {
                       multiple = TRUE)),
                   uiOutput("habitatfile"),
                   conditionalPanel ("output.maskpolygonsready", 
-                    fluidRow(
-                      column(10, 
-                        checkboxInput("polygonbox", "Clip to polygon(s)", value = FALSE),
-                        
+                    
+                    fluidRow(column(9,
                         tags$div(title = "Do polygons represent habitat ('include') or non-habitat ('exclude')?",
                           radioButtons("includeexcludebtn", label = "",
                             choices = c("Include", "Exclude"), 
                             selected = "Include", inline = TRUE)
-                        )
-                        
+                        ),
+                      
+                      ),
+                      column(3,
+                        br(),
+                        actionLink("clearpolygondata", HTML("<small>clear</small>"))
                       )
                     )
                   )
@@ -571,21 +573,21 @@ ui <- function(request) {
             ),
             wellPanel(class = "mypanel",
               div(style="height: 80px;",
-                fileInput("covariatefilename",
+                fileInput("maskcovariatefilename",
                   paste0("Spatial data source for covariates (optional)"),
                   accept = c('.shp', '.dbf', '.sbn', '.sbx',
                     '.shx', '.prj', '.txt', '.rds'),
                   multiple = TRUE)),
               uiOutput("covariatefile"),
-              conditionalPanel ("output.maskcovariatesready", 
+              conditionalPanel ("output.maskcovariatefileready", 
                 fluidRow(
-                  column(6, 
-                    checkboxGroupInput("availablecovariates", "Covariate(s) to add",
-                      choices = character(0))
-                  ),
-                  column(6, 
+                  column(9, 
                     checkboxInput("dropmissing", 
                       "Drop point if any covariate missing", value = FALSE)
+                  ),
+                  column(3,
+                    br(),
+                    actionLink("clearspatialdata", HTML("<small>clear</small>"))
                   )
                 )
               )
@@ -967,8 +969,13 @@ server <- function(input, output, session) {
     return(!is.null(mask()))
   })
   
-  output$maskcovariatesready <- reactive({
+  output$maskcovariatefileready <- reactive({
+    ## return(!is.null(input$maskcovariatefilename))
     return(!is.null(covariaterv$data))
+  })
+  
+  output$maskcovariatesready <- reactive({
+    return(length(covariaterv$names>0))
   })
   
   output$maskpolygonsready <- reactive({
@@ -989,6 +996,7 @@ server <- function(input, output, session) {
   
   outputOptions(output, "maskready", suspendWhenHidden=FALSE)
   outputOptions(output, "maskcovariatesready", suspendWhenHidden=FALSE)
+  outputOptions(output, "maskcovariatefileready", suspendWhenHidden=FALSE)
   outputOptions(output, "maskpolygonsready", suspendWhenHidden=FALSE)
   outputOptions(output, "modelFitted", suspendWhenHidden=FALSE)
   outputOptions(output, "capthistLoaded", suspendWhenHidden=FALSE)
@@ -1210,21 +1218,21 @@ server <- function(input, output, session) {
   output$covariatefile <- renderUI({
     helptext <- ""
     if (!is.null(covariaterv$data)) {
-      pos <- grep(".shp", tolower(input$covariatefilename[,1]))
+      pos <- grep(".shp", tolower(input$maskcovariatefilename[,1]))
       if (length(pos)>0)
-        helptext <- paste0(input$covariatefilename[pos,1])
-      pos <- grep(".rda", tolower(input$covariatefilename[,1]))  # .rda, .rdata
+        helptext <- paste0(input$maskcovariatefilename[pos,1])
+      pos <- grep(".rda", tolower(input$maskcovariatefilename[,1]))  # .rda, .rdata
       if (length(pos)>0) {
-        objlist <- load(input$covariatefilename[1,4])
+        objlist <- load(input$maskcovariatefilename[1,4])
         helptext <- paste0(objlist[1])
       }
-      pos <- grep(".rds", tolower(input$covariatefilename[,1])) 
+      pos <- grep(".rds", tolower(input$maskcovariatefilename[,1])) 
       if (length(pos)>0) {
-        helptext <- paste0(input$covariatefilename[pos,1])
+        helptext <- paste0(input$maskcovariatefilename[pos,1])
       }
-      pos <- grep(".txt", tolower(input$covariatefilename[,1])) 
+      pos <- grep(".txt", tolower(input$maskcovariatefilename[,1])) 
       if (length(pos)>0) {
-        helptext <- paste0(input$covariatefilename[pos,1])
+        helptext <- paste0(input$maskcovariatefilename[pos,1])
       }
     }
     helpText(HTML(helptext))
@@ -1658,9 +1666,9 @@ server <- function(input, output, session) {
   }
   ##############################################################################
   
-  getSPcode <- function (inputfilename, varname, apply = TRUE) {
+  getSPcode <- function (inputfilename, varname) {
     filename <- inputfilename[1,1]
-    if (is.null(filename) || !apply) {
+    if (is.null(filename)) {
       return("")
     }
     else {
@@ -1760,9 +1768,9 @@ server <- function(input, output, session) {
         polycode <- ""
         polyhabitat <- ""
         
-        if (input$polygonbox && !is.null(input$polyfilename)) { 
+        if (!is.null(input$polyfilename)) { 
           polyhabitat <- input$includeexcludebtn == "Include"
-          polycode <- getSPcode(input$polyfilename, "poly", input$polygonbox)
+          polycode <- getSPcode(input$polyfilename, "poly")
         }
         trps <- if (is.null(importrv$data)) "array" else "traps(ch)"
         paste0(polycode,
@@ -1989,7 +1997,7 @@ fitcode <- function() {
   ##############################################################################
   
   maskOK <- function () {
-    if (!input$polygonbox || is.null(polyrv$data) || is.null(traprv$data)) {
+    if (is.null(polyrv$data) || is.null(traprv$data)) {
       TRUE
     }
     else {
@@ -2073,6 +2081,7 @@ fitcode <- function() {
   covariaterv <- reactiveValues(
     data = NULL,
     covariates = NULL,
+    names = character(0),
     clear = FALSE
   )
   
@@ -2294,45 +2303,38 @@ fitcode <- function() {
   ##############################################################################
   ## read mask covariate source file
   observe({
-    req(input$covariatefilename)
+    req(input$maskcovariatefilename)
     req(!covariaterv$clear)
-    ext <- tolower(tools::file_ext(input$covariatefilename[1,1]))
+    ext <- tolower(tools::file_ext(input$maskcovariatefilename[1,1]))
     if (ext == "txt") {
-      covariaterv$data <- read.mask(input$covariatefilename[1,4], header = TRUE, 
+      covariaterv$data <- read.mask(input$maskcovariatefilename[1,4], header = TRUE, 
         stringsAsFactors = TRUE)
     }
     else if (ext == "rds") {
-      covariaterv$data <- readRDS(input$covariatefilename[1,4])
+      covariaterv$data <- readRDS(input$maskcovariatefilename[1,4])
     }
     else {
       # shapefile
-      covariaterv$data <- readpolygon(input$covariatefilename)
+      covariaterv$data <- readpolygon(input$maskcovariatefilename)
     }
     
     if (!inherits(covariaterv$data, c("SpatialPolygonsDataFrame", "mask"))) {
       showNotification("invalid covariate file; try again",
         type = "error", id = "bad covariate file")
       covariaterv$data <- NULL
+      covariaterv$names <- character(0)
     }
     else {
       if (inherits(covariaterv$data, "mask")) {
-        updateCheckboxGroupInput (session, "availablecovariates",
-          choices = names(covariates(covariaterv$data)), 
-          selected = names(covariates(covariaterv$data)))
-        updateSelectInput(session, "maskcov", 
-          choices = c("none", names(covariates(covariaterv$data))),
-          selected = "none")
+        covariaterv$names <- names(covariates(covariaterv$data))
       }
       else {
-        updateCheckboxGroupInput (session, "availablecovariates",
-          choices = names(covariaterv$data), 
-          selected = names(covariaterv$data))
-        updateSelectInput(session, "maskcov", 
-          choices = c("none", names(covariaterv$data)),
-          selected = "none")
+        covariaterv$names <- names(covariaterv$data)
       }
     }
-    
+    # updateSelectInput(session, "maskcov",
+    #   choices = c("none", covariaterv$names),
+    #   selected = "none")
   })
   ##############################################################################
   ## read mask file
@@ -2341,11 +2343,13 @@ fitcode <- function() {
     req(!maskrv$clear)
     maskrv$data <- NULL
     if (input$masktype == 'File') {
+      covariaterv$names <- character(0)
       if (!is.null(input$maskfilename)) {
         maskrv$data <- read.mask(input$maskfilename[1,4], header = TRUE, 
           stringsAsFactors = TRUE) 
+        covariaterv$names <- names(covariates(maskrv$data))
         updateSelectInput(session, "maskcov", 
-          choices = c("none", names(covariates(maskrv$data))))
+          choices = c("none", covariaterv$names))
       }
     }
   })
@@ -2371,7 +2375,7 @@ fitcode <- function() {
     polyrv$clear <- FALSE
   }, priority = 1000)
   
-  observeEvent(input$covariatefilename, {
+  observeEvent(input$maskcovariatefilename, {
     covariaterv$clear <- FALSE
   }, priority = 1000)
   
@@ -2405,7 +2409,7 @@ fitcode <- function() {
   observeEvent(c(input$detectfnbox, input$likelihoodbtn, input$distributionbtn,
     input$hcovbox, input$model, input$otherargs,
     input$masktype, input$buffer, input$habnx, input$maskshapebtn, 
-    input$polyfilename, input$polygonbox, input$maskfilename,
+    input$polyfilename, input$maskfilename,
     input$filtercapt, input$filtercapttext), {
       fitrv$value <- NULL
       updateRadioButtons(session, "resultsbtn", label = "", 
@@ -2413,6 +2417,14 @@ fitcode <- function() {
       showNotification("model modified, yet to be fitted", id="lastaction", 
         closeButton = FALSE,type="message", duration = NULL)
     })
+  ##############################################################################
+  
+  observeEvent(input$masktype, {
+    reset("maskcovariatefilename")
+    covariaterv$data <- NULL
+    covariaterv$names <- character(0)
+    covariaterv$clear <- TRUE
+    }, priority = 1000)
   ##############################################################################
   
   observeEvent(input$arrayClick, {
@@ -2661,7 +2673,7 @@ fitcode <- function() {
           buffer = input$buffer,
           nx = input$habnx,
           type = if (input$maskshapebtn=='Rectangular') 'traprect' else 'trapbuffer',
-          poly = if (input$polygonbox) polyrv$data else NULL,
+          poly = polyrv$data,
           poly.habitat = input$includeexcludebtn == "Include",
           keep.poly = FALSE)
         if (ms(msk) && !is.null(capthist())) names(msk) <- names(capthist())
@@ -2678,15 +2690,15 @@ fitcode <- function() {
           removeNotification(id = "maskrows")
         }
       }
+      # covariaterv$names <- character(0)
     }
     else {
       msk <- maskrv$data
-      covariaterv$data <- msk 
     }
-    cov <- input$availablecovariates
-    if (!is.null(covariaterv$data) && length(cov)>0) {
-      msk <- addCovariates (msk, covariaterv$data, columns = cov)
+    if (!is.null(covariaterv$data)) {
+      msk <- addCovariates (msk, covariaterv$data)
       covariates(msk) <- secr:::stringsAsFactors(covariates(msk))
+    #   covariaterv$names <- names(covariates(msk))
       OK <- apply(!is.na(covariates(msk)),1,all)
       removeNotification(id = "lastaction")
       if (sum(OK)<nrow(msk)) {
@@ -2694,14 +2706,13 @@ fitcode <- function() {
           msk <- subset(msk, OK)
         }
         else {
-          showNotification("covariate(s) missing at some mask points", 
+          showNotification("covariate(s) missing at some mask points",
             id = "lastaction", duration = NULL)
         }
       }
     }
-
+    #covariaterv$names <- names(covariates(msk))
     msk
-    
   }
   )
   ##############################################################################
@@ -2753,7 +2764,6 @@ fitcode <- function() {
   
   newdata <- reactive({
     if (inherits(fitrv$value, "secr")) {
-      
       secr.make.newdata(fitrv$value, all.levels = TRUE)
     }
     else NULL  ## no model
@@ -2922,6 +2932,8 @@ fitcode <- function() {
   # optionslink
   # masklink
   # helplink
+  # clearspatialdata
+  # clearpolygondata
   
   # model
   # okbtn
@@ -3081,13 +3093,29 @@ fitcode <- function() {
   })
   
   observeEvent(input$masklink, ignoreInit = TRUE, {
-    ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
     updateNavlistPanel(session, "navlist", "Habitat mask")
   })
+  
+  observeEvent(input$clearspatialdata, ignoreInit = TRUE, {
+    updateSelectInput(session, "maskcov", choices = "none", select = "none")
+    updateCheckboxInput(session, "legend", value = FALSE)
+    reset("maskcovariatefilename")
+    covariaterv$data <- NULL
+    covariaterv$names <- character(0)
+    covariaterv$clear <- TRUE
+  }, priority = 1000)
+
+  observeEvent(input$clearpolygondata, ignoreInit = TRUE, {
+    reset("polyfilename")
+    polyrv$data <- NULL
+    polyrv$clear <- TRUE
+    updateRadioButtons(session, "includeexcludebtn", selected = "Include")
+  }, priority = 1000)
+  
   observeEvent(input$helplink, ignoreInit = TRUE, {
-    ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
     updateNavlistPanel(session, "navlist", "Help")
   })
+  
   
   observeEvent(input$showcaptfilebtn, ignoreInit = TRUE, {
     ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
@@ -3385,9 +3413,7 @@ fitcode <- function() {
     updateNumericInput(session, "buffer", value = 100)
     updateNumericInput(session, "habnx", value = 32)
     updateRadioButtons(session, "maskshapebtn", selected = "Trap buffer")
-    updateCheckboxGroupInput(session, "availablecovariates", choices = character(0))
     updateCheckboxInput(session, "dropmissing", value = FALSE)
-    updateCheckboxInput(session, "polygonbox", value = FALSE)
     updateRadioButtons(session, "includeexcludebtn", selected = "Include")
     
     updateCheckboxInput(session, "dotsbox", value = FALSE)
@@ -3460,8 +3486,9 @@ fitcode <- function() {
     reset('polyfilename')
     
     covariaterv$data <- NULL
+    covariaterv$names <- character(0)
     covariaterv$clear <- TRUE
-    reset('covariatefilename')
+    reset('maskcovariatefilename')
     
     maskrv$data <- NULL
     maskrv$clear <- TRUE
@@ -3531,9 +3558,9 @@ fitcode <- function() {
   })
   ##############################################################################
 
-  observeEvent(c(input$covariatefilename, input$availablecovariates), {
+  observeEvent(input$maskcovariatefilename, {
     updateSelectInput(session, "maskcov", 
-      choices = c("none", names(covariates(mask()))))
+      choices = c("none", covariaterv$names))
     removeNotification(id="lastaction")
   })
 
@@ -3541,9 +3568,8 @@ fitcode <- function() {
   ##############################################################################
   observeEvent(c(input$masktype), {
     updateSelectInput(session, "maskcov", choices = "none", selected = "none")
-    updateCheckboxGroupInput(session, "availablecovariates", 
-      choices = character(0), selected = character(0))
     covariaterv$data <- NULL
+    covariaterv$names <- character(0)
     removeNotification(id="lastaction")
   })
   ##############################################################################
@@ -4011,6 +4037,7 @@ fitcode <- function() {
           covariate = NULL)
       }
       else {
+        # debug cat(input$maskcov, "\n")
         plot (msk, add = add, dots = input$dotsbox, covariate = input$maskcov,
           legend = input$legend, inset = 0)
         nacovariate <- is.na(covariates(msk)[,input$maskcov])
@@ -4033,7 +4060,7 @@ fitcode <- function() {
       plot (core, border = input$buffer, gridlines = FALSE)
       plotmsk(add = TRUE)
       plot (core, add = TRUE)
-      if (!is.null(polyrv$data) && input$polygonbox && input$showpoly) {
+      if (!is.null(polyrv$data) && input$showpoly) {
         sp::plot(polyrv$data, add = TRUE)
       }
     }
@@ -4110,7 +4137,7 @@ fitcode <- function() {
       noccasions = noccasions()[input$sess], drawlabels = drawlabels,
       binomN = 0, 
       levels = lev, 
-      poly = if (input$polygonbox) polyrv$data else NULL, 
+      poly = polyrv$data, 
       poly.habitat = input$includeexcludebtn == "Include",
       plt = TRUE, add = TRUE,
       col = col, fill = cols)
