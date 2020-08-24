@@ -560,6 +560,27 @@ ui <- function(request) {
                       )
                     )
                   )
+                ),
+                wellPanel(class = "mypanel",
+                  div(style="height: 80px;",
+                    fileInput("maskcovariatefilename",
+                      paste0("Spatial data source for covariates (optional)"),
+                      accept = c('.shp', '.dbf', '.sbn', '.sbx',
+                        '.shx', '.prj', '.txt', '.rds'),
+                      multiple = TRUE)),
+                  uiOutput("covariatefile"),
+                  conditionalPanel ("output.maskcovariatefileready", 
+                    fluidRow(
+                      column(9, 
+                        checkboxInput("dropmissing", 
+                          "Drop point if any covariate missing", value = FALSE)
+                      ),
+                      column(3,
+                        br(),
+                        actionLink("clearspatialdata", HTML("<small>clear</small>"))
+                      )
+                    )
+                  )
                 )
               ),
               tabPanel("File", 
@@ -571,30 +592,11 @@ ui <- function(request) {
                 )
               ) 
             ),
-            wellPanel(class = "mypanel",
-              div(style="height: 80px;",
-                fileInput("maskcovariatefilename",
-                  paste0("Spatial data source for covariates (optional)"),
-                  accept = c('.shp', '.dbf', '.sbn', '.sbx',
-                    '.shx', '.prj', '.txt', '.rds'),
-                  multiple = TRUE)),
-              uiOutput("covariatefile"),
-              conditionalPanel ("output.maskcovariatefileready", 
-                fluidRow(
-                  column(9, 
-                    checkboxInput("dropmissing", 
-                      "Drop point if any covariate missing", value = FALSE)
-                  ),
-                  column(3,
-                    br(),
-                    actionLink("clearspatialdata", HTML("<small>clear</small>"))
-                  )
-                )
-              )
-            ),
-            actionLink("mainlink", "Return to Main screen"),
-            HTML("&nbsp;&nbsp;&nbsp;&nbsp;"),
-            downloadLink("savemask", "Save to text file")
+            fluidRow(
+              column(6, actionLink("mainlink", "Return to Main screen")),
+              column(6, conditionalPanel ("output.maskready", 
+                downloadLink("savemask", "Save to text file")))
+            )
           ),
           column(5, plotOutput("maskPlot"),
             conditionalPanel ("output.maskready", 
@@ -1600,7 +1602,7 @@ server <- function(input, output, session) {
       ndetectors = ndetectors()[input$sess],
       noccasions = noccasions()[input$sess],
       usagepct = usagepct()[input$sess],
-      maskbuffer = input$buffer,
+      maskbuffer = if (input$masktype=='Build') input$buffer else input$maskfilename$name[1],
       masknrow = masknrow()[input$sess],
       maskspace = round(maskspace()[input$sess], 1),
       n = n(),
@@ -1666,7 +1668,7 @@ server <- function(input, output, session) {
   }
   ##############################################################################
   
-  getSPcode <- function (inputfilename, varname) {
+  getSPcode <- function (inputfilename, varname, comment = TRUE) {
     filename <- inputfilename[1,1]
     if (is.null(filename)) {
       return("")
@@ -1675,25 +1677,25 @@ server <- function(input, output, session) {
       ext <- tolower(tools::file_ext(filename))
       if (ext == "txt") {
         code <- paste0( 
-          "# coordinates from text file\n",
+          if (comment) "# coordinates from text file\n" else "",
           "coord <- read.table('", filename, "')   # read boundary coordinates\n",
           varname, " <- secr:::boundarytoSP(coord)  # convert to SpatialPolygons\n")
       }
       else if (ext %in% c("rdata", "rda")) {
         objlist <- load(inputfilename[1,4])
         code <- paste0( 
-          "# SpatialPolygons from RData file\n",
+          if (comment) "# SpatialPolygons from RData file\n" else "",
           "objlist <- load('", filename, "')\n",
           varname, " <- get(objlist[1]) \n")
       }
       else if (ext == "rds") {
         code <- paste0( 
-          "# SpatialPolygons from RDS file\n",
+          if (comment) "# SpatialPolygons from RDS file\n" else "",
           varname, " <- readRDS('", filename, "') \n")
       }
       else {
         code <- paste0(
-          "# ESRI polygon shapefile\n",
+          if (comment) "# ESRI polygon shapefile\n" else "",
           varname, " <- rgdal::readOGR(dsn = '", 
           tools::file_path_sans_ext(basename(filename)), 
           ".shp')\n"
@@ -1767,20 +1769,48 @@ server <- function(input, output, session) {
         buffer <- as.character(round(input$buffer,2))
         polycode <- ""
         polyhabitat <- ""
+        sourcecode <- ""
+        addcovcode <- ""
+        dropcode <- ""
         
         if (!is.null(input$polyfilename)) { 
           polyhabitat <- input$includeexcludebtn == "Include"
           polycode <- getSPcode(input$polyfilename, "poly")
         }
+        if (!is.null(input$maskcovariatefilename)) { 
+          ext <- tolower(tools::file_ext(input$maskcovariatefilename[1,1]))
+          if (ext == "txt") {
+            sourcecode <- paste0(
+              "covariatesource <- read.mask('", 
+              input$maskcovariatefilename[1,1], 
+              "')\n"
+            )
+          }
+          else {
+            sourcecode <- getSPcode(input$maskcovariatefilename, 
+              "covariatesource", comment = FALSE)
+          }
+          addcovcode <- "mask <- addCovariates(mask, covariatesource)\n"
+          if (input$dropmissing) {
+            dropcode <- paste0(
+              "covariatesOK <- apply(!is.na(covariates(mask)), 1, all)\n",
+              "mask <- subset(mask, covariatesOK)\n"
+            )
+          }
+        }
         trps <- if (is.null(importrv$data)) "array" else "traps(ch)"
-        paste0(polycode,
+        paste0(
+          polycode,
           "mask <- make.mask (", trps,  
           ", buffer = ", buffer, 
           ", nx = ", input$habnx, 
           ", type = '", type, "'",  
           if (polycode == "") "" else ",\n    poly = poly",
           if (polycode == "") "" else ", poly.habitat = ", polyhabitat,
-          ")\n")
+          ")\n",
+          sourcecode,
+          addcovcode,
+          dropcode)
       }
     }
     else {
@@ -2420,7 +2450,11 @@ fitcode <- function() {
   ##############################################################################
   
   observeEvent(input$masktype, {
+    reset("maskfilename")
+    reset("maskpolygonsfilename")
     reset("maskcovariatefilename")
+    maskrv$data <- NULL
+    maskrv$clear <- TRUE
     covariaterv$data <- NULL
     covariaterv$names <- character(0)
     covariaterv$clear <- TRUE
@@ -3604,16 +3638,19 @@ fitcode <- function() {
 
     cat(x1, "\n")
     
-    if (is.null(mask()))  
-      x2 <- ""
+    if (is.null(mask())) { 
+      if (input$masktype == 'File')
+        x2 <- "[yet to load]"
+      else
+        x2 <- ""
+    }
     else {
       if (ms(mask()))
         x2 <- paste0("Session 1 ", nrow(mask()[[1]]), " points, spacing ", signif(spacing(mask()[[1]]),3), " m")
       else
         x2 <- paste0(nrow(mask()), " points, spacing ", signif(spacing(mask()),3), " m")
-      cat(x2, "\n")
-      
     }
+    cat(x2, "\n")
     
   })
   #-----------------------------------------------------------------------------
