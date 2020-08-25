@@ -49,10 +49,11 @@ ui <- function(request) {
     withMathJax(),
     tags$head(tags$style(".mypanel{margin-top:5px; margin-bottom:10px; padding-bottom: 5px;}")),
     tags$head(tags$style("#maskdetailPrint{color:black; font-size:12px; min-height: 20px; max-height: 70px;}")),  #  background: ghostwhite;
+    tags$head(tags$style("#animalIDPrint{color:black; font-size:12px; min-height: 20px; max-height: 70px; min-width: 80px; max-width: 200px;}")),  #  background: ghostwhite;
     tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 260px; background: ghostwhite;}")),
     tags$head(tags$style("#codePrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 320px; background: ghostwhite;}")),
     tags$head(tags$style("#maskPrint{color:blue; font-size:12px; background: ghostwhite;}")),
-    tags$head(tags$style(type="text/css", "input.shiny-bound-input { font-size:14px; height:30px; margin-top:0px; margin-bottom:2px; padding-top:0px; padding-bottom:0px;}")),
+    #tags$head(tags$style(type="text/css", "input.shiny-bound-input { font-size:14px; height:30px; margin-top:0px; margin-bottom:2px; padding-top:0px; padding-bottom:0px;}")),
     br(),
     navlistPanel(id = "navlist", widths = c(2,10), well=TRUE,
       
@@ -394,11 +395,12 @@ ui <- function(request) {
                     conditionalPanel("output.capthistLoaded",
                       fluidRow(
                         column(2, offset = 1, checkboxInput("tracks", "All tracks", FALSE)),
-                        column(2, checkboxInput("varycol", "Vary colours", FALSE)),
                         column(2, numericInput("animal", "Select animal", min = 0, max = 2000, 
                           step = 1, value = 1)),
-                        column(3, br(), conditionalPanel("input.animal>0", uiOutput("uianimalID"))),
-                        column(2, conditionalPanel("output.modelFitted", checkboxInput("fxi", "fxi contour", FALSE)))
+                        column(4, conditionalPanel("input.animal>0", 
+                          verbatimTextOutput("animalIDPrint")
+                        )),
+                        column(3, conditionalPanel("output.modelFitted", checkboxInput("fxi", "fxi contour", FALSE)))
                       ))
                   ),
                   tabPanel("Moves", 
@@ -799,6 +801,9 @@ ui <- function(request) {
               fluidRow(
                 column(6, checkboxInput("entireregionbox", "Show entire region", value = FALSE, width = 160)),
                 column(5, checkboxInput("snaptodetector", "Snap to detector", value = FALSE, width = 160))
+              ),
+              fluidRow(
+                column(6, checkboxInput("varycol", "Vary colours", FALSE)),
               ),
               br(),
               fluidRow(
@@ -3677,7 +3682,7 @@ fitcode <- function() {
       x1 <- paste0(input$buffer, "-m  buffer, nx = ", input$habnx)
     else
       x1 <- paste0("Habitat mask from file")
-
+    
     cat(x1, "\n")
     
     if (is.null(mask())) { 
@@ -3694,6 +3699,32 @@ fitcode <- function() {
     }
     cat(x2, "\n")
     
+  })
+  #-----------------------------------------------------------------------------
+  
+  output$animalIDPrint <- renderPrint({
+    if(is.na(input$animal) || input$animal<=0 || is.null(nsessions()))
+      cat("")
+    else {
+      if (nsessions()>1) {
+        ch <- capthist()[[input$sess]]
+      }    
+      else {
+        ch <- capthist()
+      }
+      ch <- subset(ch, input$animal)
+      covar <- covariates(ch) #[input$animal,,drop = FALSE]
+      if (length(covar)>0)
+        covar <- paste(lapply(1:length(covar), function(i) 
+          paste(names(covar)[i], as.character(covar[[i]]))), collapse = ', ')
+      ID <- paste0("ID ", rownames(ch)) # [input$animal])
+      ncapt <- sum(ch)
+      nDet <- paste0("\n", ncapt, " detection", if (ncapt>1) "s," else ",") 
+      mmdm <- MMDM(ch, min.recapt = 1)
+      if (is.na(mmdm)) mmdm <- 0
+      ORL <- paste0("ORL ", signif(mmdm, 3), " m")
+      cat(paste(ID, covar, nDet, ORL, sep = " "))
+    }
   })
   #-----------------------------------------------------------------------------
   
