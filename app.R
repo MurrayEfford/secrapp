@@ -527,13 +527,18 @@ ui <- function(request) {
                         title = "Based on fitted model, if available, otherwise RPSV. Seeks buffer truncation bias <= 1%"))
                   ),
                   fluidRow(
-                    column(12, 
+                    column(9, 
                       tags$div(title = "Mask type 'trapbuffer' is trimmed to exclude points further than the buffer distance from any detector",
                         radioButtons("maskshapebtn", label = "Shape",
                         choices = c("Rectangular", "Trap buffer"), 
                         selected = "Trap buffer", inline = TRUE)
                       )
+                    ),
+                    column(3,
+                      br(),
+                      actionLink("clearbufferspec", HTML("<small>reset</small>"))
                     )
+                    
                   )
                 ),
                 wellPanel(class = "mypanel", 
@@ -582,7 +587,8 @@ ui <- function(request) {
                     ),
                     conditionalPanel("output.filterMask",
                     fluidRow(
-                      column(8, textInput("filtermasktext", "Filter"))
+                      column(12, textInput("filtermasktext", "Filter",
+                        placeholder = "e.g., forest == 'beech'"))
                     ))
                   )
                 )
@@ -2990,6 +2996,7 @@ fitcode <- function() {
   # helplink
   # clearspatialdata
   # clearpolygondata
+  # clearbufferspec
   
   # model
   # okbtn
@@ -3166,6 +3173,12 @@ fitcode <- function() {
     polyrv$data <- NULL
     polyrv$clear <- TRUE
     updateRadioButtons(session, "includeexcludebtn", selected = "Include")
+  }, priority = 1000)
+  
+  observeEvent(input$clearbufferspec, ignoreInit = TRUE, {
+    updateNumericInput(session, "buffer", value = 100)
+    updateNumericInput(session, "habnx", value = 32)
+    updateRadioButtons(session, "maskshapebtn", selected = "Trap buffer")
   }, priority = 1000)
   
   observeEvent(input$helplink, ignoreInit = TRUE, {
@@ -3474,6 +3487,7 @@ fitcode <- function() {
     updateNumericInput(session, "buffer", value = 100)
     updateNumericInput(session, "habnx", value = 32)
     updateRadioButtons(session, "maskshapebtn", selected = "Trap buffer")
+    
     updateCheckboxInput(session, "dropmissing", value = FALSE)
     updateRadioButtons(session, "includeexcludebtn", selected = "Include")
     
