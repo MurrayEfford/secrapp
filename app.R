@@ -576,10 +576,14 @@ ui <- function(request) {
                           "Drop point if any covariate missing", value = FALSE)
                       ),
                       column(3,
-                        br(),
+                        actionLink("filtermask", HTML("<small>filter</small>")), br(),
                         actionLink("clearspatialdata", HTML("<small>clear</small>"))
                       )
-                    )
+                    ),
+                    conditionalPanel("output.filterMask",
+                    fluidRow(
+                      column(8, textInput("filtermasktext", "Filter"))
+                    ))
                   )
                 )
               ),
@@ -972,7 +976,6 @@ server <- function(input, output, session) {
   })
   
   output$maskcovariatefileready <- reactive({
-    ## return(!is.null(input$maskcovariatefilename))
     return(!is.null(covariaterv$data))
   })
   
@@ -992,6 +995,10 @@ server <- function(input, output, session) {
     return(filtercaptrv$value)
   })
   
+  output$filterMask <- reactive({
+    return(filtermaskrv$value)
+  })
+  
   output$capthistLoaded <- reactive({
     return(!is.null(capthist()))
   })
@@ -1003,6 +1010,7 @@ server <- function(input, output, session) {
   outputOptions(output, "modelFitted", suspendWhenHidden=FALSE)
   outputOptions(output, "capthistLoaded", suspendWhenHidden=FALSE)
   outputOptions(output, "filterCapt", suspendWhenHidden=FALSE)
+  outputOptions(output, "filterMask", suspendWhenHidden=FALSE)
   
   
   ##############################################################################
@@ -1731,14 +1739,16 @@ server <- function(input, output, session) {
       
       ## 2020-08-16
       if (length(filename)>1) {
+        cr <- ",\n   "
         filename <- paste0("c('", paste(filename, collapse = "','"), "')")
       }
       else {
+        cr <- ", "
         filename <- paste0("'", filename, "'")
       }
       code <- paste0("array <- read.traps (",
         filename,
-        ",\n    detector = '", input$detector, "'", 
+        cr, "detector = '", input$detector, "'", 
         args, sheet, ")\n")
       cov <- covariates(traprv$data)
       if (!is.null(cov) && !ms(cov)) {     # defer hard case
@@ -2362,9 +2372,9 @@ fitcode <- function() {
         covariaterv$names <- names(covariaterv$data)
       }
     }
-    # updateSelectInput(session, "maskcov",
-    #   choices = c("none", covariaterv$names),
-    #   selected = "none")
+    updateSelectInput(session, "maskcov",
+      choices = c("none", covariaterv$names),
+      selected = "none")
   })
   ##############################################################################
   ## read mask file
@@ -2455,6 +2465,8 @@ fitcode <- function() {
     reset("maskcovariatefilename")
     maskrv$data <- NULL
     maskrv$clear <- TRUE
+    filtermaskrv$value <- FALSE
+    updateTextInput(session, "filtermasktext", value = "")
     covariaterv$data <- NULL
     covariaterv$names <- character(0)
     covariaterv$clear <- TRUE
@@ -2730,11 +2742,11 @@ fitcode <- function() {
       msk <- maskrv$data
     }
     if (!is.null(covariaterv$data)) {
+      removeNotification(id = "lastaction")
       msk <- addCovariates (msk, covariaterv$data)
       covariates(msk) <- secr:::stringsAsFactors(covariates(msk))
-    #   covariaterv$names <- names(covariates(msk))
+
       OK <- apply(!is.na(covariates(msk)),1,all)
-      removeNotification(id = "lastaction")
       if (sum(OK)<nrow(msk)) {
         if (input$dropmissing) {
           msk <- subset(msk, OK)
@@ -2744,8 +2756,17 @@ fitcode <- function() {
             id = "lastaction", duration = NULL)
         }
       }
+      if (!is.null(covariates(msk))) {
+        if (input$filtermasktext != "" && filtermaskrv$value) {
+          OKF <- try(with (covariates(msk), {
+            eval(parse(text = input$filtermasktext))
+          }), silent = TRUE)
+          if (!inherits(OKF, "try-error")) {
+            msk <- subset (msk, OKF)
+          }
+        }
+      }
     }
-    #covariaterv$names <- names(covariates(msk))
     msk
   }
   )
@@ -2941,6 +2962,7 @@ fitcode <- function() {
   traptextrv <- reactiveValues(value=FALSE)
   capttextrv <- reactiveValues(value=FALSE)
   filtercaptrv <- reactiveValues(value=FALSE)
+  filtermaskrv <- reactiveValues(value=FALSE)
   
   ##############################################################################
   
@@ -3162,6 +3184,10 @@ fitcode <- function() {
     filtercaptrv$value <- (input$filtercapt %% 2) == 1
   })
   
+  observeEvent(input$filtermask, ignoreInit = TRUE, {
+    filtermaskrv$value <- (input$filtermask %% 2) == 1
+  })
+  
   observeEvent(input$fitbtn, ignoreInit = TRUE, {
     ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
     if (is.null(capthist())) {
@@ -3365,6 +3391,7 @@ fitcode <- function() {
     traptextrv$value <- FALSE
     capttextrv$value <- FALSE
     filtercaptrv$value <- FALSE
+    filtermaskrv$value <- FALSE
     timerv$timewarning <- timewarning
     timerv$timelimit <- timelimit
     
@@ -3456,6 +3483,7 @@ fitcode <- function() {
     updateCheckboxInput(session, "legend", value = FALSE)
     updateCheckboxInput(session, "showpoly", value = FALSE)
     updateSelectInput(session, "maskcov", choices = "none", selected = "none")
+    updateTextInput(session, "filtermasktext", value = "", placeholder = "")
     
     ## Summary
     
