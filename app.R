@@ -49,7 +49,7 @@ ui <- function(request) {
     withMathJax(),
     tags$head(tags$style(".mypanel{margin-top:5px; margin-bottom:10px; padding-bottom: 5px;}")),
     tags$head(tags$style("#maskdetailPrint{color:black; font-size:12px; min-height: 20px; max-height: 70px;}")),  #  background: ghostwhite;
-    tags$head(tags$style("#animalIDPrint{color:black; font-size:12px; min-height: 20px; max-height: 70px; min-width: 80px; max-width: 200px;}")),  #  background: ghostwhite;
+    tags$head(tags$style("#animalIDPrint{color:black; margin-top:5px; font-size:12px; min-height: 20px; max-height: 70px; min-width: 80px; max-width: 220px;}")),  #  background: ghostwhite;
     tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 260px; background: ghostwhite;}")),
     tags$head(tags$style("#codePrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 320px; background: ghostwhite;}")),
     tags$head(tags$style("#maskPrint{color:blue; font-size:12px; background: ghostwhite;}")),
@@ -1279,25 +1279,6 @@ server <- function(input, output, session) {
   })
   #-----------------------------------------------------------------------------
   
-  output$uianimalID <- renderUI({
-    if(is.na(input$animal) || input$animal<=0 || is.null(nsessions()))
-      helpText("")
-    else {
-      if (nsessions()>1) {
-        ch <- capthist()[[input$sess]]
-      }    
-      else {
-        ch <- capthist()
-      }
-      
-      covar <- covariates(ch)[input$animal,,drop = FALSE]
-      if (length(covar)>0)
-        covar <- paste(lapply(1:length(covar), function(i) 
-          paste(names(covar)[i], as.character(covar[[i]]))), collapse = ', ')
-      helpText(paste("ID", rownames(ch)[input$animal], ' ', covar))
-    }
-  })
-  
   output$xycoord <- renderUI({
     xy <- c(input$arrayHover$x, input$arrayHover$y)
     tmpgrid <- isolate(traprv$data)
@@ -2136,6 +2117,10 @@ fitcode <- function() {
     clear = FALSE
   )
   
+  currentIDrv <- reactiveValues(
+    value = ""
+  )
+  
   ##############################################################################
   
   getcovnames <- function (cov, ncov, prefix = 'X', quote = FALSE, character = TRUE) {
@@ -2295,6 +2280,15 @@ fitcode <- function() {
       dataname <- input$captxlsname[1,"datapath"]
       filename <- input$captxlsname[1,"name"]
       if (!input$captsheet %in% readxl::excel_sheets(dataname)) return()
+      
+      samexls <- filename == input$trapxlsname[1,"name"]
+      if (samexls && input$captsheet %in% input$trapsheet) {
+        showNotification(id = "lastaction", type = "error", duration = NULL,
+          "cannot use same xls sheet")
+        captrv$data <- NULL
+        return()
+      }
+      
       if (!grepl('sheet', input$captotherargs)) {
         sheet <- paste0(", sheet = '", input$captsheet, "'")
       }
@@ -2518,6 +2512,35 @@ fitcode <- function() {
   })
   ##############################################################################
   
+  observeEvent(input$animal, {
+    if (input$animal>0) {
+      if (ms(capthist())) {
+        currentIDrv$value <- rownames(capthist()[[input$sess]])[input$animal]
+      }
+      else {
+        currentIDrv$value <- rownames(capthist())[input$animal]
+      }
+    }
+    else {
+      currentIDrv$value <- ""
+    }
+  })
+  
+  observeEvent(input$sess, ignoreInit = TRUE, {
+    if (input$animal>0) {
+      # Tracking ID over sessions not working 2020-08-26, so suppress
+      # ID <- currentIDrv$value
+      # assume ms(capthist())
+      # newsessanimal <- match(ID, rownames(capthist()[[input$sess]]))
+      # if (is.na(newsessanimal)) {
+      #   newsessanimal <- 1
+      #   currentIDrv$value <- rownames(capthist()[[input$sess]])[1]
+      # }
+      # updateNumericInput(session, "animal", value = newsessanimal)
+      updateNumericInput(session, "animal", value = 1)
+    }
+  })
+  
   observeEvent(input$trapxlsname, {
     dataname <- input$trapxlsname[1,"datapath"]
     updateSelectInput(session, "trapsheet", choices = readxl::excel_sheets(dataname))
@@ -2525,7 +2548,17 @@ fitcode <- function() {
   
   observeEvent(input$captxlsname, {
     dataname <- input$captxlsname[1,"datapath"]
-    updateSelectInput(session, "captsheet", choices = readxl::excel_sheets(dataname))
+    sheets <- readxl::excel_sheets(dataname)
+    samexls <- input$captxlsname[1,"name"] == input$trapxlsname[1,"name"]
+    sheetnumber <- if (samexls) length(input$trapsheet)+1 else 1
+    if (samexls && length(sheets)<2) {
+      showNotification(id = "lastaction", type = "error", duration = NULL,
+        "cannot use same xls sheet")
+      sheetnumber <- 1
+    }
+    updateSelectInput(session, "captsheet", 
+      choices = sheets,
+      selected = sheets[sheetnumber])
   })
   
   ##############################################################################
@@ -2582,10 +2615,15 @@ fitcode <- function() {
             ch <- NULL
           }
         }
+        
+        if (ms(ch)) 
+          currentIDrv$value <- rownames(ch[[1]])[1]
+        else 
+          currentIDrv$value <- rownames(ch)[1]
         updateNumericInput(session, "animal", max = nanimal)
         output$multisession <- renderText(tolower(ms(ch)))
         updateNumericInput(session, "sess", max = length(ch))
-        updateNumericInput(session, "masksess", max = length(ch))
+        updateNumericInput(session, "masksess", value = 1, max = length(ch))
         updateSelectInput(session, "hcovbox", choices = c("none", covnames))
       }
     }
@@ -3712,12 +3750,13 @@ fitcode <- function() {
       else {
         ch <- capthist()
       }
-      ch <- subset(ch, input$animal)
-      covar <- covariates(ch) #[input$animal,,drop = FALSE]
+      ch <- subset(ch, input$animal, dropnullocc = TRUE)
+      
+      covar <- covariates(ch) 
       if (length(covar)>0)
         covar <- paste(lapply(1:length(covar), function(i) 
           paste(names(covar)[i], as.character(covar[[i]]))), collapse = ', ')
-      ID <- paste0("ID ", rownames(ch)) # [input$animal])
+      ID <- paste0("ID ", currentIDrv$value)
       ncapt <- sum(ch)
       nDet <- paste0("\n", ncapt, " detection", if (ncapt>1) "s," else ",") 
       mmdm <- MMDM(ch, min.recapt = 1)
