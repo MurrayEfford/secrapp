@@ -3932,7 +3932,7 @@ fitcode <- function() {
       cat("\n# input data\n")
       cat(arraycode())
     }
-    if (!is.null(captrv$data)) {
+    if (!is.null(captrv$data) || !is.null(importrv$data)) {
       cat(captcode())
     }
     
