@@ -1,7 +1,7 @@
 ---
 title: "secr app 1.3"
 author: "Murray Efford"
-date: '2020-08-15'
+date: '2020-08-26'
 output:
   html_document:
     toc: yes
@@ -42,11 +42,11 @@ TIP: on small displays, running your browser in full-screen mode will avoid the 
 
 ## Data input
 
-By default, input is from two text files, one for the detector layout and one for detections ('captures') of known individuals. Excel files may also be used. Alternatively, secrapp may  read the secr capthist object from a .rds file.
+By default, input is from two text files, one for the detector layout and one for detections ('captures') of known individuals. Excel files may also be used. Alternatively, secrapp may  read the complete secr capthist object from a .rds file.
 
 ### Detector layout
 
-The detector layout is input from a text file. The file typically should have three columns (trapID, x, y) with no headers. These may optionally be followed by binary usage codes (0/1), one per occasion. Columns after a '/' are interpreted as detector covariates. 
+The detector layout file typically should have three columns (trapID, x, y) with no headers. These may optionally be followed by binary usage codes (0/1), one per occasion. Columns after a '/' are interpreted as detector covariates. Headers are required for input from Excel files.
 
 Options for <u>detector type</u>  follow **secr** ([Efford (2020)](#references)): "multi" refers to a multi-catch trap; "proximity" to binary proximity detectors, and "count" to detectors that yield integer counts. Counts are assumed to be Poisson-distributed. Data from searches of areas or transects use the types "polygon", "polygonX", "transect" or "transectX" (Efford 2011; see also [secr-polygondetectors.pdf]).
 
@@ -133,11 +133,13 @@ The <u>Distribution</u> radio button toggles between two models for the number o
 
 <a name="hcov"></a>
 
-The <u>Mixture hcov</u> select input allows the user to choose a variable defining a mixture class from among the individual covariates. This is passed to `secr.fit` as the argument 'hcov'. The covariate should take two non-missing values (e.g., 'F','M'); missing values are allowed. The mixing proportion 'pmix' is included in the model automatically when hcov is specified. To estimate mixture-specific values of a parameter include ~h2 in its formula (e.g., lambda0~h2). See <a href="https://www.otago.ac.nz/density/pdfs/secr-finitemixtures.pdf"; target="_blank";>secr-finitemixtures.pdf</a> for more.
+The <u>Mixture hcov</u> select input allows the user to choose a variable defining a 2-level mixture class from among the individual covariates. This is passed to `secr.fit` as the argument 'hcov'. The covariate should take two non-missing values (e.g., 'F','M'); missing values are allowed. The mixing proportion 'pmix' is included in the model automatically when hcov is specified. To estimate mixture-specific values of a parameter include ~h2 in its formula (e.g., lambda0~h2). See <a href="https://www.otago.ac.nz/density/pdfs/secr-finitemixtures.pdf"; target="_blank";>secr-finitemixtures.pdf</a> for more.
 
 Other arguments separated by commas may be used to customise the call to `secr.fit`. Attempts here to change 'capthist', 'mask', 'model' or 'detectfn' are ignored, and 'trace' is always FALSE.
 
-Model formulae may be edited using pre-defined predictors or covariate names as described in <a href="https://www.otago.ac.nz/density/pdfs/secr-overview.pdf"; target="_blank";>secr-overview.pdf</a>. Time covariates ('timecov') and session covariates ('sessioncov') may be specified in 'Other arguments'. There is no provision for time-varying detector covariates.
+Model formulae may be edited using pre-defined predictors or covariate names as described in <a href="https://www.otago.ac.nz/density/pdfs/secr-overview.pdf"; target="_blank";>secr-overview.pdf</a>. Time covariates ('timecov') and session covariates ('sessioncov') may be specified in <u>Other arguments</u>. There is no provision for time-varying detector covariates.
+
+The <u>Habitat mask</u> box reports attributes of the mask currently defined on the Habitat mask screen; use the edit link to vary these. 
 
 ## Time limits
 
@@ -161,7 +163,7 @@ The application is designed for small- to medium-sized models. An internal algor
 </table> 
 
 <br>
-'Reset all' does not delete Summary results from the current session. Use the 'Clear all' and 'Delete last' buttons on the Summary page to manage the summaries. Summary results will be lost if you close the application without downloading to a local file.
+'Reset all' does not delete Summary results from the current session. Use the buttons on the Summary page to manage the summaries. Summary results will be lost if you close the application without downloading to a local file.
 
 The option 'Switch to secrdesign' appears once a model has been fitted if the detection function is HHN or HEX and the detector type is multi, proximity or count. This opens 'secrdesignapp' on the Otago University server in a new browser window. Settings and parameter estimates are transferred automatically. Detector locations are not transferred; they should be provided either by selecting the file in secrdesignapp, or by the usual options (Grid, Line, Region).
 
@@ -174,13 +176,15 @@ The default results vary depending on the inputs
 * summary of detector layout only
 * summary of capthist object (detector layout + detections)
 * summary of fitted model
+* user-specified code, possibly referencing the capthist (`ch`) or fitted model (`fitted`)
 
 Once a model has been fitted it is possible to select 
 
 * summary of fitted model
 * table(s) of estimates from `predict`
 * table of `derived` (Horvitz-Thompson) estimates
-* some other summary function that takes the fitted model as an argument.
+
+The 'hide' button temporarily suppresses the summary output.
 
 ## Tabbed code and plots
 
@@ -196,7 +200,7 @@ The statements may be copied and pasted into an R session. It is assumed that in
 
 A plot of the current detector layout. Detections are overplotted if they have been uploaded.
 
-By default, the locations of one animal are highlighted. Suppress this by selecting animal '0'.
+By default, the locations of one animal are highlighted and its ID, number of detections and observed range length (ORL) appear in a box. Suppress this by selecting animal '0'. Click on the plot to select an individual.
 
 A session selector is shown for multi-session data. Changing the session changes the plot displayed on this tab, and on some others (Buffer, Pxy, Dxy); it does not affect model fitting.
 
@@ -257,15 +261,21 @@ As an alternative to conventional power analysis we can construct intervals for 
 
 Either construct a habitat mask from scratch ('Build') or read mask coordinates from a text file ('File'). 
 
-For file input there should be a header line. The first two columns ('x', 'y') are read as the x- and y-coordinates. Further columns are assumed to represent covariates and their names may be used in formulae for density (D).
+The 'Suggest width' button runs the **secr** function `suggest.buffer` which is currently available only for point detectors (not polygon types). The algorithm requires that captures have been loaded.
 
-The 'Suggest width' button runs the **secr** function `suggest.buffer` which is currently available only for point detectors (not polygon types).
+A mask built by buffering around a detector array may include known non-habitat. Polygon data from an ESRI shapefile may be used to include or exclude sites from the mask.
+
+Mask covariates are used to build spatial models of density (D). Covariate data may be added from a spatial data source - either a polygon shapefile, a SpatialPolygonsDataFrame stored in an .rds file, or a text file in the format used for habitat masks (below). Covariate values at each mask point are inferred from spatial overlap (shapefile or SpatialPolygonsDataFrame) or the nearest source point (mask file).
+
+A mask text file should have a header line. The first two columns ('x', 'y') are read as the x- and y-coordinates. Further columns are assumed to represent covariates and their names may be used in formulae for density.
 
 ----------------------------------------------------
 
 # Summary  <a name="summary"></a>
 
-The table on this page has one column for each model fit or other summary; summaries are added automatically when models are fitted.
+The table on this page has one column for each model fit or other summary; summaries are added automatically when models are fitted. 
+
+The displayed table includes only selected analyses. Users should ensure AIC comparisons are valid across the selected analyses (use same data and compatible model structure).
 
 The table may be downloaded as a comma-separated text file or in the RDS format (use `readRDS` to restore in R). The table is transposed on download so that scenarios become rows.
 
