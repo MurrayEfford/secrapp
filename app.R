@@ -402,7 +402,7 @@ ui <- function(request) {
                         )),
                         column(3, conditionalPanel("output.modelFitted", checkboxInput("fxi", "fxi contour", FALSE)))
                       )),
-                    conditionalPanel("output.capthistLoaded!='true'", 
+                    conditionalPanel("output.usage", 
                       fluidRow(
                         column(2, offset = 1, checkboxInput("usageplot", "Usage", FALSE))
                         )
@@ -1020,6 +1020,10 @@ server <- function(input, output, session) {
     return(!is.null(capthist()))
   })
   
+  output$usage <- reactive({
+    return(!is.null(usage(traprv$data)) && is.null(capthist()))
+  })
+  
   outputOptions(output, "maskready", suspendWhenHidden=FALSE)
   outputOptions(output, "maskcovariatesready", suspendWhenHidden=FALSE)
   outputOptions(output, "maskcovariatefileready", suspendWhenHidden=FALSE)
@@ -1028,6 +1032,7 @@ server <- function(input, output, session) {
   outputOptions(output, "capthistLoaded", suspendWhenHidden=FALSE)
   outputOptions(output, "filterCapt", suspendWhenHidden=FALSE)
   outputOptions(output, "filterMask", suspendWhenHidden=FALSE)
+  outputOptions(output, "usage", suspendWhenHidden=FALSE)
   
   
   ##############################################################################
