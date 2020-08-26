@@ -50,7 +50,7 @@ ui <- function(request) {
     tags$head(tags$style(".mypanel{margin-top:5px; margin-bottom:10px; padding-bottom: 5px;}")),
     tags$head(tags$style("#maskdetailPrint{color:black; font-size:12px; min-height: 20px; max-height: 70px;}")),  #  background: ghostwhite;
     tags$head(tags$style("#animalIDPrint{color:black; margin-top:5px; font-size:12px; min-height: 20px; max-height: 70px; min-width: 80px; max-width: 220px;}")),  #  background: ghostwhite;
-    tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 260px; background: ghostwhite;}")),
+    tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 270px; background: ghostwhite;}")),
     tags$head(tags$style("#codePrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 320px; background: ghostwhite;}")),
     tags$head(tags$style("#maskPrint{color:blue; font-size:12px; background: ghostwhite;}")),
     #tags$head(tags$style(type="text/css", "input.shiny-bound-input { font-size:14px; height:30px; margin-top:0px; margin-bottom:2px; padding-top:0px; padding-bottom:0px;}")),
@@ -401,7 +401,13 @@ ui <- function(request) {
                           verbatimTextOutput("animalIDPrint")
                         )),
                         column(3, conditionalPanel("output.modelFitted", checkboxInput("fxi", "fxi contour", FALSE)))
-                      ))
+                      )),
+                    conditionalPanel("output.capthistLoaded!='true'", 
+                      fluidRow(
+                        column(2, offset = 1, checkboxInput("usageplot", "Usage", FALSE))
+                        )
+                    )
+                    
                   ),
                   tabPanel("Moves", 
                     fluidRow(
@@ -2215,6 +2221,10 @@ fitcode <- function() {
           names(temp) <- paste('Session', 1:length(temp))  
           updateNumericInput(session, "sess", max = length(temp))
           updateNumericInput(session, "masksess", max = length(temp))
+          updateNumericInput(session, "rad", value = signif(spacing(temp[[1]])/5, 2))
+        }
+        else {
+          updateNumericInput(session, "rad", value = spacing(temp)/5)
         }
         output$multisession <- renderText(tolower(ms(temp)))
         ncov <- ncol(covariates(temp))
@@ -2222,9 +2232,6 @@ fitcode <- function() {
           covnames <- getcovnames(input$trapcovnames, ncov, 'T', TRUE, FALSE)
           names(covariates(temp)) <- covnames
         }
-        # if (covnames != "") {
-        #     args <- paste0(", covnames = ", covnames)
-        # }
         traprv$data <- temp
         enable("captfilename")
         enable("captxlsname")
@@ -3498,6 +3505,7 @@ fitcode <- function() {
     updateNumericInput(session, "animal", value = 1)
     updateNumericInput(session, "sess", value = 1)
     updateNumericInput(session, "masksess", value = 1)
+    updateCheckboxInput(session, "usageplot", value = FALSE)
     
     ## Moves plot
     updateNumericInput(session, "nbar", value = 10)
@@ -3853,8 +3861,10 @@ fitcode <- function() {
           input$captfilename[1,'name'])
       }
       else if (input$datasource == 'Excel files') {
-        header <- paste("Summary of capthist object from", input$trapxlsname[1,'name'], "and", 
-          input$captxlsname[1,'name'])
+        header <- paste("Summary of capthist object from", input$trapxlsname[1,'name'])
+        if (input$captxlsname[1,'name'] != input$trapxlsname[1,'name']) {
+          header <- paste(header, "and", input$captxlsname[1,'name'])
+        }
       }
       else {
         header <- paste("Summary of capthist object from", input$importfilename[1,'name'])
@@ -3890,7 +3900,7 @@ fitcode <- function() {
     }
     else if (is.null(capthist())) {
       if (input$resultsbtn == "summary")
-        summary(traprv$data)
+        summary(traprv$data, covariates = TRUE)   ## arg covariates new in secr 4.3.1
       else
         otherfn(input$otherfunction, FALSE, FALSE)
     }
@@ -4065,6 +4075,14 @@ fitcode <- function() {
         detpar = list(cex = input$cex), 
         gridlines = (input$gridlines != "None"), 
         gridspace = as.numeric(input$gridlines))
+      usge <- usage(tmpgrid)
+      if (!is.null(usge) && input$usageplot) {
+        scale <- 1 / max(usge, na.rm = TRUE)
+        usagePlot(tmpgrid, add = TRUE, fill = FALSE, metres = FALSE, 
+          scale = scale, rad = input$rad)
+        occasionKey(noccasions = ncol(usge), rad = input$rad * 1.3, 
+          title = "", cex = 0.7)
+      }
     }
   })
   ##############################################################################
