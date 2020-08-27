@@ -3853,9 +3853,9 @@ fitcode <- function() {
     }
     else if (is.null(fitrv$value)) {
       if (input$datasource == 'Text files') {
-        header <- paste("Summary of capthist object from", input$trapfilename[1,'name'], 
-          if (nrow(input$trapfilename)>1) "etc." else "",
-          "and", 
+        header <- paste0("Summary of capthist object from ", input$trapfilename[1,'name'], 
+          if (nrow(input$trapfilename)>1) " etc." else "",
+          " and ", 
           input$captfilename[1,'name'])
       }
       else if (input$datasource == 'Excel files') {
@@ -3866,6 +3866,9 @@ fitcode <- function() {
       }
       else {
         header <- paste("Summary of capthist object from", input$importfilename[1,'name'])
+      }
+      if (filtercaptrv$value) {
+        header <- paste0(header, ", ", input$filtercapttext)
       }
     }
     else if (inherits(fitrv$value, "secr")) {
