@@ -47,13 +47,6 @@ ui <- function(request) {
     includeCSS("secrstyle.css"),
     useShinyjs(),
     withMathJax(),
-    tags$head(tags$style(".mypanel{margin-top:5px; margin-bottom:10px; padding-bottom: 5px;}")),
-    tags$head(tags$style("#maskdetailPrint{color:black; font-size:12px; min-height: 20px; max-height: 70px;}")),  #  background: ghostwhite;
-    tags$head(tags$style("#animalIDPrint{color:black; margin-top:5px; font-size:12px; min-height: 20px; max-height: 70px; min-width: 80px; max-width: 220px;}")),  #  background: ghostwhite;
-    tags$head(tags$style("#resultsPrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 270px; background: ghostwhite;}")),
-    tags$head(tags$style("#codePrint{color:blue; font-size:12px; overflow-y:scroll; min-height: 250px; max-height: 320px; background: ghostwhite;}")),
-    tags$head(tags$style("#maskPrint{color:blue; font-size:12px; background: ghostwhite;}")),
-    #tags$head(tags$style(type="text/css", "input.shiny-bound-input { font-size:14px; height:30px; margin-top:0px; margin-bottom:2px; padding-top:0px; padding-bottom:0px;}")),
     br(),
     navlistPanel(id = "navlist", widths = c(2,10), well=TRUE,
       
@@ -390,7 +383,8 @@ ui <- function(request) {
                         br(),
                         conditionalPanel("input.gridlines != 'None'",
                         uiOutput("uigridlines") ),
-                        br(), uiOutput('xycoord'))
+                        br(), 
+                        uiOutput('xycoord'))
                     ),
                     conditionalPanel("output.capthistLoaded",
                       fluidRow(
