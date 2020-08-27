@@ -4,8 +4,8 @@ library(secr)
 library(shinyjs)
 
 secrversion <- packageVersion('secr')
-if (compareVersion(as.character(secrversion), '4.0.1') < 0)
-  stop("secrapp 1.3 requires secr version 4.0.1 or later",
+if (compareVersion(as.character(secrversion), '4.3.1') < 0)
+  stop("secrapp 1.3 requires secr version 4.3.1 or later",
     call. = FALSE)
 
 # for transfer to secrdesign
