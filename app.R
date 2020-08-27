@@ -2414,6 +2414,7 @@ fitcode <- function() {
   
   observeEvent(c(input$trapfilename,  input$trapxlsname, input$trapsheet), {
     traprv$clear <- FALSE
+    updateNumericInput(session, "animal", value = 1)
     updateRadioButtons(session, "resultsbtn", label = "", 
       inline = TRUE, choices = defaultresultsbtn)
   }, priority = 1000)
