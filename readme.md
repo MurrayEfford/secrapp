@@ -11,7 +11,7 @@ library(shiny)
 runGitHub("secrapp", "MurrayEfford")
 ```
 
-Version 1.3 requires secr >= 4.1.0. A few features work only with secr >= 4.3.0.
+Version 1.3 requires secr >= 4.3.1 (expected on CRAN early September 2020, otherwise see https://www.otago.ac.nz/density).
 
 ----
 
