@@ -3772,9 +3772,7 @@ fitcode <- function() {
       ID <- paste0("ID ", currentIDrv$value)
       ncapt <- sum(ch)
       nDet <- paste0("\n", ncapt, " detection", if (ncapt>1) "s," else ",") 
-      mmdm <- MMDM(ch, min.recapt = 1)
-      if (is.na(mmdm)) mmdm <- 0
-      ORL <- paste0("ORL ", signif(mmdm, 3), " m")
+      ORL <- paste0("ORL ", signif(ORL(ch)$ORL, 3), " m")
       cat(paste(ID, covar, nDet, ORL, sep = " "))
     }
   })
