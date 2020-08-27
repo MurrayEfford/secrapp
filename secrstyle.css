@@ -58,11 +58,58 @@ tr {
 }
 
 .shiny-notification{
-  font-size: 12px;
   color: blue;
-  width:20%;
-  max-width:20%;
+  font-size: 12px;
+  width:     16%;
+  height:     5%;
+  max-width: 20%;
   position: fixed;
-  left: calc(80%);
+  left: calc(84%);
   top: calc(95%);
+}
+
+.mypanel{
+  margin-top:     5px; 
+  margin-bottom: 10px; 
+  padding-bottom: 5px;
+}
+
+#maskdetailPrint{
+  color: black;
+  font-size:  12px; 
+  min-height: 20px; 
+  max-height: 70px;
+}
+
+#animalIDPrint{
+  color:black; 
+  margin-top:  5px; 
+  font-size:  12px; 
+  min-height: 20px; 
+  max-height: 70px; 
+  min-width:  80px; 
+  max-width: 220px;
+}
+
+#resultsPrint{
+  color: blue; 
+  font-size: 12px; 
+  overflow-y: scroll; 
+  min-height: 250px; 
+  max-height: 270px; 
+  background: ghostwhite;
+}
+#codePrint{
+  color: blue; 
+  font-size: 12px; 
+  overflow-y: scroll; 
+  min-height: 250px; 
+  max-height: 320px; 
+  background: ghostwhite;
+}
+
+#maskPrint{
+  color:blue; 
+  font-size: 12px; 
+  background: ghostwhite;
 }
