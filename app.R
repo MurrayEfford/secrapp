@@ -2223,7 +2223,7 @@ fitcode <- function() {
           updateNumericInput(session, "rad", value = signif(spacing(temp[[1]])/5, 2))
         }
         else {
-          updateNumericInput(session, "rad", value = spacing(temp)/5)
+          updateNumericInput(session, "rad", value = signif(spacing(temp)/5, 2))
         }
         output$multisession <- renderText(tolower(ms(temp)))
         ncov <- ncol(covariates(temp))
