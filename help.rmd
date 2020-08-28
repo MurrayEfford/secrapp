@@ -1,7 +1,7 @@
 ---
 title: "secr app 1.3"
 author: "Murray Efford"
-date: '2020-08-26'
+date: '2020-08-28'
 output:
   html_document:
     toc: yes
@@ -83,31 +83,47 @@ The Summary table includes the filter text unless that summary field is deselect
 
 ## Model
 
-<table style="width:80%">
+<table style="width:60%">
   <tr>
     <td> Detection function </td>
-    <td> HN &nbsp; halfnormal &nbsp; \( \small g(d) = -g_0 \exp\{-d^2/(2\sigma^2)\} \) </td>
+    <td> HN </td> 
+    <td> halfnormal </td>
+    <td> \( \small g(d) = -g_0 \exp\{-d^2/(2\sigma^2)\} \) </td>
   </tr>
   <tr>
     <td> </td>
-    <td> HR &nbsp; hazard rate  &nbsp; \( \small  g(d) = -g_0 (1 - \exp(-(d/\sigma)^{-z})) \) </td>
+    <td> HR </td>
+    <td> hazard rate</td>
+    <td> \( \small  g(d) = -g_0 (1 - \exp(-(d/\sigma)^{-z})) \) </td>
   </tr>
   <tr>
     <td> </td>
-    <td> EX &nbsp; negative exponential  &nbsp; \( \small  g(d) = -g_0 \exp(-d/\sigma) \) </td>
+    <td> EX </td> 
+    <td> negative exponential</td>
+    <td> \( \small  g(d) = -g_0 \exp(-d/\sigma) \) </td>
   </tr>
   <tr>
     <td> </td>
-    <td> HHN &nbsp; hazard halfnormal  &nbsp; \( \small  \lambda(d) = -\lambda_0 \exp(-d^2/(2\sigma^2)) \) </td>
+    <td> HHN </td> 
+    <td> hazard halfnormal</td>
+    <td> \( \small  \lambda(d) = -\lambda_0 \exp(-d^2/(2\sigma^2)) \) </td>
   </tr>
   <tr>
     <td> </td>
-    <td> HHR &nbsp; hazard hazard rate  &nbsp; \( \small  \lambda(d) = -\lambda_0 (1 - \exp(-(d/\sigma)^{-z})) \)  </td>
+    <td> HHR </td>
+    <td> hazard hazard rate </td>
+    <td> \( \small  \lambda(d) = -\lambda_0 (1 - \exp(-(d/\sigma)^{-z})) \)  </td>
   </tr>
   <tr>
     <td> </td>
-    <td> HEX &nbsp; hazard negative exponential  &nbsp; \( \small  \lambda(d) = -\lambda_0 \exp(-d/\sigma) \) </td>
+    <td> HEX </td>
+    <td> hazard negative exponential</td>
+    <td> \( \small  \lambda(d) = -\lambda_0 \exp(-d/\sigma) \) </td>
   </tr>
+</table> 
+  
+<br>
+<table style="width:60%">
   <tr>
     <td>Likelihood</td>
     <td>maximize full likelihood or likelihood conditional on \( \small n\)</td>
@@ -118,7 +134,7 @@ The Summary table includes the filter text unless that summary field is deselect
   </tr>
   <tr>
     <td>Mixture hcov</td>
-    <td>name of covariate</td>
+    <td>name of individual covariate</td>
   </tr>
 </table> 
 
@@ -147,7 +163,7 @@ The application is designed for small- to medium-sized models. An internal algor
 
 ## Actions
 
-<table style="width:60%">
+<table style="width:50%">
   <tr>
     <td>Fit model</td>
     <td>Fit closed-population SECR model</td>
@@ -171,7 +187,7 @@ The option 'Switch to secrdesign' appears once a model has been fitted if the de
 
 *Values in the Results window are updated automatically when the inputs change.*
 
-The default results vary depending on the inputs
+The default 'results' vary depending on the inputs
 
 * summary of detector layout only
 * summary of capthist object (detector layout + detections)
