@@ -2663,9 +2663,11 @@ fitcode <- function() {
       if (is.null(traprv$data))
         return(NULL)
       else {
-        if (!maskOK()) showNotification("no detectors in habitat polygon(s)",
+        if (!maskOK()) {
+          showNotification("no detectors in habitat polygon(s)",
           type = "warning", id = "notrapsinpoly",
           duration = seconds)
+        }
         msk <- make.mask (traprv$data,
           buffer = input$buffer,
           nx = input$habnx,
@@ -2718,6 +2720,15 @@ fitcode <- function() {
         }
       }
     }
+    # check spacing 2020-09-02
+    if (!is.null(capthist())) {
+      rpsv <- unlist(RPSV(capthist(), CC = TRUE))[input$sess]
+      sp <- unlist(spacing(msk))[input$sess]
+      if (sp > rpsv) {
+          showNotification(id = "lastaction", type = "warning", duration = NULL,
+            paste0("mask spacing ", signif(sp,2), " exceeds naive sigma ", signif(rpsv,2)))
+        }
+      }
     msk
   }
   )
@@ -4030,7 +4041,7 @@ fitcode <- function() {
       rpsv <- unlist(RPSV(capthist(), CC = TRUE))[input$sess]
       cat("Number of moves", length(unlist(m)), "\n")
       cat("Median move", round(median(unlist(m)),1), "m\n")
-      cat("Approx HN sigma", round(rpsv,1), "m\n")
+      cat("Naive HN sigma", round(rpsv,1), "m\n")
       cat("Longest move", round(maxm,1), "m\n")
       cat("by animal ID", IDmax, "\n")
     }
