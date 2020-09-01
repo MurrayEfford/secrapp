@@ -283,7 +283,7 @@ ui <- function(request) {
                   column(9, fileInput("importfilename", 
                     "Import capthist from Rds file",
                     accept = c(".RDS", ".Rds",".rds"))),
-                  column(3, br(), actionLink("clearimportbtn", "Clear"))
+                  column(3, br(), actionLink("clearimportlink", "Clear"))
                 )
               )
             ),  # end conditionalPanel stored capthist
@@ -508,7 +508,7 @@ ui <- function(request) {
               tabPanel("Build",
                 wellPanel(class = "mypanel", 
                   fluidRow(
-                    column(6, 
+                    column(8, 
                       numericInput("buffer", "Buffer width (m)",
                         min = 0,
                         max = 100000,
@@ -524,9 +524,11 @@ ui <- function(request) {
                         width = 180)
                       )
                     ),
-                    column(6,
-                      br(),
-                      actionButton("suggestbuffer", "Suggest width", width = 130,
+                    column(4,
+                      br(), br(),
+                      #actionLink("suggestbufferlink", "suggest width",
+                        actionLink("suggestbufferlink", HTML("<small>suggest width</small>"),
+                          width = 130,
                         title = "Based on fitted model, if available, otherwise RPSV. Seeks buffer truncation bias <= 1%"))
                   ),
                   fluidRow(
@@ -973,6 +975,7 @@ server <- function(input, output, session) {
   disable("fitbtn")
   disable("captfilename")
   disable("captxlsname")
+  disable("dummybookmarkbutton")
   
   showNotification(paste("secr", desc$Version, desc$Date), id = "lastaction",
     closeButton = FALSE, type = "message", duration = seconds)
@@ -1592,7 +1595,7 @@ server <- function(input, output, session) {
   
   addtosummary <- function() {
     ## input$fields is character vector of selected fields
-    
+    OK <- FALSE
     df <- data.frame(
       date = format(Sys.time(), "%Y-%m-%d"),
       time = format(Sys.time(), "%H:%M:%S"),
@@ -1662,6 +1665,7 @@ server <- function(input, output, session) {
         df$k <- NA_real_ # force numeric NA
       df$proctime <- fitrv$value$proctime
       df[,20:35] <- round(df[,20:35], input$dec)
+      OK <- TRUE
     }
     sumrv$value <- rbind (sumrv$value, df)
     
@@ -1673,6 +1677,7 @@ server <- function(input, output, session) {
         selected = c(input$analyses, paste0("Analysis", nrow(sumrv$value)))
       )
     }
+    return(OK)
   }
   ##############################################################################
   
@@ -1993,41 +1998,47 @@ fitcode <- function() {
       else {
         fitrv$dsurf <- NULL
       }
-      addtosummary()
       
       if (fit$fit$minimum == 1e+10) {
         showNotification("Model failed to fit", id = "lastaction",
           type = "error", duration = NULL)
       }
       else {
-        showNotification("Model fitted", id = "lastaction",
-          closeButton = FALSE, type = "message", duration = seconds)
-        
-        if (input$masktype == "Build") {
-          x <- suppressWarnings(secr:::bufferbiascheck(fit, 
-            buffer = round(input$buffer,2), biasLimit=0.01))
-          if (!is.null(x)) {
-            showNotification(x, id = "lastaction",
-              type = "warning", duration = NULL)
-            
-          }
+        OK <- try(addtosummary())
+        if (inherits(OK, 'try-error')) {
+          showNotification("Problem adding results to summary", id = "lastaction",
+            type = "error", duration = NULL)
         }
-        
-        if (!is.null(fit$fit$hessian) && !is.null(fit$beta.vcv)) {
-          svtol <- 1e-5
-          eigH <- eigen(fit$fit$hessian)$values
-          eigH <- abs(eigH)/max(abs(eigH))   
+        else {
+          showNotification("Model fitted", id = "lastaction",
+            closeButton = FALSE, type = "message", duration = seconds)
           
-          eig <- round(eigH, -log10(svtol))
-          rankH <- length(which(eigH > svtol))
-          nbeta <- nrow(fit$beta.vcv)
-          if (rankH < nbeta) {
-            showNotification("at least one beta parameter is not identifiable (svtol=1e-5)", 
-              id='lastaction', type = "warning", duration = NULL)
+          if (input$masktype == "Build") {
+            x <- suppressWarnings(secr:::bufferbiascheck(fit, 
+              buffer = round(input$buffer,2), biasLimit=0.01))
+            if (!is.null(x)) {
+              showNotification(x, id = "lastaction",
+                type = "warning", duration = NULL)
+              
+            }
+          }
+          
+          if (!is.null(fit$fit$hessian) && !is.null(fit$beta.vcv)) {
+            svtol <- 1e-5
+            eigH <- eigen(fit$fit$hessian)$values
+            eigH <- abs(eigH)/max(abs(eigH))   
+            
+            eig <- round(eigH, -log10(svtol))
+            rankH <- length(which(eigH > svtol))
+            nbeta <- nrow(fit$beta.vcv)
+            if (rankH < nbeta) {
+              showNotification("at least one beta parameter is not identifiable (svtol=1e-5)", 
+                id='lastaction', type = "warning", duration = NULL)
+            }
           }
         }
       }
-
+      
     }
     if (is.null(fitrv$value)) {
       updateRadioButtons (session, "resultsbtn", label = "", 
@@ -2035,7 +2046,7 @@ fitcode <- function() {
     }
   }
   ##############################################################################
-  
+    
   maskOK <- function () {
     if (is.null(polyrv$data) || is.null(traprv$data)) {
       TRUE
@@ -2290,12 +2301,12 @@ fitcode <- function() {
       if (detector(traprv$data)[1] %in% polygondetectors) {
         updateSelectInput(session, "detectfnbox", choices = hazarddetectfn, 
           selected = "HHN")
-        disable('suggestbuffer')
+        disable('suggestbufferlink')
       }
       else {
         updateSelectInput(session, "detectfnbox", choices = c('HN','HR','EX', hazarddetectfn), 
           selected = "HN")
-        enable('suggestbuffer')
+        enable('suggestbufferlink')
       }
       showNotification("capthist imported", closeButton = FALSE, 
         type = "message", id = "lastaction", duration = seconds)
@@ -2447,7 +2458,6 @@ fitcode <- function() {
     maskrv$data <- NULL
     if (input$masktype == 'File') {
       covariaterv$names <- character(0)
-      browser()
       if (!is.null(input$maskfilename)) {
         # temporary fix for shiny problem with multiple files to upload
         if (bookmarkrv$value) {
@@ -2563,22 +2573,12 @@ fitcode <- function() {
   })
   ##############################################################################
   
-  detectrv <- reactive({
+  setdetectrv <- reactive({
     if (input$detectfnbox %in% hazarddetectfn) {
       detectrv$value <- 'lambda0'
-      ## following code not working so suppress
-      # if (!("lambda0" %in% input$fields2)) 
-      #     updateCheckboxGroupInput(session, "fields2", selected = c(input$fields2, "lambda0"))
-      # if (!("se.lambda0" %in% input$fields2))
-      #     updateCheckboxGroupInput(session, "fields2", selected = c(input$fields2, "se.lambda0"))
     }
     else {
       detectrv$value <- 'g0'
-      ## following code not working so suppress
-      # if (!("g0" %in% input$fields2)) 
-      #     updateCheckboxGroupInput(session, "fields2", selected = c(input$fields2, "g0"))
-      # if (!("se.g0" %in% input$fields2))
-      #     updateCheckboxGroupInput(session, "fields2", selected = c(input$fields2, "se.g0"))
     }
   })
   ##############################################################################
@@ -2652,9 +2652,7 @@ fitcode <- function() {
   zw <- reactive ({
     predictparm (parm = 'z', stat = 'estimate') 
   })
-  
-  
-  
+
   ##############################################################################
   
   mask <- reactive( {
@@ -2912,7 +2910,7 @@ fitcode <- function() {
   # alpha
   # areaunit
   # CIclick
-  # clearimportbtn, datasource
+  # clearimportlink, datasource
   # selectallanalyseslink
   # selectnoanalyseslink
   # detector
@@ -2944,7 +2942,7 @@ fitcode <- function() {
   # selectfieldsbtn
   # selectanalysesbtn
   # selectnofieldslink
-  # suggestbuffer
+  # suggestbufferlink
   
   ## Invalidate results when model specification changes
   # likelihoodbtn
@@ -3182,7 +3180,7 @@ fitcode <- function() {
   
   ##############################################################################
   
-  observeEvent(c(input$clearimportbtn, input$datasource), ignoreInit = TRUE, {
+  observeEvent(c(input$clearimportlink, input$datasource), ignoreInit = TRUE, {
     
     reset('trapfilename')
     reset('captfilename')
@@ -3211,12 +3209,12 @@ fitcode <- function() {
     if (input$detector %in% polygondetectors) {
       updateSelectInput(session, "detectfnbox", choices = hazarddetectfn, selected = "HHN")
       updateSelectInput(session, "fmt", label = "Format", choices = c("XY"), selected = 'XY')
-      disable('suggestbuffer')
+      disable('suggestbufferlink')
     }
     else {
       updateSelectInput(session, "detectfnbox", choices = c('HN','HR','EX',hazarddetectfn))
       updateSelectInput(session, "fmt", label = "Format", choices = c("trapID", "XY"))
-      enable('suggestbuffer')
+      enable('suggestbufferlink')
     }
     fitrv$value <- NULL
   })
@@ -3725,8 +3723,8 @@ fitcode <- function() {
   }   )
   ##############################################################################
   
-  observeEvent(input$suggestbuffer, ignoreInit = TRUE, {
-    ## ignoreInit blocks initial execution when suggestbuffer goes from NULL to 0
+  observeEvent(input$suggestbufferlink, ignoreInit = TRUE, {
+    ## ignoreInit blocks initial execution when suggestbufferlink goes from NULL to 0
     ch <- capthist()
     if (!is.null(ch)) {
       progress <- Progress$new(session, min = 1, max = 15)
