@@ -196,7 +196,7 @@ ui <- function(request) {
                       conditionalPanel( condition = "input.datasource == 'Text files'",
                         column(6, 
                           br(),
-                          actionLink("showtrapfilebtn", HTML("<small>show file</small>"))
+                          actionLink("showtrapfilelink", HTML("<small>show file</small>"))
                         )
                       )
                     ),
@@ -241,10 +241,10 @@ ui <- function(request) {
                       column(6, 
                         br(), 
                         conditionalPanel( condition = "input.datasource == 'Text files'",
-                          actionLink("showcaptfilebtn", HTML("<small>show file</small>")),
+                          actionLink("showcaptfilelink", HTML("<small>show file</small>")),
                           br()
                         ),
-                        actionLink("filtercapt", HTML("<small>filter</small>"))
+                        actionLink("filtercaptlink", HTML("<small>filter</small>"))
                       )
                       
                     ),
@@ -333,7 +333,8 @@ ui <- function(request) {
             fluidRow(
               column(3, actionButton("resetbtn", "Reset all", width = 130, 
                 title = "Reset all inputs to initial values")),
-              column(3, bookmarkButton(width = 130)),
+              # column(3, bookmarkButton(width = 130)), # NOT WORKING 1.3
+              column(3, actionButton("dummybookmarkbutton", "Bookmark", width = 130)),
               column(3),
               column(3, helpText(HTML("F11 full screen")))
             )
@@ -545,7 +546,7 @@ ui <- function(request) {
                 ),
                 wellPanel(class = "mypanel", 
                   div(style="height: 80px;",
-                    fileInput("polyfilename", 
+                    fileInput("maskpolyfilename", 
                       paste0("Mask polygon file(s)", strrep(intToUtf8(160), 3), " (optional)"),
                       accept = c('.shp','.dbf','.sbn','.sbx',
                         '.shx',".prj", ".txt", ".rdata", ".rda", ".rds"), 
@@ -655,16 +656,17 @@ ui <- function(request) {
               h2("Fields"),
               fluidRow(
                 column(6, actionButton("selectfieldsbtn", "Select", title = "Choose fields to display")), 
-                column(6, actionLink("selectnonebtn", "None", title = "Unselect all fields"), br(), 
-                  actionLink("selectallbtn", "All", title = "Select all fields"))
+                column(6, 
+                  actionLink("selectnofieldslink", "None", title = "Unselect all fields"), br(), 
+                  actionLink("selectallfieldslink", "All", title = "Select all fields"))
               ),
               br(),
               h2("Analyses"),
               fluidRow(
                 column(6, actionButton("selectanalysesbtn", "Select", title = "Choose analyses to display")), 
                 column(4, 
-                  actionLink("selectnonelink", "None", title = "Select no analyses"), br(),
-                  actionLink("selectalllink",  "All",  title = "Select all analyses")
+                  actionLink("selectnoanalyseslink", "None", title = "Select no analyses"), br(),
+                  actionLink("selectallanalyseslink",  "All",  title = "Select all analyses")
                 )
               ), 
               br(), 
@@ -950,12 +952,12 @@ ui <- function(request) {
 server <- function(input, output, session) {
   
   desc <- packageDescription("secr")
-  summaryfields <- c("date", "time", "note", "traps", "captures", "filter", "n", "r",
-    "ndetectors", "noccasions", "usagepct", "maskbuffer", "masknrow", "maskspace",
-    "likelihood", "distribution", "model", "hcov", 
+  summaryfields <- c("date", "time", "note", "traps", "captures", "filter", 
+    "n", "r", "ndetectors", "noccasions", "usagepct", "maskbuffer", "masknrow", 
+    "maskspace", "likelihood", "distribution", "model", "hcov", 
     "detectfn", "npar", "logLik", "AIC", "dAIC",
-    "D", "se.D", "RSE.D", "g0", "se.g0", "lambda0", "se.lambda0", "sigma", "se.sigma", "z", "se.z",
-    "k", "proctime"
+    "D", "se.D", "RSE.D", "g0", "se.g0", "lambda0", "se.lambda0", "sigma", 
+    "se.sigma", "z", "se.z", "k", "proctime"
   )
   
   fieldgroup1 <- 1:18
@@ -970,6 +972,7 @@ server <- function(input, output, session) {
   
   disable("fitbtn")
   disable("captfilename")
+  disable("captxlsname")
   
   showNotification(paste("secr", desc$Version, desc$Date), id = "lastaction",
     closeButton = FALSE, type = "message", duration = seconds)
@@ -1137,7 +1140,7 @@ server <- function(input, output, session) {
           paste0("trapotherargs=", input$trapotherargs))
       }
       
-      if (!is.null(input$captfilename)) {
+      if (!is.null(captrv$data)) {
         parm <- c(parm,
           paste0("noccasions=", as.character(noccasions())))
       }
@@ -1224,17 +1227,17 @@ server <- function(input, output, session) {
   output$habitatfile <- renderUI({
     helptext <- ""
     if (!is.null(polyrv$data)) {
-      pos <- grep(".shp", tolower(input$polyfilename[,1]))
+      pos <- grep(".shp", tolower(input$maskpolyfilename[,1]))
       if (length(pos)>0)
-        helptext <- paste0(input$polyfilename[pos,1])
-      pos <- grep(".rda", tolower(input$polyfilename[,1]))  # .rda, .rdata
+        helptext <- paste0(input$maskpolyfilename[pos,1])
+      pos <- grep(".rda", tolower(input$maskpolyfilename[,1]))  # .rda, .rdata
       if (length(pos)>0) {
-        objlist <- load(input$polyfilename[1,4])
+        objlist <- load(input$maskpolyfilename[1,4])
         helptext <- paste0(objlist[1])
       }
-      pos <- grep(".rds", tolower(input$polyfilename[,1])) 
+      pos <- grep(".rds", tolower(input$maskpolyfilename[,1])) 
       if (length(pos)>0) {
-        helptext <- paste0(input$polyfilename[pos,1])
+        helptext <- paste0(input$maskpolyfilename[pos,1])
       }
     }
     helpText(HTML(helptext))
@@ -1780,9 +1783,9 @@ server <- function(input, output, session) {
         addcovcode <- ""
         dropcode <- ""
         
-        if (!is.null(input$polyfilename)) { 
+        if (!is.null(input$maskpolyfilename)) { 
           polyhabitat <- input$includeexcludebtn == "Include"
-          polycode <- getSPcode(input$polyfilename, "poly")
+          polycode <- getSPcode(input$maskpolyfilename, "poly")
         }
         if (!is.null(input$maskcovariatefilename)) { 
           ext <- tolower(tools::file_ext(input$maskcovariatefilename[1,1]))
@@ -2057,35 +2060,26 @@ fitcode <- function() {
   }
   ##############################################################################
   
-  ## reactive
+  ## reactiveValues
   
-  # capthist 
-  # density 
-  # predictresult 
-  # derivedresult 
-  # detectorarray
-  # invalidateOutputs 
-  # detect0 
-  # mask 
-  # masknrow 
-  # maskspace 
-  # n 
-  # ndetectors
-  # newdata 
-  # noccasions 
-  # nsessions 
-  # poly 
-  # pop
-  # r 
-  # RSE
-  # se.density 
-  # se.detect0 
-  # se.sigma 
-  # sigma 
-  # zw
-  # usagepct 
-  
-  ##############################################################################
+  bookmarkrv <- reactiveValues(value = FALSE, captfilename="", 
+    captxlsname="", maskfilename="")
+  capttextrv <- reactiveValues(value = FALSE)
+  current <- reactiveValues(unit = "ha")
+  detectrv <- reactiveValues(value = 'g0')
+  Drv <- reactiveValues(current = FALSE, xy = NULL, value = NULL)
+  filtercaptrv <- reactiveValues(value = FALSE)
+  filtermaskrv <- reactiveValues(value = FALSE)
+  fitrv <-  reactiveValues(value = NULL)
+  poprv <- reactiveValues(v = 0)  # used to invalidate and re-plot popn
+  pxyrv <- reactiveValues(current = FALSE, xy = NULL, value = NULL)
+  RSErv <- reactiveValues(current = FALSE, value = NULL, adjRSE = NULL)
+  selectingfieldsrv <- reactiveValues(value = FALSE)
+  selectinganalysesrv <- reactiveValues(value = FALSE)
+  sumrv <- reactiveValues(value = read.csv(text = paste(summaryfields, collapse = ", ")))
+  timerv <- reactiveValues(timewarning = timewarning, timelimit = timelimit)
+  traptextrv <- reactiveValues(value = FALSE)
+
   
   ## using advice of Joe Cheng 2018-03-23 to allow resetting of fileInputs
   ## https://stackoverflow.com/questions/49344468/resetting-fileinput-in-shiny-app
@@ -2128,6 +2122,37 @@ fitcode <- function() {
   
   ##############################################################################
   
+  ## reactive
+  
+  # capthist 
+  # density 
+  # predictresult 
+  # derivedresult 
+  # detectorarray
+  # invalidateOutputs 
+  # detect0 
+  # mask 
+  # masknrow 
+  # maskspace 
+  # n 
+  # ndetectors
+  # newdata 
+  # noccasions 
+  # nsessions 
+  # poly 
+  # pop
+  # r 
+  # RSE
+  # se.density 
+  # se.detect0 
+  # se.sigma 
+  # sigma 
+  # zw
+  # usagepct 
+  
+  ##############################################################################
+  
+  
   getcovnames <- function (cov, ncov, prefix = 'X', quote = FALSE, character = TRUE) {
     if (ncov <= 0) {
       NULL
@@ -2157,9 +2182,12 @@ fitcode <- function() {
   }
   
   #############################################################################
-  ## read trap file
+  ## read or re-read trap file
   
-  observe({
+  observeEvent(c(input$trapfilename, input$trapxlsname, input$detector, 
+    input$trapcovnames, input$trapotherargs, input$trapsheet), 
+    ignoreInit = FALSE, {
+  
     req(!traprv$clear)
     if (input$datasource == 'Text files') {
       req(input$trapfilename)
@@ -2170,26 +2198,35 @@ fitcode <- function() {
     removeNotification("badtrapotherargs")
     removeNotification("badtrap")
     removeNotification("badcapt")
-    reset('importfilename')
-    reset('captfilename')
-    reset('captxlsname')
-    updateSelectInput(session, "captsheet", choices = "Sheet1")
-    importrv$data <- NULL
-    importrv$clear <- TRUE
-    captrv$data <- NULL
-    captrv$clear <- TRUE
-
+    
+    if (!bookmarkrv$value) {
+      reset('importfilename')
+      importrv$data <- NULL
+      importrv$clear <- TRUE
+      
+      reset('captfilename')
+      reset('captxlsname')
+      updateSelectInput(session, "captsheet", choices = "Sheet1")
+      captrv$data <- NULL
+      captrv$clear <- TRUE
+    }
     sheet <- ""
     if (input$datasource == 'Text files') {
-      dataname <- input$trapfilename[,"datapath"]
+      if (bookmarkrv$value)
+        trapdataname <- bookmarkrv$trapfilename
+      else
+        trapdataname <- input$trapfilename[,"datapath"]
     }
     else {
-      dataname <- input$trapxlsname[,"datapath"]
+      if (bookmarkrv$value)
+        trapdataname <- bookmarkrv$trapxlsname
+      else
+        trapdataname <- input$trapxlsname[,"datapath"]
       # assume common sheet name for now
       checksheet <- function(dname) {
         input$trapsheet %in% readxl::excel_sheets(dname)
       }
-      if (!all(sapply(dataname, checksheet))) return()
+      if (!all(sapply(trapdataname, checksheet))) return()
       if (!grepl('sheet', input$trapotherargs)) {
         sheet <- paste0(", sheet = '", input$trapsheet, "'")
       }
@@ -2206,7 +2243,8 @@ fitcode <- function() {
         args <- paste0(", ", args)
       }
       
-      readtrapcall <-  paste0("read.traps (dataname, detector = input$detector", args, sheet, ")")
+      readtrapcall <-  paste0("read.traps (trapdataname, detector = input$detector", 
+        args, sheet, ")")
       
       temp <- try(eval(parse(text = readtrapcall)))
       if (!inherits(temp, "traps")) {
@@ -2278,16 +2316,29 @@ fitcode <- function() {
     sheet <- ""
     if (input$datasource == 'Text files') {
       req(input$captfilename)
-      dataname <- input$captfilename[1,"datapath"]
-      filename <- input$captfilename[1,"name"]
+      # temporary fix for bad shiny bookmark
+      if (bookmarkrv$value) {
+        captdataname <- bookmarkrv$captfilename
+      }
+      else {
+        captdataname <- input$captfilename[1,"datapath"]
+      }
+      captfilename <- input$captfilename[1,"name"]
     }
     else {
       req(input$captxlsname)
-      dataname <- input$captxlsname[1,"datapath"]
-      filename <- input$captxlsname[1,"name"]
-      if (!input$captsheet %in% readxl::excel_sheets(dataname)) return()
+      # temporary fix for bad shiny bookmark
+      if (bookmarkrv$value) {
+        captdataname <- bookmarkrv$captlsname
+      }
+      else {
+        captdataname <- input$captxlsname[1,"datapath"]
+      }
       
-      samexls <- filename == input$trapxlsname[1,"name"]
+      captfilename <- input$captxlsname[1,"name"]
+      if (!input$captsheet %in% readxl::excel_sheets(captdataname)) return()
+      
+      samexls <- captfilename == input$trapxlsname[1,"name"]
       if (samexls && input$captsheet %in% input$trapsheet) {
         showNotification(id = "lastaction", type = "error", duration = NULL,
           "cannot use same xls sheet")
@@ -2310,17 +2361,17 @@ fitcode <- function() {
       removeNotification(id = "badcaptotherargs")
       if (args != "")
         args <- paste0(", ", args)
-      if (grepl('.xls', dataname)) {
-        readcaptcall <- paste0("readxl::read_excel(dataname", args, sheet, ")")
+      if (grepl('.xls', captdataname)) {
+        readcaptcall <- paste0("readxl::read_excel(captdataname", args, sheet, ")")
       }
       else {
         # ensure correct type for trapID
-        nfield <- count.fields(dataname)[1]
+        nfield <- count.fields(captdataname)[1]
         if (nfield >= mincol && input$fmt == "trapID" && ! grepl("colClasses", args)) {
           colClass <- c("character", "character","integer","character", rep(NA, nfield-4))
           args <- paste0(args, ", colClasses = colClass")
         }
-        readcaptcall <- paste0("read.table (dataname", args, ")")
+        readcaptcall <- paste0("read.table (captdataname", args, ")")
       }
       captrv$data <- try(eval(parse(text = readcaptcall)))
       captrv$data <- as.data.frame(captrv$data)
@@ -2341,10 +2392,10 @@ fitcode <- function() {
   
   ## read mask polygon file
   observe({
-    req(input$polyfilename)
+    req(input$maskpolyfilename)
     req(!polyrv$clear)
     removeNotification("badpoly")
-    polyrv$data <- readpolygon(input$polyfilename)
+    polyrv$data <- readpolygon(input$maskpolyfilename)
     if (!inherits(polyrv$data, "SpatialPolygons")) {
       showNotification("invalid polygon file; try again",
         type = "error", id = "badpoly")
@@ -2352,14 +2403,15 @@ fitcode <- function() {
     }
   })
   ##############################################################################
+  
   ## read mask covariate source file
   observe({
     req(input$maskcovariatefilename)
     req(!covariaterv$clear)
     ext <- tolower(tools::file_ext(input$maskcovariatefilename[1,1]))
     if (ext == "txt") {
-      covariaterv$data <- read.mask(input$maskcovariatefilename[1,4], header = TRUE, 
-        stringsAsFactors = TRUE)
+      covariaterv$data <- read.mask(input$maskcovariatefilename[1,4], 
+        header = TRUE, stringsAsFactors = TRUE)
     }
     else if (ext == "rds") {
       covariaterv$data <- readRDS(input$maskcovariatefilename[1,4])
@@ -2395,177 +2447,22 @@ fitcode <- function() {
     maskrv$data <- NULL
     if (input$masktype == 'File') {
       covariaterv$names <- character(0)
+      browser()
       if (!is.null(input$maskfilename)) {
-        maskrv$data <- read.mask(input$maskfilename[1,4], header = TRUE, 
-          stringsAsFactors = TRUE) 
+        # temporary fix for shiny problem with multiple files to upload
+        if (bookmarkrv$value) {
+          maskrv$data <- read.mask(bookmarkrv$maskfilename, header = TRUE, 
+            stringsAsFactors = TRUE) 
+        }
+        else {
+          maskrv$data <- read.mask(input$maskfilename[1,4], header = TRUE, 
+            stringsAsFactors = TRUE) 
+        }
         covariaterv$names <- names(covariates(maskrv$data))
         updateSelectInput(session, "maskcov", 
           choices = c("none", covariaterv$names))
       }
     }
-  })
-  ##############################################################################
-  
-  observeEvent(c(input$trapfilename,  input$trapxlsname, input$trapsheet), {
-    traprv$clear <- FALSE
-    updateNumericInput(session, "animal", value = 1)
-    updateRadioButtons(session, "resultsbtn", label = "", 
-      inline = TRUE, choices = defaultresultsbtn)
-  }, priority = 1000)
-  
-  observeEvent(c(input$captfilename, input$captxlsname, input$captsheet), {
-    captrv$clear <- FALSE
-  }, priority = 1000)
-  
-  observeEvent(input$importfilename, {
-    importrv$clear <- FALSE
-    updateRadioButtons(session, "resultsbtn", label = "", 
-      inline = TRUE, choices = defaultresultsbtn)
-  }, priority = 1000)
-  
-  observeEvent(input$polyfilename, {
-    polyrv$clear <- FALSE
-  }, priority = 1000)
-  
-  observeEvent(input$maskcovariatefilename, {
-    covariaterv$clear <- FALSE
-  }, priority = 1000)
-  
-  observeEvent(input$maskfilename, {
-    maskrv$clear <- FALSE
-  }, priority = 1000)
-  
-  ##############################################################################
-  
-  observeEvent(input$navlist, {
-    removeNotification("lastaction")
-    if (input$navlist == "Main screen") {
-      if (is.null(traprv$data)) {
-        showNotification("waiting for input", id = "lastaction", 
-          closeButton = FALSE, type = "message", duration = NULL)
-      }
-    }
-    else if (input$navlist == "Habitat mask") {
-      if (is.null(traprv$data))
-        showNotification("waiting for detector layout on Main screen", id = "lastaction", 
-          closeButton = FALSE, type = "message", duration = NULL)
-    }
-    else if (input$navlist == "Summary") {
-      if (is.null(sumrv$value) || nrow(sumrv$value)==0)
-        showNotification("no model has been fitted", id = "lastaction", 
-          closeButton = FALSE, type = "message", duration = NULL)
-    }
-  })
-  ##############################################################################
-  
-  observeEvent(c(input$detectfnbox, input$likelihoodbtn, input$distributionbtn,
-    input$hcovbox, input$model, input$otherargs,
-    input$masktype, input$buffer, input$habnx, input$maskshapebtn, 
-    input$polyfilename, input$maskfilename,
-    input$filtercapt, input$filtercapttext), {
-      fitrv$value <- NULL
-      updateRadioButtons(session, "resultsbtn", label = "", 
-        inline = TRUE, choices = defaultresultsbtn)
-      showNotification("model modified, yet to be fitted", id="lastaction", 
-        closeButton = FALSE,type="message", duration = NULL)
-    })
-  ##############################################################################
-  
-  observeEvent(input$masktype, {
-    reset("maskfilename")
-    reset("maskpolygonsfilename")
-    reset("maskcovariatefilename")
-    maskrv$data <- NULL
-    maskrv$clear <- TRUE
-    filtermaskrv$value <- FALSE
-    updateTextInput(session, "filtermasktext", value = "")
-    covariaterv$data <- NULL
-    covariaterv$names <- character(0)
-    covariaterv$clear <- TRUE
-    }, priority = 1000)
-  ##############################################################################
-  
-  observeEvent(input$arrayClick, {
-    xy <- c(input$arrayClick$x, input$arrayClick$y)
-    tmpgrid <- isolate(traprv$data)
-    tmpcapt <- capthist()
-    if (ms(tmpcapt)) {
-      tmpcapt <- tmpcapt[[input$sess]]
-      tmpgrid <- traps(tmpcapt)
-    }
-    if (!is.null(xy) && !is.null(tmpcapt)) 
-    {
-      if (detector(tmpgrid)[1] %in% polygondetectors) {
-        nearest <- nearesttrap(xy, xy(tmpcapt))
-        updateNumericInput(session, "animal", value = animalID(tmpcapt, names=FALSE)[nearest])
-        id <- paste0(animalID(tmpcapt)[nearest], ":")
-      }
-      else {
-        nearest <- nearesttrap(xy, tmpgrid)
-        #-----------------------------------------------------
-        ## machinery to cycle through animals at this detector
-        if (lasttrap != nearest) clickno <<- 0
-        clickno <<- clickno + 1
-        lasttrap <<- nearest
-        at.xy <- apply(tmpcapt[,,nearest, drop = FALSE],1,sum)
-        at.xy <- which(at.xy>0)
-        clickno <<- ((clickno-1) %% length(at.xy)) + 1
-        #-----------------------------------------------------
-        if (length(at.xy)>0) {
-          updateNumericInput(session, "animal", value = as.numeric(at.xy[clickno]))
-        }
-      }
-    }
-  })
-  ##############################################################################
-  
-  observeEvent(input$animal, {
-    if (input$animal>0) {
-      if (ms(capthist())) {
-        currentIDrv$value <- rownames(capthist()[[input$sess]])[input$animal]
-      }
-      else {
-        currentIDrv$value <- rownames(capthist())[input$animal]
-      }
-    }
-    else {
-      currentIDrv$value <- ""
-    }
-  })
-  
-  observeEvent(input$sess, ignoreInit = TRUE, {
-    if (input$animal>0) {
-      # Tracking ID over sessions not working 2020-08-26, so suppress
-      # ID <- currentIDrv$value
-      # assume ms(capthist())
-      # newsessanimal <- match(ID, rownames(capthist()[[input$sess]]))
-      # if (is.na(newsessanimal)) {
-      #   newsessanimal <- 1
-      #   currentIDrv$value <- rownames(capthist()[[input$sess]])[1]
-      # }
-      # updateNumericInput(session, "animal", value = newsessanimal)
-      updateNumericInput(session, "animal", value = 1)
-    }
-  })
-  
-  observeEvent(input$trapxlsname, {
-    dataname <- input$trapxlsname[1,"datapath"]
-    updateSelectInput(session, "trapsheet", choices = readxl::excel_sheets(dataname))
-  })
-  
-  observeEvent(input$captxlsname, {
-    dataname <- input$captxlsname[1,"datapath"]
-    sheets <- readxl::excel_sheets(dataname)
-    samexls <- input$captxlsname[1,"name"] == input$trapxlsname[1,"name"]
-    sheetnumber <- if (samexls) length(input$trapsheet)+1 else 1
-    if (samexls && length(sheets)<2) {
-      showNotification(id = "lastaction", type = "error", duration = NULL,
-        "cannot use same xls sheet")
-      sheetnumber <- 1
-    }
-    updateSelectInput(session, "captsheet", 
-      choices = sheets,
-      selected = sheets[sheetnumber])
   })
   
   ##############################################################################
@@ -3000,43 +2897,31 @@ fitcode <- function() {
       100*uprob(trps)
   })
   ##############################################################################
-  
-  ## reactiveValues
-  
-  arrrv <- reactiveValues(v = 0)  # used to invalidate and re-plot detectorarray
-  current <- reactiveValues(unit = "ha")
-  timerv <- reactiveValues(timewarning = timewarning, timelimit = timelimit)
-  fitrv <-  reactiveValues(value = NULL)
-  poprv <- reactiveValues(v = 0)  # used to invalidate and re-plot popn
-  pxyrv <- reactiveValues(current = FALSE, xy = NULL, value = NULL)
-  Drv <- reactiveValues(current = FALSE, xy = NULL, value = NULL)
-  RSErv <- reactiveValues(current = FALSE, value = NULL, adjRSE = NULL)
-  selecting <- reactiveValues(v=FALSE)
-  selectinganalyses <- reactiveValues(v=FALSE)
-  sumrv <- reactiveValues(value = read.csv(text = paste(summaryfields, collapse = ", ")))
-  detectrv <- reactiveValues(value='g0')
-  traptextrv <- reactiveValues(value=FALSE)
-  capttextrv <- reactiveValues(value=FALSE)
-  filtercaptrv <- reactiveValues(value=FALSE)
-  filtermaskrv <- reactiveValues(value=FALSE)
-  
-  ##############################################################################
-  
+
   ## observeEvent
+  
+  # navlist
+  
+  # trapfilename,  trapxlsname, trapsheet
+  # captfilename, captxlsname, captsheet
+  # importfilename
+  # maskpolyfilename
+  # maskcovariatefilename
+  # maskfilename
   
   # alpha
   # areaunit
   # CIclick
   # clearimportbtn, datasource
-  # selectalllink
-  # selectnonelink
+  # selectallanalyseslink
+  # selectnoanalyseslink
   # detector
   # detectfnbox
   # distributionbtn
   # fitbtn
   
   # incrementtime
-  # showtrapfilebtn
+  # showtrapfilelink
   
   # mainlink
   # mainlink2
@@ -3055,10 +2940,10 @@ fitcode <- function() {
   # Dclick
   # randompopbtn
   # resetbtn
-  # selectallbtn
+  # selectallfieldslink
   # selectfieldsbtn
   # selectanalysesbtn
-  # selectnonebtn
+  # selectnofieldslink
   # suggestbuffer
   
   ## Invalidate results when model specification changes
@@ -3067,6 +2952,185 @@ fitcode <- function() {
   # distributionbtn
   # model
   # otherarg
+
+  # detectfnbox, likelihoodbtn, distributionbtn, hcovbox, model, otherargs,
+  #     masktype, buffer, habnx, maskshapebtn, maskpolyfilename, maskfilename,
+  #     filtercaptlink, filtercapttext
+  # masktype
+  # arrayClick
+  # animal
+  # sess
+  # trapxlsname
+  # captxlsname
+  
+  ##############################################################################
+
+  observeEvent(input$navlist, {
+    removeNotification("lastaction")
+    if (input$navlist == "Main screen") {
+      if (is.null(traprv$data)) {
+        showNotification("waiting for input", id = "lastaction", 
+          closeButton = FALSE, type = "message", duration = NULL)
+      }
+    }
+    else if (input$navlist == "Habitat mask") {
+      if (is.null(traprv$data))
+        showNotification("waiting for detector layout on Main screen", id = "lastaction", 
+          closeButton = FALSE, type = "message", duration = NULL)
+    }
+    else if (input$navlist == "Summary") {
+      if (is.null(sumrv$value) || nrow(sumrv$value)==0)
+        showNotification("no model has been fitted", id = "lastaction", 
+          closeButton = FALSE, type = "message", duration = NULL)
+    }
+  })
+  ##############################################################################
+  
+  observeEvent(c(input$trapfilename,  input$trapxlsname, input$trapsheet), {
+    traprv$clear <- FALSE
+    updateNumericInput(session, "animal", value = 1)
+    updateRadioButtons(session, "resultsbtn", label = "", 
+      inline = TRUE, choices = defaultresultsbtn)
+  }, priority = 1000)
+  
+  observeEvent(c(input$captfilename, input$captxlsname, input$captsheet), {
+    captrv$clear <- FALSE
+  }, priority = 1000)
+  
+  observeEvent(input$importfilename, {
+    importrv$clear <- FALSE
+    updateRadioButtons(session, "resultsbtn", label = "", 
+      inline = TRUE, choices = defaultresultsbtn)
+  }, priority = 1000)
+  
+  observeEvent(input$maskpolyfilename, {
+    polyrv$clear <- FALSE
+  }, priority = 1000)
+  
+  observeEvent(input$maskcovariatefilename, {
+    covariaterv$clear <- FALSE
+  }, priority = 1000)
+  
+  observeEvent(input$maskfilename, {
+    maskrv$clear <- FALSE
+  }, priority = 1000)
+  
+  ##############################################################################
+  
+  # Invalidate model
+  observeEvent(c(input$detectfnbox, input$likelihoodbtn, input$distributionbtn,
+    input$hcovbox, input$model, input$otherargs,
+    input$masktype, input$buffer, input$habnx, input$maskshapebtn, 
+    input$maskpolyfilename, input$maskfilename,
+    input$filtercaptlink, input$filtercapttext), 
+    ignoreInit = TRUE, {
+      fitrv$value <- NULL
+      updateRadioButtons(session, "resultsbtn", label = "", 
+        inline = TRUE, choices = defaultresultsbtn)
+      showNotification("model modified, yet to be fitted", id="lastaction", 
+        closeButton = FALSE,type="message", duration = NULL)
+    })
+  ##############################################################################
+  
+  # Invalidate mask
+  observeEvent(input$masktype, {
+    reset("maskfilename")
+    reset("maskpolygonsfilename")
+    reset("maskcovariatefilename")
+    maskrv$data <- NULL
+    maskrv$clear <- TRUE
+    filtermaskrv$value <- FALSE
+    updateTextInput(session, "filtermasktext", value = "")
+    covariaterv$data <- NULL
+    covariaterv$names <- character(0)
+    covariaterv$clear <- TRUE
+  }, priority = 1000)
+  ##############################################################################
+  
+  observeEvent(input$arrayClick, {
+    xy <- c(input$arrayClick$x, input$arrayClick$y)
+    tmpgrid <- isolate(traprv$data)
+    tmpcapt <- capthist()
+    if (ms(tmpcapt)) {
+      tmpcapt <- tmpcapt[[input$sess]]
+      tmpgrid <- traps(tmpcapt)
+    }
+    if (!is.null(xy) && !is.null(tmpcapt)) 
+    {
+      if (detector(tmpgrid)[1] %in% polygondetectors) {
+        nearest <- nearesttrap(xy, xy(tmpcapt))
+        updateNumericInput(session, "animal", value = animalID(tmpcapt, names=FALSE)[nearest])
+        id <- paste0(animalID(tmpcapt)[nearest], ":")
+      }
+      else {
+        nearest <- nearesttrap(xy, tmpgrid)
+        #-----------------------------------------------------
+        ## machinery to cycle through animals at this detector
+        if (lasttrap != nearest) clickno <<- 0
+        clickno <<- clickno + 1
+        lasttrap <<- nearest
+        at.xy <- apply(tmpcapt[,,nearest, drop = FALSE],1,sum)
+        at.xy <- which(at.xy>0)
+        clickno <<- ((clickno-1) %% length(at.xy)) + 1
+        #-----------------------------------------------------
+        if (length(at.xy)>0) {
+          updateNumericInput(session, "animal", value = as.numeric(at.xy[clickno]))
+        }
+      }
+    }
+  })
+  ##############################################################################
+  
+  observeEvent(input$animal, {
+    if (input$animal>0) {
+      if (ms(capthist())) {
+        currentIDrv$value <- rownames(capthist()[[input$sess]])[input$animal]
+      }
+      else {
+        currentIDrv$value <- rownames(capthist())[input$animal]
+      }
+    }
+    else {
+      currentIDrv$value <- ""
+    }
+  })
+  
+  observeEvent(input$sess, ignoreInit = TRUE, {
+    if (input$animal>0) {
+      # Tracking ID over sessions not working 2020-08-26, so suppress
+      # ID <- currentIDrv$value
+      # assume ms(capthist())
+      # newsessanimal <- match(ID, rownames(capthist()[[input$sess]]))
+      # if (is.na(newsessanimal)) {
+      #   newsessanimal <- 1
+      #   currentIDrv$value <- rownames(capthist()[[input$sess]])[1]
+      # }
+      # updateNumericInput(session, "animal", value = newsessanimal)
+      updateNumericInput(session, "animal", value = 1)
+    }
+  })
+  
+  observeEvent(input$trapxlsname, {
+    dataname <- input$trapxlsname[1,"datapath"]
+    updateSelectInput(session, "trapsheet", choices = readxl::excel_sheets(dataname))
+  })
+  
+  ##############################################################################
+  
+  observeEvent(input$captxlsname, {
+    dataname <- input$captxlsname[1,"datapath"]
+    sheets <- readxl::excel_sheets(dataname)
+    samexls <- input$captxlsname[1,"name"] == input$trapxlsname[1,"name"]
+    sheetnumber <- if (samexls) length(input$trapsheet)+1 else 1
+    if (samexls && length(sheets)<2) {
+      showNotification(id = "lastaction", type = "error", duration = NULL,
+        "cannot use same xls sheet")
+      sheetnumber <- 1
+    }
+    updateSelectInput(session, "captsheet", 
+      choices = sheets,
+      selected = sheets[sheetnumber])
+  })
   
   ##############################################################################
   
@@ -3101,14 +3165,14 @@ fitcode <- function() {
   })
   ##############################################################################
   
-  observeEvent(input$selectnonelink, {
+  observeEvent(input$selectnoanalyseslink, {
     updateCheckboxGroupInput(session, "analyses", 
       selected = character(0))
   })
   
   ##############################################################################
   
-  observeEvent(input$selectalllink, {
+  observeEvent(input$selectallanalyseslink, {
     if (nrow(sumrv$value) == 0) 
       selected <- character(0)
     else
@@ -3118,10 +3182,11 @@ fitcode <- function() {
   
   ##############################################################################
   
-  observeEvent(c(input$clearimportbtn, input$datasource), {
+  observeEvent(c(input$clearimportbtn, input$datasource), ignoreInit = TRUE, {
     
     reset('trapfilename')
     reset('captfilename')
+    reset('captxlsname')
     disable("captfilename")  # waiting for trap file
     disable("captxlsname")  # waiting for trap xls
     reset('importfilename')
@@ -3171,34 +3236,28 @@ fitcode <- function() {
     timerv$timelimit <- timerv$timelimit+1
   })
   
-  observeEvent(input$showtrapfilebtn, ignoreInit = TRUE, {
-    ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
+  observeEvent(input$showtrapfilelink, ignoreInit = TRUE, {
     capttextrv$value <- FALSE
-    traptextrv$value <- !is.null(input$trapfilename) && (input$showtrapfilebtn %% 2 == 1)
+    traptextrv$value <- !is.null(input$trapfilename) && (input$showtrapfilelink %% 2 == 1)
   })
   
   observeEvent(input$mainlink, ignoreInit = TRUE, {
-    ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
     updateNavlistPanel(session, "navlist", "Main screen")
   })
   
   observeEvent(input$mainlink2, ignoreInit = TRUE, {
-    ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
     updateNavlistPanel(session, "navlist", "Main screen")
   })
   
   observeEvent(input$mainlink3, ignoreInit = TRUE, {
-    ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
     updateNavlistPanel(session, "navlist", "Main screen")
   })
   
   observeEvent(input$optionslink, ignoreInit = TRUE, {
-    ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
     updateNavlistPanel(session, "navlist", "Options")
   })
   
   observeEvent(input$resultsbtn, ignoreInit = TRUE, {
-    ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
     if (input$resultsbtn == "hide") 
       hide("resultsPrint")
     else
@@ -3219,7 +3278,7 @@ fitcode <- function() {
   }, priority = 1000)
 
   observeEvent(input$clearpolygondata, ignoreInit = TRUE, {
-    reset("polyfilename")
+    reset("maskpolyfilename")
     polyrv$data <- NULL
     polyrv$clear <- TRUE
     updateRadioButtons(session, "includeexcludebtn", selected = "Include")
@@ -3236,15 +3295,15 @@ fitcode <- function() {
   })
   
   
-  observeEvent(input$showcaptfilebtn, ignoreInit = TRUE, {
+  observeEvent(input$showcaptfilelink, ignoreInit = TRUE, {
     ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
     traptextrv$value <- FALSE
-    capttextrv$value <- !is.null(input$captfilename) && (input$showcaptfilebtn %% 2 == 1)
+    capttextrv$value <- !is.null(input$captfilename) && (input$showcaptfilelink %% 2 == 1)
   })
   
-  observeEvent(input$filtercapt, ignoreInit = TRUE, {
+  observeEvent(input$filtercaptlink, ignoreInit = TRUE, {
     ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
-    filtercaptrv$value <- (input$filtercapt %% 2) == 1
+    filtercaptrv$value <- (input$filtercaptlink %% 2) == 1
   })
   
   observeEvent(input$filtermask, ignoreInit = TRUE, {
@@ -3447,7 +3506,12 @@ fitcode <- function() {
   
   ##############################################################################
   
-  observeEvent(input$resetbtn, {
+  observeEvent(input$dummybookmarkbutton, ignoreInit = TRUE, {
+    showNotification("Bookmarking is disabled in secrapp 1.3", id = "lastaction", 
+      duration = NULL)  
+  })
+  
+  observeEvent(input$resetbtn, ignoreInit = TRUE, {
     
     current$unit <- "ha"
     fitrv$value <- NULL
@@ -3607,10 +3671,11 @@ fitcode <- function() {
     reset('captfilename')
     reset('captxlsname')
     disable("captfilename")
-
+    disable("captxlsname")
+    
     polyrv$data <- NULL
     polyrv$clear <- TRUE
-    reset('polyfilename')
+    reset('maskpolyfilename')
     
     covariaterv$data <- NULL
     covariaterv$names <- character(0)
@@ -3634,27 +3699,27 @@ fitcode <- function() {
   
   ##############################################################################
   
-  observeEvent(input$selectallbtn, {
+  observeEvent(input$selectallfieldslink, {
     updateCheckboxGroupInput(session, "fields1", selected = summaryfields[fieldgroup1])
     updateCheckboxGroupInput(session, "fields2", selected = summaryfields[fieldgroup2])
   }   )
   ##############################################################################
   
   observeEvent(input$selectfieldsbtn, {
-    selecting$v <- ! selecting$v
-    output$selectingfields <- renderText(selecting$v)
+    selectingfieldsrv$value <- ! selectingfieldsrv$value
+    output$selectingfields <- renderText(selectingfieldsrv$value)
     
   }   )
   ##############################################################################
   
   observeEvent(input$selectanalysesbtn, {
-    selectinganalyses$v <- ! selectinganalyses$v
-    output$selectinganalyses <- renderText(selectinganalyses$v)
+    selectinganalysesrv$value <- ! selectinganalysesrv$value
+    output$selectinganalyses <- renderText(selectinganalysesrv$value)
     
   }   )
   ##############################################################################
   
-  observeEvent(input$selectnonebtn, {
+  observeEvent(input$selectnofieldslink, {
     updateCheckboxGroupInput(session, "fields1", selected = "")
     updateCheckboxGroupInput(session, "fields2", selected = "")
   }   )
@@ -4460,8 +4525,7 @@ fitcode <- function() {
         msk <- mask()[[input$masksess]]
       else 
         msk <- mask()
-      df <- cbind(msk, covariates(msk))
-      write.table(df, file = file)
+      write.mask(msk, file = file)
     }
   )
   
@@ -4484,33 +4548,69 @@ fitcode <- function() {
   
   ##############################################################################
   
-  setBookmarkExclude(c("fitbtn", 
-    "selectalllink", "selectnonelink", "selectnonebtn", "selectallbtn",
+  setBookmarkExclude(c(
+    "filtercaptlink",
+    "fitbtn", 
+    "selectallanalyseslink", 
+    "selectnoanalyseslink", 
+    "selectnofieldslink", 
+    "selectallfieldslink",
     "resetbtn", 
-    "selectfieldsbtn", "selecting",
-    "selectanalysesbtn", "selectinganalyses"))
+    "selectfieldsbtn", 
+    "selectanalysesbtn", 
+    "selectingfields",          # rv
+    "selectinganalyses"         # rv
+    ))
   
   # Save extra values in state$values when we bookmark
   onBookmark(function(state) {
-    shp <- sapply(input$polyfilename, shpfile)
-    if (any(shp)) {
-      showNotification("ESRI shapefile will not be bookmarked", type = "error", id = "noshapefile")
+    maskpolyshp <- sapply(input$maskpolyfilename, shpfile)
+    maskcovshp <- sapply(input$maskcovariatefilename, shpfile)
+    shp <- any(maskpolyshp) | any(maskcovshp)
+    if (shp) {
+      showNotification("ESRI shapefile(s) will not be bookmarked", type = "warning",
+        id = "noshapefile")
     }
     state$values$shp <- shp
     state$values$sumrv <- sumrv$value            # works
     state$values$fit <- fitrv$value
+    state$values$filtercaptrv <- filtercaptrv$value
     state$values$port <- session$clientData$url_port
+    
+    if (!is.null(input$trapfilename))
+      state$values$trapfilename <- tools::file_path_as_absolute(input$trapfilename$name[1])
+    if (!is.null(input$trapxlsname))
+      state$values$trapxlsname <- tools::file_path_as_absolute(input$trapxlsname$name[1])
+    
+    if (!is.null(input$captfilename))
+      state$values$captfilename <- tools::file_path_as_absolute(input$captfilename$name[1])
+    if (!is.null(input$captxlsname))
+      state$values$captxlsname <- tools::file_path_as_absolute(input$captxlsname$name[1])
+    
+    if (!is.null(input$maskfilename))
+      state$values$maskfilename <- tools::file_path_as_absolute(input$maskfilename$name[1])
+    
     ## can manually recover with e.g.
     ## readRDS('d:/density secr 3.2/secrapp/shiny_bookmarks/9c88715bacc260cf/values.rds')$port
   })    
   # Read values from state$values when we restore
   onRestore(function(state) {
+    bookmarkrv$value <- TRUE
+    bookmarkrv$trapfilename <- state$values$trapfilename
+    bookmarkrv$trapxlsname <- state$values$trapxlsname
+    bookmarkrv$captfilename <- state$values$captfilename
+    bookmarkrv$captxlsname <- state$values$captxlsname
+    bookmarkrv$maskfilename <- state$values$maskfilename
     sumrv$value <- state$values$sumrv
     fitrv$value <- state$values$fit
     current$unit <- input$areaunit
     if (any(state$values$shp)) {
       showNotification("Cannot restore ESRI shapefile(s); re-select", type = "error", id = "noshapefile2")
     }
+  })
+  # Read values from state$values when we restore
+  onRestored(function(state) {
+    bookmarkrv$value <- FALSE
   })
 }
 
