@@ -60,12 +60,19 @@ tr {
 .shiny-notification{
   color: blue;
   font-size: 12px;
-  width:     16%;
+  width:     20%;
   height:     5%;
   max-width: 20%;
   position: fixed;
   left: calc(84%);
   top: calc(95%);
+}
+
+.action-button{
+  padding-top: 4px;
+  padding-bottom: 4px;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .mypanel{
@@ -113,3 +120,4 @@ tr {
   font-size: 12px; 
   background: ghostwhite;
 }
+
