@@ -2197,7 +2197,6 @@ fitcode <- function() {
   observeEvent(c(input$trapfilename, input$trapxlsname, input$detector, 
     input$trapcovnames, input$trapotherargs, input$trapsheet), 
     ignoreInit = FALSE, {
-  
     req(!traprv$clear)
     if (input$datasource == 'Text files') {
       req(input$trapfilename)
@@ -2722,7 +2721,7 @@ fitcode <- function() {
     # check spacing 2020-09-02
     if (!is.null(capthist())) {
       rpsv <- unlist(RPSV(capthist(), CC = TRUE))[input$sess]
-      sp <- unlist(spacing(msk))[input$sess]
+      sp <- unlist(spacing(msk)) # [input$sess]
       if (sp > rpsv) {
           showNotification(id = "lastaction", type = "warning", duration = NULL,
             paste0("mask spacing ", signif(sp,3), " exceeds naive sigma ", signif(rpsv,3)))
