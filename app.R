@@ -804,10 +804,11 @@ ui <- function(request) {
                 selected = "None", inline = TRUE),
               fluidRow(
                 column(6, checkboxInput("entireregionbox", "Show entire region", value = FALSE, width = 160)),
-                column(5, checkboxInput("snaptodetector", "Snap to detector", value = FALSE, width = 160))
+                column(6, checkboxInput("varycol", "Vary colours", FALSE)),
               ),
               fluidRow(
-                column(6, checkboxInput("varycol", "Vary colours", FALSE)),
+                column(6, numericInput("arrayborder", "Border  m", value = 20, width = 160, min = 0, max = 1000000, step = 5)),
+                column(6, checkboxInput("arrayframe", "Frame", value = FALSE))
               ),
               br(),
               fluidRow(
@@ -1316,9 +1317,7 @@ server <- function(input, output, session) {
       else {
         nearest <- nearesttrap(xy, tmpgrid)
         id <- paste0(rownames(tmpgrid)[nearest], ":")
-        if (input$snaptodetector) {
-          xy <- tmpgrid[nearest,]
-        }
+        xy <- tmpgrid[nearest,]
       }
       # 2020-02-22 this is transient on capthist plot 
       #            as plot is redrawn when new animal selected
@@ -2726,7 +2725,7 @@ fitcode <- function() {
       sp <- unlist(spacing(msk))[input$sess]
       if (sp > rpsv) {
           showNotification(id = "lastaction", type = "warning", duration = NULL,
-            paste0("mask spacing ", signif(sp,2), " exceeds naive sigma ", signif(rpsv,2)))
+            paste0("mask spacing ", signif(sp,3), " exceeds naive sigma ", signif(rpsv,3)))
         }
       }
     msk
@@ -3645,7 +3644,9 @@ fitcode <- function() {
     
     ## array plot
     updateCheckboxInput(session, "entireregionbox", value = TRUE)
-    updateCheckboxInput(session, "snaptodetector", value = FALSE)
+    updateNumericInput(session, "arrayborder", value = 20)
+    updateCheckboxInput(session, "arrayframe", value = FALSE)
+    
     updateRadioButtons(session, "gridlines", selected = "None")
     updateNumericInput(session, "rad", value = 5)
     updateNumericInput(session, "cex", value = 1)
@@ -4083,6 +4084,8 @@ fitcode <- function() {
   output$arrayPlot <- renderPlot( {
     
     removeNotification("arrayploterror")
+    boxtype <- if (input$arrayframe) "o" else "n"
+    border <- max(input$arrayborder,0)
     par(mar = c(1,1,1,1), cex = 1.3, xpd = TRUE)
     
     if (inherits(capthist(), 'capthist')) {
@@ -4092,9 +4095,9 @@ fitcode <- function() {
         ch <- capthist()
       add <- !is.null(mask()) && input$entireregionbox
       if (add) plot(mask(), col = 'grey97', dots = FALSE)
-      plot (traps(ch), add = add, border = border(1), bty='o', xaxs = 'i', yaxs = 'i', 
-        detpar = list(cex = input$cex), gridlines = (input$gridlines != "None"), 
-          gridspace = as.numeric(input$gridlines))
+      plot (traps(ch), add = add, border = border, bty = boxtype, 
+        xaxs = 'i', yaxs = 'i', gridlines = (input$gridlines != "None"), 
+        detpar = list(cex = input$cex), gridspace = as.numeric(input$gridlines))
       plot(ch, varycol = input$varycol, rad = input$rad, cappar = list(cex = input$cex), 
         tracks = input$tracks, add = TRUE, 
         title = "", subtitle = "")
@@ -4144,8 +4147,8 @@ fitcode <- function() {
       add <- !is.null(mask()) && input$entireregionbox
       if (add) plot(mask(), col = 'grey97', dots = FALSE)
       plot (tmpgrid, add = add, 
-        border = border(1), 
-        bty = 'o', 
+        border = border, 
+        bty = boxtype, 
         xaxs = 'i', yaxs = 'i', 
         detpar = list(cex = input$cex), 
         gridlines = (input$gridlines != "None"), 
