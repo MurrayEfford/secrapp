@@ -1891,7 +1891,13 @@ server <- function(input, output, session) {
         code <- paste0(code, "ch <- make.capthist (capt, traps = array", fmt, cov, ")\n")
         
         if (filtercaptrv$value && !input$filtercapttext=="") {
-          code <- paste0(code, "ch <- subset(capthist = ch, ", input$filtercapttext, ")\n")
+          subset <- input$filtercapttext
+          numsubset <- as.numeric(subset)
+          if (!is.na(numsubset))
+            if (all(numsubset<0)) {
+              subset <- paste0("!(1:nrow(ch)) %in% c(", paste0(-numsubset, collapse = ","), ")")
+            }
+          code <- paste0(code, "ch <- subset(capthist = ch, ", subset, ")\n")
         }
         
         if (comment) {
@@ -2487,7 +2493,13 @@ fitcode <- function() {
         ch <- try(suppressWarnings(make.capthist(captrv$data, traprv$data, 
           fmt = input$fmt)))
         if (filtercaptrv$value && !input$filtercapttext=="") {
-          subsetcaptcall <- paste0("subset (ch,",input$filtercapttext, ")")
+          subset <- input$filtercapttext
+          numsubset <- as.numeric(subset)
+          if (!is.na(numsubset))
+            if (all(numsubset<0)) {
+              subset <- paste0("!(1:nrow(ch)) %in% c(", paste0(-numsubset, collapse = ","), ")")
+            }
+          subsetcaptcall <- paste0("subset (ch,",subset, ")")
         }
       }
       if (inherits(ch, 'try-error')) {
