@@ -55,8 +55,9 @@ ui <- function(request) {
             h2("What is secrapp?"),
             
             HTML("Spatially explicit capture&ndash;recapture (SECR or SCR) (Efford 2004, Borchers and Efford 2008, 
-                                  Efford et al. 2009) is used to estimate animal population density from data on marked animals 
-                                  at arrays of passive detectors (traps, cameras, hair snags etc.)."),
+                  Efford et al. 2009, Royle et al. 2014) is used to estimate animal population density 
+                  from data on marked animals at arrays of passive detectors 
+                  (traps, cameras, hair snags etc.)."),
             br(),br(),
             
             "SECR is computer-intensive, with both Bayesian and frequentist (maximum likelihood) flavours. 
@@ -131,7 +132,10 @@ ui <- function(request) {
             "Efford, M. G., Dawson, D. K. and Robbins, C. R. (2004)",
             a(HTML("DENSITY: software for analysing capture&ndash;recapture data from passive detector arrays."), 
               href="https://www.otago.ac.nz/density/pdfs/Efford Dawson & Robbins 2004 ABC.pdf"),
-              em("Animal Biodiversity and Conservation"), "27.1: 217-228.",
+              em("Animal Biodiversity and Conservation"), "27.1: 217-228.", br(),
+            
+            "Royle, J. A., Chandler, R. B., Sollmann, R. and Gardner, B. (2014)",
+            em(HTML("Spatial capture&ndash;recapture.")), "Academic Press.",
             
             br(), br(),
             
