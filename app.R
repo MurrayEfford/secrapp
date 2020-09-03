@@ -1893,10 +1893,11 @@ server <- function(input, output, session) {
         if (filtercaptrv$value && !input$filtercapttext=="") {
           subset <- input$filtercapttext
           numsubset <- as.numeric(subset)
-          if (!is.na(numsubset))
+          if (all(!is.na(numsubset))) {
             if (all(numsubset<0)) {
               subset <- paste0("!(1:nrow(ch)) %in% c(", paste0(-numsubset, collapse = ","), ")")
             }
+          }
           code <- paste0(code, "ch <- subset(capthist = ch, ", subset, ")\n")
         }
         
@@ -2495,10 +2496,16 @@ fitcode <- function() {
         if (filtercaptrv$value && !input$filtercapttext=="") {
           subset <- input$filtercapttext
           numsubset <- as.numeric(subset)
-          if (!is.na(numsubset))
+          if (all(!is.na(numsubset))) {
             if (all(numsubset<0)) {
               subset <- paste0("!(1:nrow(ch)) %in% c(", paste0(-numsubset, collapse = ","), ")")
             }
+            else if (any(numbset<0)) {
+              showNotification("filter indices must be all positive or all negative",
+                id = "lastaction", duration = NULL)
+            }
+          }
+          
           subsetcaptcall <- paste0("subset (ch,",subset, ")")
         }
       }
