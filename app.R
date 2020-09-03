@@ -48,11 +48,8 @@ ui <- function(request) {
     useShinyjs(),
     withMathJax(),
     br(),
-    navlistPanel(id = "navlist", widths = c(2,10), well=TRUE,
-      
-      "secr app 1.3",
+    navlistPanel(id = "navlist", widths = c(2,10), well=TRUE, "secr app 1.3",
       tabPanel("Introduction",
-        # withMathJax(includeMarkdown("intro.rmd"))  # alternative Rmarkdown 
         fluidRow(
           column(8,
             h2("What is secrapp?"),
@@ -129,7 +126,7 @@ ui <- function(request) {
             
             "Efford, M. G. (2020)",
             a(HTML("secr: Spatially explicit capture&ndash;recapture models."), href = "https://CRAN.R-project.org/package=secr"), 
-            " R package version 4.3.0.", br(),
+            " R package version 4.3.1.", br(),
             
             "Efford, M. G., Dawson, D. K. and Robbins, C. R. (2004)",
             a(HTML("DENSITY: software for analysing capture&ndash;recapture data from passive detector arrays."), 
@@ -241,8 +238,7 @@ ui <- function(request) {
                       column(6, 
                         br(), 
                         conditionalPanel( condition = "input.datasource == 'Text files'",
-                          actionLink("showcaptfilelink", HTML("<small>show file</small>")),
-                          br()
+                          actionLink("showcaptfilelink", HTML("<small>show file</small>"))
                         ),
                         actionLink("filtercaptlink", HTML("<small>filter</small>"))
                       )
@@ -326,7 +322,7 @@ ui <- function(request) {
               column(3, actionButton("secrhelpbtn", "secr help",  width = 130,
                 title = "Open secr help index")),
               column(3, uiOutput("secrdesignurl")),  ## switch to secrdesign, with parameters
-              column(3, actionLink("optionslink", HTML("<small>Go to Options</small>")))
+              column(3, actionLink("optionslink", "Go to Options"))
             ),
             
             br(),
@@ -334,7 +330,7 @@ ui <- function(request) {
               column(3, actionButton("resetbtn", "Reset all", width = 130, 
                 title = "Reset all inputs to initial values")),
               # column(3, bookmarkButton(width = 130)), # NOT WORKING 1.3
-              column(3, actionButton("dummybookmarkbutton", "Bookmark", width = 130)),
+              column(3, actionButton("dummybookmarkbutton", "Bookmark", width = 130, title = "Bookmarking is disabled in secrapp 1.3")),
               column(3),
               column(3, helpText(HTML("F11 full screen")))
             )
