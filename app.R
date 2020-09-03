@@ -373,35 +373,50 @@ ui <- function(request) {
                   ),
                   tabPanel("Array",
                     fluidRow(
-                      column(10, style = 'padding:0px;', 
+                      column(9, style = 'padding:0px;', 
                         plotOutput("arrayPlot", 
                           click = clickOpts(id = "arrayClick", clip = FALSE),
                           hover = hoverOpts(id ="arrayHover", delayType = "throttle"))),
-                      column(2, br(),
+                      column(3, br(),
                         conditionalPanel("output.multisession=='true'",
                           numericInput("sess", "Session", min = 1, max = 2000, 
                             step = 1, value = 1)),
                         br(),
+                        
+                        conditionalPanel("output.capthistLoaded",
+                          checkboxInput("tracks", "All tracks", FALSE), br(),
+                          numericInput("animal", "Select animal", min = 0, max = 2000, 
+                            step = 1, value = 1), 
+                          conditionalPanel("input.animal>0", verbatimTextOutput("animalIDPrint")),
+                          conditionalPanel("output.modelFitted", checkboxInput("fxi", "fxi contour", FALSE))
+                        ),
+                        conditionalPanel("output.usage", 
+                          fluidRow(
+                            column(2, offset = 1, checkboxInput("usageplot", "Usage", FALSE))
+                          )
+                        ),
                         conditionalPanel("input.gridlines != 'None'",
                         uiOutput("uigridlines") ),
                         br(), 
-                        uiOutput('xycoord'))
-                    ),
-                    conditionalPanel("output.capthistLoaded",
-                      fluidRow(
-                        column(2, offset = 1, checkboxInput("tracks", "All tracks", FALSE)),
-                        column(2, numericInput("animal", "Select animal", min = 0, max = 2000, 
-                          step = 1, value = 1)),
-                        column(4, conditionalPanel("input.animal>0", 
-                          verbatimTextOutput("animalIDPrint")
-                        )),
-                        column(3, conditionalPanel("output.modelFitted", checkboxInput("fxi", "fxi contour", FALSE)))
-                      )),
-                    conditionalPanel("output.usage", 
-                      fluidRow(
-                        column(2, offset = 1, checkboxInput("usageplot", "Usage", FALSE))
-                        )
+                        uiOutput('xycoord')
+                      )
                     )
+                    # ,
+                    # conditionalPanel("output.capthistLoaded",
+                    #   fluidRow(
+                    #     column(2, offset = 1, checkboxInput("tracks", "All tracks", FALSE)),
+                    #     column(2, numericInput("animal", "Select animal", min = 0, max = 2000, 
+                    #       step = 1, value = 1)),
+                    #     column(4, conditionalPanel("input.animal>0", 
+                    #       verbatimTextOutput("animalIDPrint")
+                    #     )),
+                    #     column(3, conditionalPanel("output.modelFitted", checkboxInput("fxi", "fxi contour", FALSE)))
+                    #   )),
+                    # conditionalPanel("output.usage", 
+                    #   fluidRow(
+                    #     column(2, offset = 1, checkboxInput("usageplot", "Usage", FALSE))
+                    #     )
+                    # )
                     
                   ),
                   tabPanel("Moves", 
@@ -3859,8 +3874,8 @@ fitcode <- function() {
           paste(names(covar)[i], as.character(covar[[i]]))), collapse = ', ')
       ID <- paste0("ID ", currentIDrv$value)
       ncapt <- sum(ch)
-      nDet <- paste0("\n", ncapt, " detection", if (ncapt>1) "s," else ",") 
-      ORL <- paste0("ORL ", signif(ORL(ch)$ORL, 3), " m")
+      nDet <- paste0("\n", ncapt, " detection", if (ncapt>1) "s" else "") 
+      ORL <- paste0("\nORL ", signif(ORL(ch)$ORL, 3), " m")
       cat(paste(ID, covar, nDet, ORL, sep = " "))
     }
   })
