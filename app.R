@@ -324,7 +324,9 @@ ui <- function(request) {
               column(3, actionButton("fitbtn", "Fit model",  width = 130,
                 title = "Fit spatially explicit capture-recapture model to estimate density and update Results")),
               column(3, actionButton("secrhelpbtn", "secr help",  width = 130,
-                title = "Open secr help index")),
+                title = "Open secr manual in a browser window",
+                onclick = "window.open('https://www.otago.ac.nz/density/pdfs/secr-manual.pdf',
+                '_blank')")),
               column(3, uiOutput("secrdesignurl")),  ## switch to secrdesign, with parameters
               column(3, actionLink("optionslink", "Go to Options"))
             ),
@@ -3381,17 +3383,18 @@ fitcode <- function() {
   })
   
   ##############################################################################
-  
-  observeEvent(input$secrhelpbtn, ignoreInit = TRUE, {
-    secrhelp <- file.path(path.package("secr"), "html",  "00Index.html")
-    if (file.exists(secrhelp)) {
-      browseURL(secrhelp)
-    }
-    else {
-      # revert to pdf manual if html help not found
-      browseURL("https://www.otago.ac.nz/density/pdfs/secr-manual.pdf")
-    }
-  })
+
+  # defunct 2020-09-07 as browseURL doesn't work on server  
+  # observeEvent(input$secrhelpbtn, ignoreInit = TRUE, {
+  #   secrhelp <- file.path(path.package("secr"), "html",  "00Index.html")
+  #   if (file.exists(secrhelp)) {
+  #     browseURL(secrhelp)
+  #   }
+  #   else {
+  #     # revert to pdf manual if html help not found
+  #     browseURL("https://www.otago.ac.nz/density/pdfs/secr-manual.pdf")
+  #   }
+  # })
   ##############################################################################
   
   observeEvent(input$likelihoodbtn, ignoreInit = TRUE, {
