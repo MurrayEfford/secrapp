@@ -313,7 +313,7 @@ ui <- function(request) {
               ),
               fluidRow(
                 column(12,  style="color:grey;",
-                  textInput("otherargs", "Other arguments", value = "", 
+                  textInput("modelotherargs", "Other arguments", value = "", 
                     placeholder = "e.g., details = list(fastproximity = FALSE), binomN = 1"))
               )
             ),   # end wellPanel Model
@@ -543,7 +543,6 @@ ui <- function(request) {
                     ),
                     column(4,
                       br(), br(),
-                      #actionLink("suggestbufferlink", "suggest width",
                         actionLink("suggestbufferlink", HTML("<small>suggest width</small>"),
                           width = 130,
                         title = "Based on fitted model, if available, otherwise RPSV. Seeks buffer truncation bias <= 1%"))
@@ -994,7 +993,7 @@ server <- function(input, output, session) {
   disable("captfilename")
   disable("captxlsname")
   disable("dummybookmarkbutton")
-  
+
   showNotification(paste("secr", desc$Version, desc$Date), id = "lastaction",
     closeButton = FALSE, type = "message", duration = seconds)
   output$selectingfields <- renderText('false')
@@ -1946,10 +1945,10 @@ fitcode <- function() {
       paste0(",\n      method = '", input$method, "'")
     nc <- input$ncores
     ncores <- paste0(", ncores = ", nc)
-    otherargs <- if (input$otherargs=="") "" else paste0(",\n      ", input$otherargs)
+    modelotherargs <- if (input$modelotherargs=="") "" else paste0(",\n      ", input$modelotherargs)
     code <- paste0(
       "fitted <- secr.fit(ch, mask = mask, detectfn = ", detfn, CL, hcov, ", \n",
-      "      ", model, ", trace = FALSE", distn, method, ncores, otherargs, ")\n"
+      "      ", model, ", trace = FALSE", distn, method, ncores, modelotherargs, ")\n"
     )
     code
   }
@@ -1975,14 +1974,15 @@ fitcode <- function() {
     
     model <- modellist()
     
-    otherargs <- try(eval(parse(text = paste0("list(", input$otherargs, ")"))), silent = TRUE)
-    if (inherits(otherargs, "try-error") && !LLonly) {
+    modelotherargs <- try(eval(parse(text = paste0("list(", input$modelotherargs, ")"))), silent = TRUE)
+    if (inherits(modelotherargs, "try-error") && !LLonly) {
       showNotification("model fit failed - check other arguments",
         type = "error", id = "nofit", duration = NULL)
       fit <- NULL
     }
     else {
-      otherargs <- otherargs[!(names(otherargs) %in% c('capthist','trace','mask','model','detectfn'))]
+      modelotherargs <- modelotherargs[!(names(modelotherargs) %in% c('capthist','trace','mask','model','detectfn'))]
+      # if (grepl("fitted", input$modelotherargs)) fitted <- fitrv$value
       nc <- input$ncores
       args <- c(list(capthist = capthist(), 
         trace = FALSE,
@@ -1991,7 +1991,7 @@ fitcode <- function() {
         detectfn = input$detectfnbox,
         method = input$method,
         ncores = nc),
-        otherargs)
+        modelotherargs)
       args$CL <- CL 
       args$details <- as.list(replace (args$details, "distribution", input$distributionbtn))
       if (LLonly)
@@ -2978,7 +2978,7 @@ fitcode <- function() {
   
   # model
   # okbtn
-  # otherargs
+  # modelotherargs
   # pxyclick
   # Dclick
   # randompopbtn
@@ -2996,7 +2996,7 @@ fitcode <- function() {
   # model
   # otherarg
 
-  # detectfnbox, likelihoodbtn, distributionbtn, hcovbox, model, otherargs,
+  # detectfnbox, likelihoodbtn, distributionbtn, hcovbox, model, modelotherargs,
   #     masktype, buffer, habnx, maskshapebtn, maskpolyfilename, maskfilename,
   #     filtercaptlink, filtercapttext
   # masktype
@@ -3062,7 +3062,7 @@ fitcode <- function() {
   
   # Invalidate model
   observeEvent(c(input$detectfnbox, input$likelihoodbtn, input$distributionbtn,
-    input$hcovbox, input$model, input$otherargs,
+    input$hcovbox, input$model, input$modelotherargs,
     input$masktype, input$buffer, input$habnx, input$maskshapebtn, 
     input$maskpolyfilename, input$maskfilename,
     input$filtercaptlink, input$filtercapttext), 
@@ -3494,7 +3494,7 @@ fitcode <- function() {
   
   ##############################################################################
   
-  observeEvent(input$otherargs, {
+  observeEvent(input$modelotherargs, {
     fitrv$value <- NULL
   })
   ##############################################################################
@@ -3593,7 +3593,7 @@ fitcode <- function() {
     
     updateTextInput(session, "model", 
       value = "D~1, g0~1, sigma~1", placeholder = "")
-    updateTextInput(session, "otherargs", 
+    updateTextInput(session, "modelotherargs", 
       value = "", placeholder = "e.g., details = list(fastproximity = FALSE)")
     
     ## Actions
@@ -3774,24 +3774,27 @@ fitcode <- function() {
   observeEvent(input$suggestbufferlink, ignoreInit = TRUE, {
     ## ignoreInit blocks initial execution when suggestbufferlink goes from NULL to 0
     ch <- capthist()
-    if (!is.null(ch)) {
-      progress <- Progress$new(session, min = 1, max = 15)
-      on.exit(progress$close())
-      progress$set(message = 'Suggesting buffer width ...', detail = '')
-      if (is.null(fitrv$value)) {
-        ch <- if (ms(ch)) ch[[input$masksess]] else ch
-        # 0.3 is guess?
-        detectparlist <- list(0.3, RPSV(ch, CC = TRUE), 1)
-        names(detectparlist) <- c(detectrv$value, 'sigma', 'z')
-        buff <- suggest.buffer(ch, detectfn = input$detectfnbox,
-          detectpar = detectparlist,
-          noccasions = noccasions()[1], RBtarget = 0.001)
+    det <- if (ms(ch)) detector(traps(ch[[1]])) else detector(traps(ch))
+    if (!det[1] %in% polygondetectors) {
+      if (!is.null(ch)) {
+        progress <- Progress$new(session, min = 1, max = 15)
+        on.exit(progress$close())
+        progress$set(message = 'Suggesting buffer width ...', detail = '')
+        if (is.null(fitrv$value)) {
+          ch <- if (ms(ch)) ch[[input$masksess]] else ch
+          # 0.3 is guess?
+          detectparlist <- list(0.3, RPSV(ch, CC = TRUE), 1)
+          names(detectparlist) <- c(detectrv$value, 'sigma', 'z')
+          buff <- suggest.buffer(ch, detectfn = input$detectfnbox,
+            detectpar = detectparlist,
+            noccasions = noccasions()[1], RBtarget = 0.001)
+        }
+        else {
+          buff <- suggest.buffer(fitrv$value, RBtarget = 0.001)[1]
+        }
+        
+        updateNumericInput(session, "buffer", value = round(buff))
       }
-      else {
-        buff <- suggest.buffer(fitrv$value, RBtarget = 0.001)[1]
-      }
-      
-      updateNumericInput(session, "buffer", value = round(buff))
     }
   })
   ##############################################################################
