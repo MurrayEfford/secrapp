@@ -3772,35 +3772,28 @@ fitcode <- function() {
   ##############################################################################
   
   observeEvent(input$suggestbufferlink, ignoreInit = TRUE, {
-    ## ignoreInit blocks initial execution when suggestbufferlink goes from NULL to 0
     ch <- capthist()
     det <- if (ms(ch)) detector(traps(ch[[1]])) else detector(traps(ch))
     if (det[1] %in% polygondetectors) {
       showNotification(id = "lastaction", type = "warning", duration = NULL,
         "suggest.buffer is for point detectors; set manually")
-      
-      
     }
     else {
+      ## 2020-09-08 suppressed use of fitted model fitrv$value
+      ## because could be misleading if detectfn changed
       RBtarget <- 0.001   ## 0.1%
       if (!is.null(ch)) {
         progress <- Progress$new(session, min = 1, max = 15)
         on.exit(progress$close())
         progress$set(message = 'Suggesting buffer width ...', detail = '')
-        # if (is.null(fitrv$value)) {
-          ch <- if (ms(ch)) ch[[input$masksess]] else ch
-          # 0.3 is guess?
-          detectparlist <- list(0.3, RPSV(ch, CC = TRUE), 1)
-          names(detectparlist) <- c(detectrv$value, 'sigma', 'z')
-          buff <- try(suggest.buffer(ch, detectfn = input$detectfnbox,
-            detectpar = detectparlist,
-            noccasions = noccasions()[1], RBtarget = RBtarget))
-        # }
-        # else {
-        #   buff <- try(suggest.buffer(fitrv$value, RBtarget = RBtarget))
-        # }
+        ch <- if (ms(ch)) ch[[input$masksess]] else ch
+        # 0.3 is a guess
+        detectparlist <- list(0.3, RPSV(ch, CC = TRUE), 1)
+        names(detectparlist) <- c(detectrv$value, 'sigma', 'z')
+        buff <- try(suggest.buffer(ch, detectfn = input$detectfnbox,
+          detectpar = detectparlist,
+          noccasions = noccasions()[1], RBtarget = RBtarget))
         if (inherits(buff, "try-error")) {
-          # msg <- geterrmessage()
           showNotification(id = "lastaction", type = "error", duration = NULL,
             "suggest.buffer failed; set width manually")
         }
