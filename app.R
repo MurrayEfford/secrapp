@@ -542,10 +542,10 @@ ui <- function(request) {
                       )
                     ),
                     column(4,
-                      br(), br(),
-                        actionLink("suggestbufferlink", HTML("<small>suggest width</small>"),
-                          width = 130,
-                        title = "Based on fitted model, if available, otherwise RPSV. Seeks buffer truncation bias <= 1%"))
+                      br(),br(),
+                      actionLink("suggestbufferlink", HTML("<small>suggest width</small>"),
+                        title = "Based on RPSV(ch, CC = TRUE); RB <= 0.1%")
+                    )
                   ),
                   fluidRow(
                     column(9, 
@@ -3775,25 +3775,38 @@ fitcode <- function() {
     ## ignoreInit blocks initial execution when suggestbufferlink goes from NULL to 0
     ch <- capthist()
     det <- if (ms(ch)) detector(traps(ch[[1]])) else detector(traps(ch))
-    if (!det[1] %in% polygondetectors) {
+    if (det[1] %in% polygondetectors) {
+      showNotification(id = "lastaction", type = "warning", duration = NULL,
+        "suggest.buffer is for point detectors; set manually")
+      
+      
+    }
+    else {
+      RBtarget <- 0.001   ## 0.1%
       if (!is.null(ch)) {
         progress <- Progress$new(session, min = 1, max = 15)
         on.exit(progress$close())
         progress$set(message = 'Suggesting buffer width ...', detail = '')
-        if (is.null(fitrv$value)) {
+        # if (is.null(fitrv$value)) {
           ch <- if (ms(ch)) ch[[input$masksess]] else ch
           # 0.3 is guess?
           detectparlist <- list(0.3, RPSV(ch, CC = TRUE), 1)
           names(detectparlist) <- c(detectrv$value, 'sigma', 'z')
-          buff <- suggest.buffer(ch, detectfn = input$detectfnbox,
+          buff <- try(suggest.buffer(ch, detectfn = input$detectfnbox,
             detectpar = detectparlist,
-            noccasions = noccasions()[1], RBtarget = 0.001)
+            noccasions = noccasions()[1], RBtarget = RBtarget))
+        # }
+        # else {
+        #   buff <- try(suggest.buffer(fitrv$value, RBtarget = RBtarget))
+        # }
+        if (inherits(buff, "try-error")) {
+          # msg <- geterrmessage()
+          showNotification(id = "lastaction", type = "error", duration = NULL,
+            "suggest.buffer failed; set width manually")
         }
         else {
-          buff <- suggest.buffer(fitrv$value, RBtarget = 0.001)[1]
+          updateNumericInput(session, "buffer", value = signif(buff[1],3))
         }
-        
-        updateNumericInput(session, "buffer", value = round(buff))
       }
     }
   })
