@@ -2758,7 +2758,7 @@ fitcode <- function() {
     if (!is.null(capthist())) {
       rpsv <- unlist(RPSV(capthist(), CC = TRUE))[input$sess]
       sp <- unlist(spacing(msk)) # custom for this session
-      if (sp > rpsv) {
+      if (sp[1] > rpsv) {
           showNotification(id = "lastaction", type = "warning", duration = NULL,
             paste0("mask spacing ", signif(sp,3), " exceeds naive sigma ", signif(rpsv,3)))
         }
