@@ -3125,7 +3125,7 @@ fitcode <- function() {
   ##############################################################################
   
   observeEvent(input$animal, {
-    if (input$animal>0) {
+    if (is.numeric(input$animal) && input$animal>0) {
       if (ms(capthist())) {
         currentIDrv$value <- rownames(capthist()[[input$sess]])[input$animal]
       }
@@ -3134,6 +3134,9 @@ fitcode <- function() {
       }
     }
     else {
+      if (is.na(input$animal)) {
+        updateNumericInput(session, "animal", value = 0)
+      }
       currentIDrv$value <- ""
     }
   })
