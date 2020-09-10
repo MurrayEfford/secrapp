@@ -2326,6 +2326,14 @@ fitcode <- function() {
         disable('suggestbufferlink')
       }
       else {
+        if (ms(ch)) {
+          updateNumericInput(session, "sess", max = length(ch))
+          updateNumericInput(session, "masksess", max = length(ch))
+          updateNumericInput(session, "rad", value = signif(spacing(traprv$data[[1]])/5, 2))
+        }
+        else {
+          updateNumericInput(session, "rad", value = signif(spacing(traprv$data)/5, 2))
+        }
         updateSelectInput(session, "detectfnbox", choices = c('HN','HR','EX', hazarddetectfn), 
           selected = "HN")
         enable('suggestbufferlink')
