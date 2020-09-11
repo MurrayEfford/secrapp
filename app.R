@@ -799,7 +799,7 @@ ui <- function(request) {
             h2("Summary"),
             wellPanel(class = "mypanel",
               fluidRow(
-                column(12, numericInput("dec", "Decimal places", 
+                column(12, numericInput("dec", "Significant figures", 
                   min = 0, 
                   max = 8, 
                   value = 4, 
@@ -1167,9 +1167,9 @@ server <- function(input, output, session) {
       
       if (!is.null(fitrv$value)) {
         parm <- c(parm,
-          paste0("D=", as.character(round(density(), input$dec))),
-          paste0(detectrv$value, "=", as.character(round(detect0(), input$dec))),
-          paste0("sigma=", as.character(round(sigma(), input$dec))))
+          paste0("D=", as.character(signif(density(), input$dec))),
+          paste0(detectrv$value, "=", as.character(signif(detect0(), input$dec))),
+          paste0("sigma=", as.character(signif(sigma(), input$dec))))
       }
       
       parm <- paste(parm, collapse = "&")
@@ -1679,7 +1679,7 @@ server <- function(input, output, session) {
       else 
         df$k <- NA_real_ # force numeric NA
       df$proctime <- fitrv$value$proctime
-      df[,20:35] <- round(df[,20:35], input$dec)
+      df[,20:35] <- signif(df[,20:35], input$dec)
       OK <- TRUE
     }
     sumrv$value <- rbind (sumrv$value, df)
@@ -2628,7 +2628,7 @@ fitcode <- function() {
   predictresult <- reactive({
     if (inherits(fitrv$value, 'secr')) {
       pred <- predict(fitrv$value, all.levels = TRUE)
-      roundpr <- function (pr) {pr[,-1] <- round(pr[,-1], input$dec); pr}
+      roundpr <- function (pr) {pr[,-1] <- signif(pr[,-1], input$dec); pr}
       if (is.data.frame(pred))
         pred <- roundpr(pred)
       else 
@@ -2650,9 +2650,9 @@ fitcode <- function() {
       der <- derived(fitrv$value, distribution = tolower(input$distributionbtn),
         se.esa = TRUE)
       if (ms(capthist()))
-        lapply(der, round, input$dec)
+        lapply(der, signif, input$dec)
       else 
-        round(der, input$dec)
+        signif(der, input$dec)
     }
     else NULL
   })
@@ -4478,7 +4478,7 @@ fitcode <- function() {
         xy <- Drv$xy
         points(xy[1], xy[2], pch=16, cex=0.7)
         offset <- (par()$usr[2] - par()$usr[1])/15
-        text(xy[1]+offset, xy[2], round(Drv$value,3), cex = 0.9, xpd = TRUE)
+        text(xy[1]+offset, xy[2], signif(Drv$value,3), cex = 0.9, xpd = TRUE)
       }
       
       if (input$Dmaskedge) {
