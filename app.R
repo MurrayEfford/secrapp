@@ -522,6 +522,7 @@ ui <- function(request) {
           column(3,
             tabsetPanel(
               type = "pills", id = "masktype", selected = "Build",
+              # build mask by buffering around traps
               tabPanel("Build",
                 wellPanel(class = "mypanel", 
                   fluidRow(
@@ -614,6 +615,7 @@ ui <- function(request) {
                   )
                 )
               ),
+              # mask input from file
               tabPanel("File", 
                 wellPanel(class = "mypanel", 
                   div(style = "height: 80px;",
@@ -2766,7 +2768,7 @@ fitcode <- function() {
     if (!is.null(capthist())) {
       rpsv <- unlist(RPSV(capthist(), CC = TRUE))[input$sess]
       sp <- unlist(spacing(msk)) # custom for this session
-      if (sp[1] > rpsv) {
+      if (!is.null(sp) && sp[1] > rpsv) {    # check for NULL 2021-06-20
           showNotification(id = "lastaction", type = "warning", duration = NULL,
             paste0("mask spacing ", signif(sp,3), " exceeds naive sigma ", signif(rpsv,3)))
         }
