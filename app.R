@@ -4,8 +4,8 @@ library(secr)
 library(shinyjs)
 
 secrversion <- packageVersion('secr')
-if (compareVersion(as.character(secrversion), '4.3.1') < 0)
-  stop("secrapp 1.3 requires secr version 4.3.1 or later",
+if (compareVersion(as.character(secrversion), '4.4.2') < 0)
+  stop("secrapp 1.4 requires secr version 4.4.2 or later",
     call. = FALSE)
 
 # for transfer to secrdesign
@@ -43,12 +43,12 @@ fittedresultsbtn <- c("summary", "hide", "predict", "derived", "other")
 ui <- function(request) {
   
   fluidPage(
-    title = "secr app 1.3",
+    title = "secr app 1.4",
     includeCSS("secrstyle.css"),
     useShinyjs(),
     withMathJax(),
     br(),
-    navlistPanel(id = "navlist", widths = c(2,10), well=TRUE, "secr app 1.3",
+    navlistPanel(id = "navlist", widths = c(2,10), well=TRUE, "secr app 1.4",
       tabPanel("Introduction",
         fluidRow(
           column(8,
@@ -336,7 +336,7 @@ ui <- function(request) {
               column(3, actionButton("resetbtn", "Reset all", width = 130, 
                 title = "Reset all inputs to initial values")),
               # column(3, bookmarkButton(width = 130)), # NOT WORKING 1.3
-              column(3, actionButton("dummybookmarkbutton", "Bookmark", width = 130, title = "Bookmarking is disabled in secrapp 1.3")),
+              column(3, actionButton("dummybookmarkbutton", "Bookmark", width = 130, title = "Bookmarking is disabled in secrapp 1.4")),
               column(3),
               column(3, helpText(HTML("F11 full screen")))
             )
@@ -943,7 +943,7 @@ ui <- function(request) {
         withMathJax(includeMarkdown("help.rmd"))
       ),
       tabPanel("About",
-        h2("secr app 1.3"), br(),
+        h2("secr app 1.4"), br(),
         
         h5(paste("This Shiny application provides an interface to the R package 'secr', version", 
           packageDescription("secr")$Version), "."),
@@ -2823,7 +2823,9 @@ fitcode <- function() {
   
   newdata <- reactive({
     if (inherits(fitrv$value, "secr")) {
-      secr.make.newdata(fitrv$value, all.levels = TRUE)
+      ## secr.make.newdata(fitrv$value, all.levels = TRUE)
+      ## 4.4.2
+      makenewdata(fitrv$value, all.levels = TRUE)
     }
     else NULL  ## no model
   })
@@ -3562,7 +3564,7 @@ fitcode <- function() {
   ##############################################################################
   
   observeEvent(input$dummybookmarkbutton, ignoreInit = TRUE, {
-    showNotification("Bookmarking is disabled in secrapp 1.3", id = "lastaction", 
+    showNotification("Bookmarking is disabled in secrapp 1.4", id = "lastaction", 
       duration = NULL)  
   })
   

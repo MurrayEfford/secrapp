@@ -14,14 +14,15 @@ install.packages("secr")     # skip if already installed
 shiny::runGitHub("secrapp", "MurrayEfford")
 ```
 
-Note 
+Note:
+
 - secrapp 1.3 required secr 4.3
 - secrapp 1.4 requires secr 4.4.2 or a later version.
 
 
 The app may also be run in a web browser without any setup by following this 
-[link](https://www.stats.otago.ac.nz/secrapp). This arrangement is experimental 
-and has limited capacity.
+[link](https://www.stats.otago.ac.nz/secrapp). This arrangement has limited 
+capacity for simultaneous users.
 
 ----
 
