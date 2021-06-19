@@ -16,7 +16,7 @@ shiny::runGitHub("secrapp", "MurrayEfford")
 
 Note 
 - installing **shinyjs** also installs **shiny**\\
-- secrapp 1.3 required secr 4.3.3 or earlier\\
+- secrapp 1.3 required secr 4.3\\
 - secrapp 1.4 requires secr 4.4.2 or a later version.
 
 
