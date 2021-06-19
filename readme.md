@@ -9,14 +9,13 @@ and the [Density web page](https://www.otago.ac.nz/density/) .
 To run secrapp directly from GitHub on your own machine, paste this code into an R session.
 
 ```r
-install.packages("shinyjs")  # skip if already installed
+install.packages("shinyjs")  # skip if already installed; installs 'shiny' if needed
 install.packages("secr")     # skip if already installed
 shiny::runGitHub("secrapp", "MurrayEfford")
 ```
 
 Note 
-- installing **shinyjs** also installs **shiny**\\
-- secrapp 1.3 required secr 4.3\\
+- secrapp 1.3 required secr 4.3
 - secrapp 1.4 requires secr 4.4.2 or a later version.
 
 
