@@ -1,4 +1,4 @@
-# secrapp 1.3
+# secrapp 1.4
 
 This Shiny app performs simple spatially explicit capture-recapture analyses using the 
 R package [secr](https://CRAN.R-project.org/package=secr). For details see the 
@@ -6,16 +6,22 @@ Help tab, the
 [step-by-step tutorial](https://www.otago.ac.nz/density/pdfs/secrapp-tutorial.html), 
 and the [Density web page](https://www.otago.ac.nz/density/) .
 
-To run secrapp on your own machine, install packages **shinyjs** and **secr** 
-with their dependencies (secrapp 1.3 requires secr 4.3.1 or a later version). 
-Then paste this code into an R session:
+To run secrapp directly from GitHub on your own machine, paste this code into an R session.
 
 ```r
-library(shiny)
-runGitHub("secrapp", "MurrayEfford")
+install.packages("shinyjs")  # skip if already installed
+install.packages("secr")     # skip if already installed
+shiny::runGitHub("secrapp", "MurrayEfford")
 ```
 
-The app may also be run in a web browser without any setup by following this [link](https://www.stats.otago.ac.nz/secrapp). This arrangement is experimental 
+Note 
+- installing **shinyjs** also installs **shiny**\\
+- secrapp 1.3 required secr 4.3.3 or earlier\\
+- secrapp 1.4 requires secr 4.4.2 or a later version.
+
+
+The app may also be run in a web browser without any setup by following this 
+[link](https://www.stats.otago.ac.nz/secrapp). This arrangement is experimental 
 and has limited capacity.
 
 ----
