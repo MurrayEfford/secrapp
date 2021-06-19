@@ -2825,7 +2825,7 @@ fitcode <- function() {
     if (inherits(fitrv$value, "secr")) {
       ## secr.make.newdata(fitrv$value, all.levels = TRUE)
       ## 4.4.2
-      makeNewdata(fitrv$value, all.levels = TRUE)
+      makeNewData(fitrv$value, all.levels = TRUE)
     }
     else NULL  ## no model
   })
