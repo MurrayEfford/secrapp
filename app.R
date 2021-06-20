@@ -34,8 +34,8 @@ timelimit <- 10.0    ## minutes
 availablecores <- min(24, parallel::detectCores())
 defaultcores <- max(1, availablecores/2)
 
-defaultresultsbtn <- c("summary", "hide", "other")
-fittedresultsbtn <- c("summary", "hide", "predict", "derived", "other")
+defaultresultsbtn <- c("summary", "other")
+fittedresultsbtn <- c("summary", "predict", "derived", "other")
 
 ##############################################################################
 
@@ -357,10 +357,13 @@ ui <- function(request) {
               conditionalPanel("output.modelFitted", 
                 column(2, br(), downloadLink("savebtn", HTML("<small>Save fitted model</small>"))))
             ),
-            
-            fluidRow(
-              column(12,verbatimTextOutput("resultsPrint"))
+            #div(style = "max-height: 400px;", 
+              fluidRow(
+                column(12,
+                  verbatimTextOutput("resultsPrint"))
+             # )
             ),
+            actionLink("hideresultslink", HTML("<small>hide</small>")),
             
             fluidRow(
               column(12,
@@ -507,8 +510,9 @@ ui <- function(request) {
                           width = "90%"))
                     )
                   )
-                  
-                )
+                ),
+                actionLink("hidegraphicslink", HTML("<small>hide</small>"))
+                
               )
             )
           )
@@ -3315,11 +3319,28 @@ fitcode <- function() {
     updateNavlistPanel(session, "navlist", "Options")
   })
   
-  observeEvent(input$resultsbtn, ignoreInit = TRUE, {
-    if (input$resultsbtn == "hide") 
+  # observeEvent(input$resultsbtn, ignoreInit = TRUE, {
+  #   if (input$resultsbtn == "hide") 
+  #     hide("resultsPrint")
+  #   else
+  #     show("resultsPrint")
+  # })
+  
+  observeEvent(input$hideresultslink, ignoreInit = TRUE, {
+    if (input$hideresultslink %% 2 == 1) {
+      hide("resultsbtn")
+      hide("otherfunction")
       hide("resultsPrint")
-    else
+      hide("savebtn")
+      updateActionLink(session, "hideresultslink", HTML("<small>show summary results</small>"))
+    }
+    else {
+      show("resultsbtn")
+      show("otherfunction")
       show("resultsPrint")
+      if (!is.null(fitrv$value)) show("savebtn")
+      updateActionLink(session, "hideresultslink", HTML("<small>hide</small>"))
+    }
   })
   
   observeEvent(input$masklink, ignoreInit = TRUE, {
@@ -3367,6 +3388,37 @@ fitcode <- function() {
   observeEvent(input$filtermask, ignoreInit = TRUE, {
     filtermaskrv$value <- (input$filtermask %% 2) == 1
   })
+  
+  observeEvent(input$hidegraphicslink, ignoreInit = TRUE, {
+    if (input$hidegraphicslink %% 2 == 1) {
+      hide("plottabs")
+      updateActionLink(session, "hidegraphicslink", HTML("<small>show code and plots</small>"))
+      # tags$head(
+      #   tags$style(
+      #     HTML(
+      #       "#resultsPrint {
+      #         max-height: 500px;
+      #       }"
+      #     )
+      #   )
+      # )
+    }
+    else {
+      show("plottabs")
+      updateActionLink(session, "hidegraphicslink", HTML("<small>hide</small>"))
+      
+      # tags$head(
+      #   tags$style(
+      #     HTML(
+      #       "#resultsPrint {
+      #         max-height: 270px;
+      #       }"
+      #     )
+      #   )
+      # )
+    }
+  })
+  
   
   observeEvent(input$fitbtn, ignoreInit = TRUE, {
     ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
@@ -3694,7 +3746,7 @@ fitcode <- function() {
     updateNumericInput(session, "dec", value = 4)
     
     ## array plot
-    updateCheckboxInput(session, "entireregionbox", value = TRUE)
+    updateCheckboxInput(session, "entireregionbox", value = FALSE)
     updateNumericInput(session, "arrayborder", value = 20)
     updateCheckboxInput(session, "arrayframe", value = FALSE)
     
@@ -3836,6 +3888,33 @@ fitcode <- function() {
   })
   ##############################################################################
   
+  
+  observeEvent(c(
+    input$hideresultslink, 
+    input$hidegraphicslink,
+    traprv$data,
+    capthist(),
+    fitrv$value,
+    input$likelihoodbtn
+    ), {
+    hideplotif <- function (condition, tab) {
+      if (condition || hideallplots)
+        hideTab(inputId = "plottabs", target = tab)
+      else 
+        showTab(inputId = "plottabs", target = tab)
+    }
+    hideallplots <- input$hidegraphicslink %% 2 == 1
+    hideplotif (FALSE, "Code")
+    hideplotif (is.null(traprv$data), "Array")
+    hideplotif (is.null(capthist()), "Moves")
+    hideplotif (is.null(fitrv$value), "Detectfn")
+    hideplotif (is.null(fitrv$value) , "Buffer")
+    hideplotif (is.null(fitrv$value) , "Pxy")
+    hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != 'Full'), "Dxy")
+    hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != "Full"), "Popn")
+    hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != "Full"), "Power")
+  })
+  
   ## renderText
   
   # maskPrint
@@ -3927,20 +4006,7 @@ fitcode <- function() {
   }
   
   output$resultsPrint <- renderPrint({
-    hideplotif <- function (condition, tab) {
-      if (condition)
-        hideTab(inputId = "plottabs", target = tab)
-      else 
-        showTab(inputId = "plottabs", target = tab)
-    }
-    hideplotif (is.null(traprv$data), "Array")
-    hideplotif (is.null(capthist()), "Moves")
-    hideplotif (is.null(fitrv$value), "Detectfn")
-    hideplotif (is.null(fitrv$value), "Buffer")
-    hideplotif (is.null(fitrv$value), "Pxy")
-    hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != 'Full'), "Dxy")
-    hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != "Full"), "Popn")
-    hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != "Full"), "Power")
+  
     rse <- RSE() 
     if (is.null(rse) || is.na(rse)) {
       maxRSE <- 100

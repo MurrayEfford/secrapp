@@ -99,13 +99,15 @@ tr {
 }
 
 #resultsPrint{
-  color: blue; 
-  font-size: 12px; 
-  overflow-y: scroll; 
-  min-height: 250px; 
-  max-height: 270px; 
-  background: ghostwhite;
+color: blue;
+font-size: 12px;
+overflow-y: scroll;
+min-height: 250px;
+max-height: 655px;    /* 270px; */
+background: ghostwhite;
 }
+
+
 #codePrint{
   color: blue; 
   font-size: 12px; 
