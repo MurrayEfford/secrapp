@@ -954,7 +954,7 @@ ui <- function(request) {
         h5(paste("This Shiny application provides an interface to the R package 'secr', version", 
           packageDescription("secr")$Version), "."),
         br(),
-        h5("Copyright 2019, 2020 Murray Efford"),
+        h5("Copyright 2019, 2020, 2021 Murray Efford"),
         "The application is released under the ",
         a("GNU General Public License Version 3.0", href="https://www.gnu.org/licenses/gpl-3.0.txt", target="_blank"), br(),
         br(),
