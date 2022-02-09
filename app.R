@@ -4,6 +4,8 @@ library(secr)
 library(shinyjs)
 
 secrversion <- packageVersion('secr')
+secryear <- substring(packageDate('secr'),1,4)
+
 if (compareVersion(as.character(secrversion), '4.4.2') < 0)
   stop("secrapp 1.4 requires secr version 4.4.2 or later",
     call. = FALSE)
@@ -66,7 +68,7 @@ ui <- function(request) {
             br(), br(),
             
             strong("secrapp"), "is an interactive interface to parts of the R package", strong("secr"), 
-            "(Efford 2020). ", strong("secr"), " and ", strong("secrapp"), "together supercede the Windows", 
+            paste0("(Efford ", secryear,"). )"), strong("secr"), " and ", strong("secrapp"), "together supercede the Windows", 
             " software DENSITY (Efford et al. 2004)." ,
             br(), br(),
 
@@ -125,9 +127,9 @@ ui <- function(request) {
             "In: D. L. Thomson, E. G. Cooch, M. J. Conroy (eds)",
             em("Modeling Demographic Processes in Marked Populations."), "Springer. Pp 255-269.", br(),
             
-            "Efford, M. G. (2020)",
-            a(HTML("secr: Spatially explicit capture&ndash;recapture models."), href = "https://CRAN.R-project.org/package=secr"), 
-            " R package version 4.3.1.", br(),
+            paste0("Efford, M. G. (", secryear, ")"),
+            a(HTML("secr: Spatially explicit capture&ndash;recapture models."), href = "https://CRAN.R-project.org/package=secr"),
+            paste0(" R package version ", secrversion, "."), br(),
             
             "Efford, M. G., Dawson, D. K. and Robbins, C. R. (2004)",
             a(HTML("DENSITY: software for analysing capture&ndash;recapture data from passive detector arrays."), 
@@ -159,11 +161,14 @@ ui <- function(request) {
             h2("Data input"),
             fluidRow(
               column(12, radioButtons("datasource", "", inline = TRUE, 
-                choices = c("Text files", "Excel files", "Stored capthist object"),
+                # choices = c("Text files", "Excel files", "Stored capthist object"),
+                choices = c("Text files", "Excel files", "Stored capthist object", "secr dataset"),
                 selected = "Text files"))
             ),
             
-            conditionalPanel( condition = "input.datasource != 'Stored capthist object'",
+            # conditionalPanel( condition = "input.datasource != 'Stored capthist object'",
+            #conditionalPanel( condition = "input.datasource %in% c('Text files', 'Excel files')",
+            conditionalPanel( condition = "input.datasource == 'Text files' | input.datasource == 'Excel files'",
               
               fluidRow(
                 column(6,
@@ -287,6 +292,36 @@ ui <- function(request) {
                 )
               )
             ),  # end conditionalPanel stored capthist
+            
+            conditionalPanel( condition = "input.datasource == 'secr dataset'",
+              wellPanel(class = "mypanel",
+                fluidRow(
+                  column(4, 
+                    div(style = "margin-top:-15px"),
+                    selectInput("secrdatabox", "", 
+                      choices = c(
+                        "captdata", 
+                        "deermouse.ESG", 
+                        "deermouse.WSG",
+                        "hornedlizardCH",
+                        "housemouse",
+                        "ovenCHp", 
+                        "OVpossumCH",
+                        "possumCH",
+                        "infraCH",
+                        "lineoCH",
+                        "stoatCH"),
+                      selected = "captdata",
+                      selectize = FALSE,
+                      size = 11)),
+                  column(8, 
+                    uiOutput("secrdatadescriptionui"),
+                    fluidRow(
+                      column(8),
+                      column(4, actionButton('secrhelptopicbtn', 'More'))))
+                )
+              )
+            ),  # end conditionalPanel secr dataset
             
             h2("Model"),
             wellPanel(class = "mypanel", 
@@ -952,9 +987,9 @@ ui <- function(request) {
         h2("secr app 1.4"), br(),
         
         h5(paste("This Shiny application provides an interface to the R package 'secr', version", 
-          packageDescription("secr")$Version), "."),
+          secrversion, ".")),
         br(),
-        h5("Copyright 2019, 2020, 2021 Murray Efford"),
+        h5("Copyright 2019, 2022 Murray Efford"),
         "The application is released under the ",
         a("GNU General Public License Version 3.0", href="https://www.gnu.org/licenses/gpl-3.0.txt", target="_blank"), br(),
         br(),
@@ -964,7 +999,9 @@ ui <- function(request) {
         a("https://github.com/MurrayEfford/secrapp", href="https://github.com/MurrayEfford/secrapp", target="_blank"), br(),
         br(),
         h5("Citation"),
-        h5("[The preferred citation for this package has not been finalised]")
+        h5("Analyses with this interface should refer to the parent package, secr. The citation for the current version is -"), 
+        h5(paste0("Efford, M. G. (", secryear, "). secr: Spatially explicit capture-recapture models. R package version ", secrversion, ".")), 
+        h5("    https://CRAN.R-project.org/package=secr.")
       )
       
     )   # end navlistpanel
@@ -1088,6 +1125,48 @@ server <- function(input, output, session) {
   })
   #-----------------------------------------------------------------------------
 
+  output$secrdatadescriptionui <- renderUI({
+    x <- ""
+    if (input$secrdatabox == 'captdata') 
+      x <- HTML("Simulated data from grid of multi-catch traps (from DENSITY)")  
+    else if (input$secrdatabox %in% c('deermouse.ESG', 'deermouse.WSG'))
+      x <- HTML("<i>Peromyscus maniculatus</i> Live-trapping data of V. H. Reid ",
+      "published as a CAPTURE example by Otis et al. (1978) Wildlife Monographs 62") 
+    else if (input$secrdatabox == 'hornedlizardCH') 
+      x <- HTML("Repeated searches of a quadrat in Arizona for flat-tailed ",
+        "horned lizards <i>Phrynosoma mcallii</i> (Royle & Young Ecology 89, 2281--2289)") 
+    else if (input$secrdatabox == 'housemouse') 
+      x <- HTML("<i>Mus musculus</i> live-trapping data of H. N. Coulombe published ",
+        "as a CAPTURE example by Otis et al. (1978) Wildlife Monographs 62 ")
+    else if (input$secrdatabox %in% c('ovenCHp'))
+      x <- HTML("Multi-year mist-netting study of ovenbirds ",
+        "<i>Seiurus aurocapilla</i> at a site in Maryland, USA ",
+        "(Dawson and Efford 2009) (nets as binary proximity detectors)")
+    else if (input$secrdatabox == 'OVpossumCH')
+      x <- HTML("Brushtail possum <i>Trichosurus vulpecula</i> live trapping in the ",
+        "Orongorongo Valley, Wellington, New Zealand 1996--1997 ",
+        "(Efford and Cowan In: The Biology of Australian Possums and Gliders ",
+        "Goldingay and Jackson eds. Pp. 471--483).")
+    else if (input$secrdatabox == 'possumCH') 
+      x <- HTML("Brushtail possum <i>Trichosurus vulpecula</i> live trapping at ",
+        "Waitarere, North Island, New Zealand April 2002 (Efford et al. 2005 ",
+        "Wildlife Society Bulletin 33, 731--738)")
+    else if (input$secrdatabox %in% c('lineoCH')) 
+      x <- HTML(" Multi-session skink (",
+        "<i>O. lineoocellatum</i>) pitfall trapping data from Lake Station, ",
+        "Upper Buller Valley, South Island, New Zealand (M. G. Efford, ",
+        "B. W. Thomas and N. J. Spencer unpublished). ")
+    else if (input$secrdatabox %in% c('infraCH')) 
+      x <- HTML(" Multi-session skink (<i>Oligosoma infrapunctatum</i>) ",
+        "pitfall trapping data from Lake Station, ",
+        "Upper Buller Valley, South Island, New Zealand (M. G. Efford, ",
+        "B. W. Thomas and N. J. Spencer unpublished). ")
+    else if (input$secrdatabox == 'stoatCH')
+      x <- HTML("Stoat <i>Mustela erminea</i> hair tube DNA data from Matakitaki ",
+      "Valley, South Island, New Zealand (Efford, Borchers and Byrom 2009).")
+    helpText(x)
+  })
+  
   output$moveswarningui <- renderUI({
     if (ms(capthist())) {
       if (input$movesallbox) 
@@ -1629,7 +1708,8 @@ server <- function(input, output, session) {
       else "",
       captures = if (input$datasource=="Text files") input$captfilename$name[1]
       else if (input$datasource=="Excel files") input$captxlsname$name[1] 
-      else if (is.null(input$importfilename)) "" else input$importfilename$name[1],
+      else if (input$datasource=="Stored capthist object") input$importfilename$name[1]
+      else if (is.null(input$secrdatabox)) "" else input$secrdatabox,
       filter = if (filtercaptrv$value && input$filtercapttext!="") input$filtercapttext else "",
       ndetectors = ndetectors()[input$sess],
       noccasions = noccasions()[input$sess],
@@ -1748,7 +1828,7 @@ server <- function(input, output, session) {
     if (args != "") {
       args <- paste0(", ", args)
     }
-    if (!is.null(traprv$data) && is.null(importrv$data)) {
+    if (!is.null(traprv$data) && is.null(importrv$data) && is.null(secrrv$data)) {
       if (input$datasource == "Text files") {
         filename <- input$trapfilename[,"name"]
       }
@@ -1834,7 +1914,7 @@ server <- function(input, output, session) {
             )
           }
         }
-        trps <- if (is.null(importrv$data)) "array" else "traps(ch)"
+        trps <- if (is.null(importrv$data) && is.null(secrrv$data)) "array" else "traps(ch)"
         paste0(
           polycode,
           "mask <- make.mask (", trps,  
@@ -1861,7 +1941,10 @@ server <- function(input, output, session) {
     # as a character value
     code <- ""  
     sheet <- ""
-    if (!is.null(importrv$data)) {
+    if (!is.null(secrrv$data)) {
+      code <- paste0("ch <- ", input$secrdatabox, "\n")
+    }
+    else if (!is.null(importrv$data)) {
       code <- paste0("ch <- readRDS('", input$importfilename[1,"name"], "')\n")
     }
     else {
@@ -2000,12 +2083,18 @@ fitcode <- function() {
         modelotherargs)
       args$CL <- CL 
       args$details <- as.list(replace (args$details, "distribution", input$distributionbtn))
-      if (LLonly)
-        args$details <- as.list(replace (args$details, "LLonly", TRUE))
       if (input$hcovbox != "none") {
         args$hcov <- input$hcovbox
       }
-      isolate(fit <- try(do.call("secr.fit", args), silent = TRUE))
+      if (LLonly) {
+        args$details <- as.list(replace (args$details, "LLonly", TRUE))
+        args$biaslimit <- NA
+        # suppress warning "multi-catch likelihood used for single-catch traps"
+        isolate(fit <- suppressWarnings(try(do.call("secr.fit", args), silent = TRUE)))
+      }
+      else {
+        isolate(fit <- try(do.call("secr.fit", args), silent = TRUE))
+      }
       if (inherits(fit, "try-error") && !LLonly) {
         showNotification("model fit failed - check data, formulae and mask",
           type = "error", id = "nofit", duration = NULL)
@@ -2139,6 +2228,11 @@ fitcode <- function() {
     clear = FALSE
   )
   
+  secrrv <- reactiveValues(
+    data = NULL,
+    clear = FALSE
+  )
+  
   polyrv <- reactiveValues(
     data = NULL,
     clear = FALSE
@@ -2231,7 +2325,7 @@ fitcode <- function() {
     if (input$datasource == 'Text files') {
       req(input$trapfilename)
     }
-    else {
+    else if (input$datasource == 'Excel files') {
       req(input$trapxlsname)
     }
     removeNotification("badtrapotherargs")
@@ -2242,6 +2336,10 @@ fitcode <- function() {
       reset('importfilename')
       importrv$data <- NULL
       importrv$clear <- TRUE
+      
+      # reset('secrdatabox')
+      # secrrv$data <- NULL
+      # secrrv$clear <- TRUE
       
       reset('captfilename')
       reset('captxlsname')
@@ -2284,7 +2382,7 @@ fitcode <- function() {
       
       readtrapcall <-  paste0("read.traps (trapdataname, detector = input$detector", 
         args, sheet, ")")
-      
+
       temp <- try(eval(parse(text = readtrapcall)))
       if (!inherits(temp, "traps")) {
         showNotification("invalid trap file or arguments; try again",
@@ -2352,6 +2450,46 @@ fitcode <- function() {
       traprv$data <- NULL
       showNotification("not a valid capthist Rds", 
         type = "error", id = "badcapt", duration = NULL)
+    }
+  })
+  
+  ##############################################################################
+  ## use builtin data 
+  observeEvent(c(input$datasource, input$secrdatabox), ignoreInit = TRUE, {
+    req(input$secrdatabox)
+    removeNotification("badcapt")
+    secrrv$data <- NULL
+    traprv$data <- NULL
+    if (input$datasource == "secr dataset") {
+      ch <- get(input$secrdatabox)
+      if (inherits(ch, 'capthist')) {
+        secrrv$data <- ch
+        traprv$data <- traps(ch)
+        if (detector(traprv$data)[1] %in% polygondetectors) {
+          updateSelectInput(session, "detectfnbox", choices = hazarddetectfn, 
+            selected = "HHN")
+          disable('suggestbufferlink')
+        }
+        else {
+          if (ms(ch)) {
+            updateNumericInput(session, "sess", max = length(ch))
+            updateNumericInput(session, "masksess", max = length(ch))
+            updateNumericInput(session, "rad", value = signif(spacing(traprv$data[[1]])/5, 2))
+          }
+          else {
+            updateNumericInput(session, "rad", value = signif(spacing(traprv$data)/5, 2))
+          }
+          updateSelectInput(session, "detectfnbox", choices = c('HN','HR','EX', hazarddetectfn), 
+            selected = "HN")
+          enable('suggestbufferlink')
+        }
+        showNotification(paste("using", input$secrdatabox), closeButton = FALSE, 
+          type = "message", id = "lastaction", duration = seconds)
+      }
+      else {
+        showNotification("not a builtin capthist object", 
+          type = "error", id = "badcapt", duration = NULL)
+      }
     }
   })
   
@@ -2517,12 +2655,17 @@ fitcode <- function() {
     # showNotification("debug: capthist eval", closeButton = FALSE, type = "message", duration = 0.1)
     ch <- NULL
     covnames <- character(0)
-    if ((is.null(traprv$data) || is.null(captrv$data)) && is.null(importrv$data)) {
+    if ((is.null(traprv$data) || is.null(captrv$data)) && 
+        is.null(importrv$data) &&
+        is.null(secrrv$data)) {
       updateNumericInput(session, "animal", max = 0)
       ch <- NULL
     }
     else {
-      if (!is.null(importrv$data)) {
+      if (!is.null(secrrv$data)) {
+        ch <- secrrv$data
+      }
+      else if (!is.null(importrv$data)) {
         ch <- importrv$data
       }
       else {
@@ -2708,8 +2851,9 @@ fitcode <- function() {
     Drv$value <- NULL
     if (input$masktype=="Build") {
       
-      if (is.null(traprv$data))
+      if (is.null(traprv$data)) {
         return(NULL)
+      }
       else {
         if (!maskOK()) {
           showNotification("no detectors in habitat polygon(s)",
@@ -2771,8 +2915,8 @@ fitcode <- function() {
     # check spacing 2020-09-02
     if (!is.null(capthist())) {
       rpsv <- unlist(RPSV(capthist(), CC = TRUE))[input$sess]
-      sp <- unlist(spacing(msk)) # custom for this session
-      if (!is.null(sp) && sp[1] > rpsv) {    # check for NULL 2021-06-20
+      sp <- unlist(spacing(msk))[1] # custom for this session
+      if (!is.null(sp) && sp > rpsv) {    # check for NULL 2021-06-20
           showNotification(id = "lastaction", type = "warning", duration = NULL,
             paste0("mask spacing ", signif(sp,3), " exceeds naive sigma ", signif(rpsv,3)))
         }
@@ -3062,6 +3206,12 @@ fitcode <- function() {
       inline = TRUE, choices = defaultresultsbtn)
   }, priority = 1000)
   
+  observeEvent(input$secrdatabox, {
+    # secrrv$clear <- FALSE
+    updateRadioButtons(session, "resultsbtn", label = "", 
+      inline = TRUE, choices = defaultresultsbtn)
+  }, priority = 1000)
+  
   observeEvent(input$maskpolyfilename, {
     polyrv$clear <- FALSE
   }, priority = 1000)
@@ -3251,17 +3401,20 @@ fitcode <- function() {
     reset('captxlsname')
     disable("captfilename")  # waiting for trap file
     disable("captxlsname")  # waiting for trap xls
+    
     reset('importfilename')
     
     updateSelectInput(session, "detectfnbox", choices = c('HN','HR','EX', hazarddetectfn), 
       selected = "HN")
     
+    if (!is.null(input$datasource) && input$datasource != 'secr dataset') {
+      reset('secrdatabox')   # 2022-02-08
+      secrrv$data <- NULL
+    }
+    
     importrv$data <- NULL
     importrv$clear <- TRUE
-    
-    traprv$data <- NULL
-    traprv$clear <- TRUE
-    
+
     captrv$data <- NULL
     captrv$clear <- TRUE
     
@@ -3375,13 +3528,11 @@ fitcode <- function() {
   
   
   observeEvent(input$showcaptfilelink, ignoreInit = TRUE, {
-    ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
     traptextrv$value <- FALSE
     capttextrv$value <- !is.null(input$captfilename) && (input$showcaptfilelink %% 2 == 1)
   })
   
   observeEvent(input$filtercaptlink, ignoreInit = TRUE, {
-    ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
     filtercaptrv$value <- (input$filtercaptlink %% 2) == 1
   })
   
@@ -3419,7 +3570,11 @@ fitcode <- function() {
     }
   })
   
-  
+  observeEvent(input$secrhelptopicbtn, ignoreInit = TRUE, {
+    updateRadioButtons(session, 'resultsbtn', selected = "other")
+    updateTextInput(session, "otherfunction", value = paste0("?", input$secrdatabox))
+  })
+    
   observeEvent(input$fitbtn, ignoreInit = TRUE, {
     ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
     if (is.null(capthist())) {
@@ -3518,6 +3673,7 @@ fitcode <- function() {
     fitrv$value <- NULL
     traprv$value <- NULL
     captrv$value <- NULL
+    secrrv$value <- NULL
   })
   ##############################################################################
   
@@ -3525,6 +3681,7 @@ fitcode <- function() {
     fitrv$value <- NULL
     traprv$value <- NULL
     captrv$value <- NULL
+    secrrv$value <- NULL
   })
   ##############################################################################
   
@@ -3532,6 +3689,7 @@ fitcode <- function() {
     fitrv$value <- NULL
     traprv$value <- NULL
     captrv$value <- NULL
+    secrrv$value <- NULL
   })
   
   ##############################################################################
@@ -3539,11 +3697,13 @@ fitcode <- function() {
   observeEvent(input$covnames, ignoreInit = TRUE, {
     fitrv$value <- NULL
     captrv$value <- NULL
+    secrrv$value <- NULL
   })
   
   observeEvent(input$captotherargs, ignoreInit = TRUE, {
     fitrv$value <- NULL
     captrv$value <- NULL
+    secrrv$value <- NULL
   })
   
   ##############################################################################
@@ -3803,6 +3963,10 @@ fitcode <- function() {
     importrv$clear <- TRUE
     reset('importfilename')
     
+    secrrv$data <- NULL
+    # secrrv$clear <- TRUE
+    updateSelectInput(session, "secrdatabox", selected = "captdata")
+    
     detectrv$value <- 'g0'
     
     showNotification("all inputs reset", id = "lastaction",
@@ -3988,7 +4152,26 @@ fitcode <- function() {
   #-----------------------------------------------------------------------------
   
   otherfn <- function (fncall, ch, fitted) {
-    if (fncall=="") cat("No function specified\n")
+    if (fncall=="") {
+      cat("No function specified\n")
+    }
+    else if (substring(fncall,1,1) == "?") {
+      ff <- get('index.search', envir = asNamespace('utils'))(
+        topic = substring(fncall,2,100), 
+        paths = find.package('secr'),
+        TRUE)
+      path    <- dirname(ff)
+      dirpath <- dirname(path)
+      pkgname <- basename(dirpath)
+      RdDB    <- file.path(path, 'secr')
+      fetchRdDB <- get('fetchRdDB', envir = asNamespace('tools'))
+      # no need for warnings from incomplete topic names
+      Rdfile <- try(suppressWarnings(fetchRdDB(RdDB, basename(ff))), silent = TRUE)
+      if (!inherits(Rdfile, 'try-error')) {
+        tools::Rd2txt(Rd = Rdfile, options = list(underline_titles = FALSE)
+        )
+      }
+    }
     else {
       if (fitted) fncall <- gsub("fitted", "fitrv$value", fncall)
       if (ch) fncall <- gsub("ch", "capthist()", fncall)
@@ -4004,6 +4187,7 @@ fitcode <- function() {
       }
     }  
   }
+  #-----------------------------------------------------------------------------
   
   output$resultsPrint <- renderPrint({
   
@@ -4024,7 +4208,7 @@ fitcode <- function() {
       max = maxRSE,
       value = rse,
       step = 0.1)
-    
+
     minchar <- 50
     if (traptextrv$value) {
       header <- paste("Detector layout file :", input$trapfilename[1,'name'])
@@ -4065,8 +4249,11 @@ fitcode <- function() {
           header <- paste(header, "and", input$captxlsname[1,'name'])
         }
       }
-      else {
+      else if (input$datasource == 'Stored capthist object') {
         header <- paste("Summary of capthist object from", input$importfilename[1,'name'])
+      }
+      else if (input$datasource == 'secr dataset') {
+        header <- paste("Summary of secr data object", input$secrdatabox)
       }
       if (filtercaptrv$value) {
         header <- paste0(header, ", ", input$filtercapttext)
@@ -4085,10 +4272,13 @@ fitcode <- function() {
         header <- paste("Derived estimates of effective sampling area 'esa' and density 'D'")
       else header <- ""
     }
+    #--------------------------------------------------
     if (nchar(header)>0) {
       cat(header, "\n")
       if (substring(header,1,2)!="No") cat(strrep('-', max(minchar,nchar(header))), "\n")
     }    
+    #--------------------------------------------------
+   
     if (traptextrv$value) {
       rawText <- readLines(input$trapfilename[1,"datapath"]) # get raw text
       writeLines(rawText)
@@ -4144,7 +4334,7 @@ fitcode <- function() {
       cat("\n# input data\n")
       cat(arraycode())
     }
-    if (!is.null(captrv$data) || !is.null(importrv$data)) {
+    if (!is.null(captrv$data) || !is.null(importrv$data) || !is.null(secrrv$data)) {
       cat(captcode())
     }
     
@@ -4539,7 +4729,8 @@ fitcode <- function() {
       col <- try(eval(parse(text = input$Dxycol)), silent = TRUE)
       plot (fitrv$dsurf, border = 0, scale = 1, title="D(x)", col = col)
       if (input$Dshowdetectors) {
-        plot(traprv$data, add = TRUE)
+        # plot(traprv$data, add = TRUE)
+        plot(traps(capthist()), add = TRUE)
       }
       if (input$Dshowdetections) {
         plot(capthist(), varycol = FALSE, add = TRUE)
