@@ -329,6 +329,7 @@ ui <- function(request) {
                 column(3, selectInput("detectfnbox", "Detection function",
                   choices = c("HN", "HR", "EX","HHN", "HHR", "HEX", "HVP"),
                   selected = "HN"),
+                  div(style = "margin-top:-15px"),  # negative spacer
                   uiOutput("detectfnui") 
                 ),
                 column(3, radioButtons("likelihoodbtn", "Likelihood", choices = c("Full", "Conditional"))),
@@ -340,14 +341,19 @@ ui <- function(request) {
                 )
               ),
               fluidRow(
-                column(7, textInput("model", "Model", value = "D~1, g0~1, sigma~1")),
-                column(5, HTML("<small><strong>Habitat mask</strong></small>","&nbsp;"),
+                div(style = "margin-top:5px"),  # spacer
+                
+                column(6, textInput("model", "Model", value = "D~1, g0~1, sigma~1")),
+                column(6, HTML("<small><strong>Habitat mask</strong></small>","&nbsp;"),
                   actionLink("masklink", HTML("<small> edit</small>")), br(),
+                  div(style = "margin-top:5px"),  # spacer
                   verbatimTextOutput("maskdetailPrint")
                 )
               ),
               fluidRow(
                 column(12,  style="color:grey;",
+                  div(style = "margin-top:-15px"),  # negative spacer
+                  
                   textInput("modelotherargs", "Other arguments", value = "", 
                     placeholder = "e.g., details = list(fastproximity = FALSE), binomN = 1"))
               )
