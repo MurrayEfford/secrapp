@@ -1032,6 +1032,9 @@ server <- function(input, output, session) {
   lasttrap <- 0
   clickno <- 0
   
+  # for remembering other function
+  oldfn <- ""  
+  
   disable("fitbtn")
   disable("captfilename")
   disable("captxlsname")
@@ -3571,8 +3574,15 @@ fitcode <- function() {
   })
   
   observeEvent(input$secrhelptopicbtn, ignoreInit = TRUE, {
-    updateRadioButtons(session, 'resultsbtn', selected = "other")
-    updateTextInput(session, "otherfunction", value = paste0("?", input$secrdatabox))
+    if (input$secrhelptopicbtn %% 2 == 0) {
+      updateRadioButtons(session, 'resultsbtn', selected = "summary")
+      updateTextInput(session, "otherfunction", value = oldfn)
+    }
+    else {
+      oldfn <<- input$otherfunction
+      updateRadioButtons(session, 'resultsbtn', selected = "other")
+      updateTextInput(session, "otherfunction", value = paste0("?", input$secrdatabox))
+    }
   })
     
   observeEvent(input$fitbtn, ignoreInit = TRUE, {
