@@ -4189,7 +4189,9 @@ fitcode <- function() {
       }
     }
     else {
-      if (fitted) fncall <- gsub("fitted", "fitrv$value", fncall)
+      # fails with AIC
+      # if (fitted) fncall <- gsub("fitted", "fitrv$value", fncall)
+      if (fitted) fitted <- fitrv$value  ## 2022-02-10
       if (ch) fncall <- gsub("ch", "capthist()", fncall)
       tr <- traprv$data
       out <- try(eval(parse(text = fncall)), silent = TRUE)
