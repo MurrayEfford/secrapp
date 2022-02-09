@@ -1751,6 +1751,7 @@ server <- function(input, output, session) {
       k = NA_real_,
       proctime = NA_real_
     )
+
     if (inherits(fitrv$value, "secr")) {
       fitsum <- summary(fitrv$value)
       df$hcov <- fitsum$modeldetails[['hcov']]
@@ -1774,7 +1775,8 @@ server <- function(input, output, session) {
       else 
         df$k <- NA_real_ # force numeric NA
       df$proctime <- fitrv$value$proctime
-      df[,20:35] <- signif(df[,20:35], input$dec)
+      df[,21:22] <- round(df[,21:22], 2)   # logLik, AIC
+      df[,23:35] <- signif(df[,23:35], input$dec)
       OK <- TRUE
     }
     sumrv$value <- rbind (sumrv$value, df)
@@ -4184,8 +4186,7 @@ fitcode <- function() {
       # no need for warnings from incomplete topic names
       Rdfile <- try(suppressWarnings(fetchRdDB(RdDB, basename(ff))), silent = TRUE)
       if (!inherits(Rdfile, 'try-error')) {
-        tools::Rd2txt(Rd = Rdfile, options = list(underline_titles = FALSE)
-        )
+        tools::Rd2txt(Rd = Rdfile, options = list(underline_titles = FALSE))
       }
     }
     else {
@@ -4816,6 +4817,9 @@ fitcode <- function() {
     tmp <- sumrv$value[analyses,fields]
     if (length(analyses)>1) {
       tmp$dAIC <- tmp$AIC - min(tmp$AIC, na.rm = TRUE)
+    }
+    else {
+      tmp$dAIC <- NA
     }
     tmp <- t(tmp)
     # if (ncol(tmp)>0) colnames(tmp) <- paste0('Analysis', 1:ncol(tmp))
