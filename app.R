@@ -2472,6 +2472,7 @@ fitcode <- function() {
     removeNotification("badcapt")
     secrrv$data <- NULL
     traprv$data <- NULL
+    fitrv$value <- NULL
     if (input$datasource == "secr dataset") {
       ch <- get(input$secrdatabox)
       if (inherits(ch, 'capthist')) {
@@ -4210,7 +4211,6 @@ fitcode <- function() {
   #-----------------------------------------------------------------------------
   
   output$resultsPrint <- renderPrint({
-  
     rse <- RSE() 
     if (is.null(rse) || is.na(rse)) {
       maxRSE <- 100
