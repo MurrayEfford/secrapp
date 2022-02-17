@@ -404,7 +404,7 @@ ui <- function(request) {
                   verbatimTextOutput("resultsPrint"))
              # )
             ),
-            actionLink("hideresultslink", HTML("<small>hide</small>")),
+            actionButton("hideresultsbtn", HTML("<small>hide</small>"), class = "btn-link"),
             
             fluidRow(
               column(12,
@@ -552,7 +552,7 @@ ui <- function(request) {
                     )
                   )
                 ),
-                actionLink("hidegraphicslink", HTML("<small>hide</small>"))
+                actionButton("hidegraphicsbtn", HTML("<small>hide</small>"), class = "btn-link")
                 
               )
             )
@@ -3492,20 +3492,22 @@ fitcode <- function() {
   #     show("resultsPrint")
   # })
   
-  observeEvent(input$hideresultslink, ignoreInit = TRUE, {
-    if (input$hideresultslink %% 2 == 1) {
+  observeEvent(input$hideresultsbtn, ignoreInit = TRUE, {
+    if (input$hideresultsbtn %% 2 == 1) {
       shinyjs::hide("resultsbtn")
       shinyjs::hide("otherfunction")
       shinyjs::hide("resultsPrint")
       shinyjs::hide("savebtn")
-      updateActionLink(session, "hideresultslink", HTML("<small>show summary results</small>"))
+      # updateActionLink(session, "hideresultslink", HTML("<small>show summary results</small>"))
+      updateActionButton(session, "hideresultsbtn", HTML("<small>show summary results</small>"))
     }
     else {
       shinyjs::show("resultsbtn")
       shinyjs::show("otherfunction")
       shinyjs::show("resultsPrint")
       if (!is.null(fitrv$value)) shinyjs::show("savebtn")
-      updateActionLink(session, "hideresultslink", HTML("<small>hide</small>"))
+      # updateActionLink(session, "hideresultslink", HTML("<small>hide</small>"))
+      updateActionButton(session, "hideresultsbtn", HTML("<small>hide</small>"))
     }
   })
   
@@ -3553,10 +3555,11 @@ fitcode <- function() {
     filtermaskrv$value <- (input$filtermask %% 2) == 1
   })
   
-  observeEvent(input$hidegraphicslink, ignoreInit = TRUE, {
-    if (input$hidegraphicslink %% 2 == 1) {
+  observeEvent(input$hidegraphicsbtn, ignoreInit = TRUE, {
+    if (input$hidegraphicsbtn %% 2 == 1) {
       shinyjs::hide("plottabs")
-      updateActionLink(session, "hidegraphicslink", HTML("<small>show code and plots</small>"))
+      # updateActionLink(session, "hidegraphicslink", HTML("<small>show code and plots</small>"))
+      updateActionButton(session, "hidegraphicsbtn", HTML("<small>show code and plots</small>"))
       # tags$head(
       #   tags$style(
       #     HTML(
@@ -3569,7 +3572,8 @@ fitcode <- function() {
     }
     else {
       shinyjs::show("plottabs")
-      updateActionLink(session, "hidegraphicslink", HTML("<small>hide</small>"))
+      # updateActionLink(session, "hidegraphicslink", HTML("<small>hide</small>"))
+      updateActionButton(session, "hidegraphicsbtn", HTML("<small>hide</small>"))
       
       # tags$head(
       #   tags$style(
@@ -4074,8 +4078,8 @@ fitcode <- function() {
   
   
   observeEvent(c(
-    input$hideresultslink, 
-    input$hidegraphicslink,
+    input$hideresultsbtn, 
+    input$hidegraphicsbtn,
     traprv$data,
     capthist(),
     fitrv$value,
@@ -4087,7 +4091,7 @@ fitcode <- function() {
       else 
         showTab(inputId = "plottabs", target = tab)
     }
-    hideallplots <- input$hidegraphicslink %% 2 == 1
+    hideallplots <- input$hidegraphicsbtn %% 2 == 1
     hideplotif (FALSE, "Code")
     hideplotif (is.null(traprv$data), "Array")
     hideplotif (is.null(capthist()), "Moves")
