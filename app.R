@@ -3494,17 +3494,17 @@ fitcode <- function() {
   
   observeEvent(input$hideresultslink, ignoreInit = TRUE, {
     if (input$hideresultslink %% 2 == 1) {
-      hide("resultsbtn")
-      hide("otherfunction")
-      hide("resultsPrint")
-      hide("savebtn")
+      shinyjs::hide("resultsbtn")
+      shinyjs::hide("otherfunction")
+      shinyjs::hide("resultsPrint")
+      shinyjs::hide("savebtn")
       updateActionLink(session, "hideresultslink", HTML("<small>show summary results</small>"))
     }
     else {
-      show("resultsbtn")
-      show("otherfunction")
-      show("resultsPrint")
-      if (!is.null(fitrv$value)) show("savebtn")
+      shinyjs::show("resultsbtn")
+      shinyjs::show("otherfunction")
+      shinyjs::show("resultsPrint")
+      if (!is.null(fitrv$value)) shinyjs::show("savebtn")
       updateActionLink(session, "hideresultslink", HTML("<small>hide</small>"))
     }
   })
@@ -3555,7 +3555,7 @@ fitcode <- function() {
   
   observeEvent(input$hidegraphicslink, ignoreInit = TRUE, {
     if (input$hidegraphicslink %% 2 == 1) {
-      hide("plottabs")
+      shinyjs::hide("plottabs")
       updateActionLink(session, "hidegraphicslink", HTML("<small>show code and plots</small>"))
       # tags$head(
       #   tags$style(
@@ -3568,7 +3568,7 @@ fitcode <- function() {
       # )
     }
     else {
-      show("plottabs")
+      shinyjs::show("plottabs")
       updateActionLink(session, "hidegraphicslink", HTML("<small>hide</small>"))
       
       # tags$head(
