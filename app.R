@@ -3993,6 +3993,12 @@ fitcode <- function() {
     
     detectrv$value <- 'g0'
     
+    # hide/show
+    # reset() doesn't work for actionButton (see ?shinyjs::reset)
+    if (input$hideresultsbtn %% 2 == 1) shinyjs::click("hideresultsbtn")
+    if (input$hidegraphicsbtn %% 2 == 1) shinyjs::click("hidegraphicsbtn")
+    if (input$secrhelptopicbtn %%2 == 1) shinyjs::click("secrhelptopicbtn")
+    
     showNotification("all inputs reset", id = "lastaction",
       closeButton = FALSE, type = "message", duration = seconds)
     
