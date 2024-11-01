@@ -1,5 +1,17 @@
 ## imports stringr, readxl
 
+## changes 1.5
+##   requires secr >= 5.0
+##   update for secr 5.0: fxiContour, esaPlot
+##   blackbearCH
+##   replace rgdal with sf:
+##     st_read; st_as_sfc
+##     inherits sfc_POLYGON
+
+## yet to fix
+## SpatialPolygons
+## docs 
+
 library(secr)
 library(shinyjs)
 
@@ -14,8 +26,7 @@ if (compareVersion(as.character(secrversion), '5.0.0') < 0)
 # designurl <- "http://127.0.0.1:4429/"    ## temporarily use 4429 local
 designurl <- "https://www.stats.otago.ac.nz/secrdesignapp/"   # secrdesignapp 1.2 and above reads parameters
 
-# requires package rgdal to read shapefiles
-# requires package sp for bbox and plot method for SpatialPolygons
+# requires package sf to read shapefiles
 # requires package parallel for max cores in simulate options (distributed with base R)
 # requires package tools for file path when reading shapefiles (distributed with base R)
 # requires package stringr for some string operations
@@ -312,7 +323,7 @@ ui <- function(request) {
                         "OVpossumCH",
                         "possumCH",
                         "stoatCH"),
-                      selected = "captdata",
+                      selected = "blackbearCH",
                       selectize = FALSE,
                       size = 11)),
                   column(8, 
@@ -1140,9 +1151,12 @@ server <- function(input, output, session) {
     x <- ""
     if (input$secrdatabox == 'captdata') 
       x <- HTML("Simulated data from grid of multi-catch traps (from DENSITY)")  
+    else if (input$secrdatabox %in% c('blackbearCH'))
+      x <- HTML("<i>Ursus americanus</i> DNA hair snag data from ",
+                "Great Smoky Mountains National Park, Tennessee") 
     else if (input$secrdatabox %in% c('deermouse.ESG', 'deermouse.WSG'))
       x <- HTML("<i>Peromyscus maniculatus</i> Live-trapping data of V. H. Reid ",
-      "published as a CAPTURE example by Otis et al. (1978) Wildlife Monographs 62") 
+                "published as a CAPTURE example by Otis et al. (1978) Wildlife Monographs 62") 
     else if (input$secrdatabox == 'hornedlizardCH') 
       x <- HTML("Repeated searches of a quadrat in Arizona for flat-tailed ",
         "horned lizards <i>Phrynosoma mcallii</i> (Royle & Young Ecology 89, 2281--2289)") 
@@ -1658,7 +1672,7 @@ server <- function(input, output, session) {
       ext <- tolower(tools::file_ext(fileupload[1,1]))
       if (ext == "txt") {
         coord <- read.table(fileupload[1,4])
-        poly <- secr:::boundarytoSP(coord[,1:2])
+        poly <- secr:::boundarytoSF(coord[,1:2])
       }
       else if (ext %in% c("rdata", "rda", "rds")) {
         if (ext == "rds") {
@@ -1669,8 +1683,8 @@ server <- function(input, output, session) {
           obj <- get(objlist[1])
         }
         if (is.matrix(obj))
-          poly <- secr:::boundarytoSP(obj[,1:2])
-        else if (inherits(obj, "SpatialPolygons"))
+          poly <- secr:::boundarytoSF(obj[,1:2])
+        else if (inherits(obj, "sfc_POLYGON"))
           poly <- obj
         else stop("unrecognised boundary object in ", objlist[1])
       }
@@ -1682,20 +1696,20 @@ server <- function(input, output, session) {
           showNotification("need shapefile components .shp, .dbf, .shx",
             type = "error", id = "nofile", duration = NULL)
         }
-        else  if (!requireNamespace("rgdal"))
-          showNotification("need package rgdal to read shapefile", 
-            type = "error", id = "norgdal", duration = NULL)
+        else  if (!requireNamespace("sf"))
+          showNotification("need package sf to read shapefile", 
+            type = "error", id = "nosf", duration = NULL)
         else {
           removeNotification(id = "nofile")
-          removeNotification(id = "norgdal")
+          removeNotification(id = "nosf")
           ## not working on restore bookmark 2019-01-24
           dsnname <- dirname(fileupload[1,4])
           ## make temp copy with uniform layername
           file.copy(from = fileupload[,4], 
             to = paste0(dsnname, "/temp.", tools::file_ext(fileupload[,4])),     
             overwrite = TRUE)
-          layername <- "temp"
-          poly <- rgdal::readOGR(dsn = dsnname, layer = layername)
+          poly <- sf::st_read(dsn = paste0(dsnname, '/temp.shp')) 
+          poly <- sf::st_as_sfc(poly)
         }
       }
     }
@@ -1806,7 +1820,7 @@ server <- function(input, output, session) {
         code <- paste0( 
           if (comment) "# coordinates from text file\n" else "",
           "coord <- read.table('", filename, "')   # read boundary coordinates\n",
-          varname, " <- secr:::boundarytoSP(coord)  # convert to SpatialPolygons\n")
+          varname, " <- secr:::boundarytoSF(coord)  # convert to sfc_POLYGON\n")
       }
       else if (ext %in% c("rdata", "rda")) {
         objlist <- load(inputfilename[1,4])
@@ -1823,7 +1837,7 @@ server <- function(input, output, session) {
       else {
         code <- paste0(
           if (comment) "# ESRI polygon shapefile\n" else "",
-          varname, " <- rgdal::readOGR(dsn = '", 
+          varname, " <- sf::st_read(dsn = '", 
           tools::file_path_sans_ext(basename(filename)), 
           ".shp')\n"
         )
@@ -2595,7 +2609,7 @@ fitcode <- function() {
     req(!polyrv$clear)
     removeNotification("badpoly")
     polyrv$data <- readpolygon(input$maskpolyfilename)
-    if (!inherits(polyrv$data, "SpatialPolygons")) {
+    if (!inherits(polyrv$data, "sfc_POLYGON")) {
       showNotification("invalid polygon file; try again",
         type = "error", id = "badpoly")
       polyrv$data <- NULL
@@ -4464,20 +4478,20 @@ fitcode <- function() {
       }
       if (!is.null(fitrv$value) && input$fxi) {
         if (!(input$detector %in% c("multi","proximity","count")))
-          showNotification("fxi.contour requires point detector type")
+          showNotification("fxiContour requires point detector type")
         else {
           if (input$animal>0) {
-            tmp <- try(fxi.contour(fitrv$value, i = input$animal, 
+            tmp <- try(fxiContour(fitrv$value, i = input$animal, 
               sessnum = input$sess, border = input$buffer, add = TRUE), 
               silent = TRUE)
           }
           else {
-            tmp <- try(fxi.contour(fitrv$value, i = NULL, 
+            tmp <- try(fxiContour(fitrv$value, i = NULL, 
               sessnum = input$sess,  border = input$buffer, add = TRUE), 
               silent = TRUE)
           }
           if (inherits(tmp, 'try-error')) {
-            showNotification("error in fxi.contour; consider smaller mask spacing", 
+            showNotification("error in fxiContour; consider smaller mask spacing", 
               id="arrayploterror", type="error")
           }
         }
@@ -4601,21 +4615,15 @@ fitcode <- function() {
     invalidateOutputs()
     req(fitrv$value)
     par(mar=c(4,5,2,5))
-    if (detector(traprv$data)[1] %in% polygondetectors) {
-      if (compareVersion(as.character(secrversion), '4.2.0') < 0) {
-        showNotification("esa.plot for polygon detector types requires secr >= 4.2.0")
-        return()
-      }
-    }
     if (input$masktype == "Build") {
       spscale <- secr:::spatialscale(fitrv$value, detectfn = input$detectfnbox, 
         session = input$sess)
       max.buffer <- max(input$buffer*1.5, 5*spscale)  # 2020-08-13 *1.5
-      esa.plot(fitrv$value, session = input$sess, max.buffer = max.buffer, thin = 1)
+      esaPlot(fitrv$value, session = input$sess, max.buffer = max.buffer, thin = 1)
       abline(v = input$buffer, col = "red")
     }
     else {
-      esa.plot(fitrv$value, session = input$sess)
+      esaPlot(fitrv$value, session = input$sess)
     }
     mtext("Density estimate", side = 4, line = 1.5)
   })
@@ -4653,7 +4661,7 @@ fitcode <- function() {
       plotmsk(add = TRUE)
       plot (core, add = TRUE)
       if (!is.null(polyrv$data) && input$showpoly) {
-        sp::plot(polyrv$data, add = TRUE)
+        sf::plot(polyrv$data, add = TRUE)
       }
     }
     
