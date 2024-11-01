@@ -6,8 +6,8 @@ library(shinyjs)
 secrversion <- packageVersion('secr')
 secryear <- substring(packageDate('secr'),1,4)
 
-if (compareVersion(as.character(secrversion), '4.4.2') < 0)
-  stop("secrapp 1.4 requires secr version 4.4.2 or later",
+if (compareVersion(as.character(secrversion), '5.0.0') < 0)
+  stop("secrapp 1.5 requires secr version 5.0.0 or later",
     call. = FALSE)
 
 # for transfer to secrdesign
@@ -45,12 +45,12 @@ fittedresultsbtn <- c("summary", "predict", "derived", "other")
 ui <- function(request) {
   
   fluidPage(
-    title = "secr app 1.4",
+    title = "secr app 1.5",
     includeCSS("secrstyle.css"),
     useShinyjs(),
     withMathJax(),
     br(),
-    navlistPanel(id = "navlist", widths = c(2,10), well=TRUE, "secr app 1.4",
+    navlistPanel(id = "navlist", widths = c(2,10), well=TRUE, "secr app 1.5",
       tabPanel("Introduction",
         fluidRow(
           column(8,
@@ -300,16 +300,17 @@ ui <- function(request) {
                     div(style = "margin-top:-15px"),
                     selectInput("secrdatabox", "", 
                       choices = c(
+                        "blackbearCH",
                         "captdata", 
                         "deermouse.ESG", 
                         "deermouse.WSG",
                         "hornedlizardCH",
                         "housemouse",
+                        "infraCH",
+                        "lineoCH",
                         "ovenCHp", 
                         "OVpossumCH",
                         "possumCH",
-                        "infraCH",
-                        "lineoCH",
                         "stoatCH"),
                       selected = "captdata",
                       selectize = FALSE,
@@ -377,7 +378,7 @@ ui <- function(request) {
               column(3, actionButton("resetbtn", "Reset all", width = 130, 
                 title = "Reset all inputs to initial values")),
               # column(3, bookmarkButton(width = 130)), # NOT WORKING 1.3
-              column(3, actionButton("dummybookmarkbutton", "Bookmark", width = 130, title = "Bookmarking is disabled in secrapp 1.4")),
+              column(3, actionButton("dummybookmarkbutton", "Bookmark", width = 130, title = "Bookmarking is disabled in secrapp 1.5")),
               column(3),
               column(3, helpText(HTML("F11 full screen")))
             )
@@ -991,7 +992,7 @@ ui <- function(request) {
         withMathJax(includeMarkdown("help.rmd"))
       ),
       tabPanel("About",
-        h2("secr app 1.4"), br(),
+        h2("secr app 1.5"), br(),
         
         h5(paste("This Shiny application provides an interface to the R package 'secr', version", 
           secrversion, ".")),
@@ -3802,7 +3803,7 @@ fitcode <- function() {
   ##############################################################################
   
   observeEvent(input$dummybookmarkbutton, ignoreInit = TRUE, {
-    showNotification("Bookmarking is disabled in secrapp 1.4", id = "lastaction", 
+    showNotification("Bookmarking is disabled in secrapp 1.5", id = "lastaction", 
       duration = NULL)  
   })
   
