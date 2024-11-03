@@ -16,7 +16,7 @@ tabintro <- tabPanel(
            br(), br(),
            
            strong("secrapp"), "is an interactive interface to parts of the R package", strong("secr"), 
-           paste0("(Efford ", secryear,"). )"), strong("secr"), " and ", strong("secrapp"), "together supercede the Windows", 
+           paste0("(Efford ", secryear,"). "), strong("secr"), " and ", strong("secrapp"), "together supercede the Windows", 
            " software DENSITY (Efford et al. 2004)." ,
            br(), br(),
            
