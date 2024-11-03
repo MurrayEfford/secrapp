@@ -1,4 +1,4 @@
-# secrapp 1.4
+# secrapp 2.0
 
 This Shiny app performs simple spatially explicit capture-recapture analyses using the 
 R package [secr](https://CRAN.R-project.org/package=secr). For details see the 
@@ -16,13 +16,11 @@ shiny::runGitHub("secrapp", "MurrayEfford")
 
 Note:
 
-- secrapp 1.3 required secr 4.3
-- secrapp 1.4 requires secr 4.4.2 or a later version.
+- secrapp 2.0 requires secr 5.0.0 or a later version.
 
-
-The app may also be run in a web browser without any setup by following this 
-[link](https://www.stats.otago.ac.nz/secrapp). This arrangement has limited 
-capacity for simultaneous users.
+A version of the app may also be run in a web browser without any setup by 
+following this [link](https://www.stats.otago.ac.nz/secrapp). 
+This arrangement has limited capacity for simultaneous users.
 
 ----
 
@@ -38,6 +36,9 @@ mask.txt | Demo mask file for capt.txt | Habitat mask - File input |
 FTHLtrap.txt | Perimeter of horned lizard search area | Data input - Detector layout |
 FTHLcapt.txt | Flat-tailed horned lizard test data |Data input - Captures |
 FTHL.Rds | Saved flat-tailed horned lizard dataset | Data input |
+GSMboundary.dbf | ESRI polygon shapefile extent of habitat near black bear hair snags | Habitat mask - Mask polygon files |
+GSMboundary.shp |||
+GSMboundary.shx |||
 hareCH6trap.txt | Snowshow hare data | Data input - Detector layout |
 hareCH6capt.txt | Snowshow hare data | Data input - Captures |
 hareCH6.xlsx | Snowshoe hare data as Excel spreadsheet | Data input |
