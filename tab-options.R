@@ -89,6 +89,17 @@ taboptions <- tabPanel("Options",
                             )
                             
                   ),
+                  h2("Habitat mask plot"),
+                  wellPanel(class = "mypanel", 
+                            fluidRow(
+                              column(6, numericInput("maskborder", "Border (buffer units)", 
+                                                     min = 1, 
+                                                     max = 1000, 
+                                                     step = 0.5, 
+                                                     value = 1, 
+                                                     width = 180))
+                            )
+                  ),
                   h2("Pxy contour plot"),
                   wellPanel(class = "mypanel", 
                             fluidRow(

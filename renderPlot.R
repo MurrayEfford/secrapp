@@ -174,7 +174,7 @@ output$esaPlot <- renderPlot( height = 290, width = 400, {
   par(mar=c(4,5,2,5))
   if (input$masktype == "Build") {
     spscale <- secr:::spatialscale(fitrv$value, detectfn = input$detectfnbox, 
-                                   session = input$sess)
+                                   sessnum = input$sess)
     max.buffer <- max(input$buffer*1.5, 5*spscale)  # 2020-08-13 *1.5
     esaPlot(fitrv$value, session = input$sess, max.buffer = max.buffer, thin = 1)
     abline(v = input$buffer, col = "red")
@@ -191,12 +191,12 @@ output$maskPlot <- renderPlot({
   plotmsk <- function (add) {
     if (is.null(input$maskcov) | (input$maskcov == "none")) {
       plot (msk, add = add, col = grey(0.94 - input$dotsbox/5), dots = input$dotsbox,
-            covariate = NULL)
+            border = input$buffer*input$maskborder, covariate = NULL)
     }
     else {
       # debug cat(input$maskcov, "\n")
-      plot (msk, add = add, dots = input$dotsbox, covariate = input$maskcov,
-            legend = input$legend, inset = 0)
+      plot (msk, add = add, dots = input$dotsbox, border = input$buffer*input$maskborder,
+            covariate = input$maskcov, legend = input$legend, inset = 0)
       nacovariate <- is.na(covariates(msk)[,input$maskcov])
       if (any(nacovariate)) {
         plot (subset(msk, nacovariate), add = TRUE, dots = input$dotsbox, 
@@ -214,7 +214,7 @@ output$maskPlot <- renderPlot({
   par(mar=c(2,1,2,5), xaxs='i', yaxs='i', xpd = !input$frame)
   if (input$masktype == "Build") {
     if (is.null(core)) return (NULL)
-    plot (core, border = input$buffer, gridlines = FALSE)
+    plot (core, border = input$buffer*input$maskborder, gridlines = FALSE)
     plotmsk(add = TRUE)
     plot (core, add = TRUE)
     if (!is.null(polyrv$data) && input$showpoly) {

@@ -50,13 +50,16 @@ tabhabitat <- tabPanel("Habitat mask",
                                                      paste0("Mask polygon file(s)", strrep(intToUtf8(160), 3), " (optional)"),
                                                      accept = c('.shp','.dbf','.sbn','.sbx',
                                                                 '.shx',".prj", ".txt", ".rdata", ".rda", ".rds"), 
-                                                     multiple = TRUE)),
+                                                     multiple = TRUE)
+                                       ),
+                                       
                                        uiOutput("habitatfile"),
                                        
                                        div(style="height: 80px;",
                                            # need also to load polyrv$data
-                                           textInput("maskpolyobject", "Polygon object",
-                                                     value = "", placeholder = "e.g., GSM")),
+                                           textInput("maskpolyobjectname", "Polygon object",
+                                                     value = "", placeholder = "e.g., GSM")
+                                       ),
                                        
                                        conditionalPanel ("output.maskpolygonsready", 
                                                          
@@ -121,7 +124,9 @@ tabhabitat <- tabPanel("Habitat mask",
            column(5, plotOutput("maskPlot"),
                   conditionalPanel ("output.maskready", 
                                     fluidRow(
-                                      column(2, offset = 1, checkboxInput("dotsbox", "dots", value = FALSE)),
+                                      column(3, offset = 1, 
+                                             checkboxInput("dotsbox", "dots", value = FALSE)),
+                            
                                       column(2, checkboxInput("frame", "frame", value = TRUE)),
                                       column(3, 
                                              checkboxInput("maskedge2", "show edge", value = FALSE),
