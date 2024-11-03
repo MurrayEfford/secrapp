@@ -1,0 +1,23 @@
+##############################################################################
+## global variables
+
+linewidth <- 2      # for various plots 
+seconds <- 6        # default duration for showNotification()
+
+timewarning <- 0.5  # minutes
+timelimit <- 10.0   # minutes
+
+availablecores <- min(24, parallel::detectCores())
+defaultcores <- max(1, availablecores/2)
+
+defaultresultsbtn <- c("summary", "other")
+fittedresultsbtn <- c("summary", "predict", "derived", "other")
+
+secrversion <- packageVersion('secr')
+secryear <- substring(packageDate('secr'),1,4)
+
+polygondetectors <- c("polygon", "polygonX", "transect", "transectX")
+hazarddetectfn <- c("HHN", "HHR", "HEX", "HVP")
+
+##############################################################################
+

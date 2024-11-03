@@ -1,7 +1,7 @@
 ---
-title: "secr app 1.4"
+title: "secr app 2.0"
 author: "Murray Efford"
-date: '2022-02-09'
+date: '2024-11-03'
 output:
   html_document:
     toc: yes
@@ -22,14 +22,14 @@ output:
 
 # Introduction  <a name="introduction"></a>
 
-This Shiny application is an interactive interface to parts of the R package **secr** ([Efford 2022](#references)). The current source code is available from https://GitHub.com/MurrayEfford/secrapp.
+This Shiny application is an interactive interface to parts of the R package **secr** ([Efford 2024a](#references)). The current source code is available from https://GitHub.com/MurrayEfford/secrapp.
 The [step-by-step guide] overlaps in scope with this document and may ultimately replace it.
 
 Documentation of **secr** is available at www.otago.ac.nz/density. For example:
 
-<a href="https://www.otago.ac.nz/density/pdfs/secr-manual.pdf"; target="_blank";>secr-manual.pdf</a>   (details of each function)  
-<a href="https://www.otago.ac.nz/density/pdfs/secr-datainput.pdf"; target="_blank";>secr-datainput.pdf</a>  
-<a href="https://www.otago.ac.nz/density/pdfs/secr-overview.pdf"; target="_blank";>secr-overview.pdf</a>
+[secr-manual.pdf]   (details of each function)  
+[secr-datainput.pdf]    
+[secr-overview.pdf]  
 
 The analyses available through the Shiny app are a subset of those in **secr**. Support for multi-session analyses is limited.
 
@@ -47,7 +47,7 @@ By default, input is from two text files, one for the detector layout and one fo
 
 The detector layout file typically should have three columns (trapID, x, y) with no headers. These may optionally be followed by binary usage codes (0/1), one per occasion. Columns after a '/' are interpreted as detector covariates. Headers are required for input from Excel files.
 
-Options for <u>detector type</u>  follow **secr** ([Efford (2022)](#references)): "multi" refers to a multi-catch trap; "proximity" to binary proximity detectors, and "count" to detectors that yield integer counts. Counts are assumed to be Poisson-distributed. Data from searches of areas or transects use the types "polygon", "polygonX", "transect" or "transectX" (Efford 2011; see also [secr-polygondetectors.pdf]).
+Options for <u>detector type</u>  follow **secr** ([Efford (2024a)](#references)): "multi" refers to a multi-catch trap; "proximity" to binary proximity detectors, and "count" to detectors that yield integer counts. Counts are assumed to be Poisson-distributed. Data from searches of areas or transects use the types "polygon", "polygonX", "transect" or "transectX" (Efford 2011; see also [secr-polygondetectors.pdf]).
 
 If detector covariates are included then one or more covariate names should be provided (without quotes, separated by commas).
 
@@ -148,11 +148,11 @@ The <u>Distribution</u> radio button toggles between two models for the number o
 
 <a name="hcov"></a>
 
-The <u>Mixture hcov</u> select input allows the user to choose a variable defining a 2-level mixture class from among the individual covariates. This is passed to `secr.fit` as the argument 'hcov'. The covariate should take two non-missing values (e.g., 'F','M'); missing values are allowed. The mixing proportion 'pmix' is included in the model automatically when hcov is specified. To estimate mixture-specific values of a parameter include ~h2 in its formula (e.g., lambda0~h2). See <a href="https://www.otago.ac.nz/density/pdfs/secr-finitemixtures.pdf"; target="_blank";>secr-finitemixtures.pdf</a> for more.
+The <u>Mixture hcov</u> select input allows the user to choose a variable defining a 2-level mixture class from among the individual covariates. This is passed to `secr.fit` as the argument 'hcov'. The covariate should take two non-missing values (e.g., 'F','M'); missing values are allowed. The mixing proportion 'pmix' is included in the model automatically when hcov is specified. To estimate mixture-specific values of a parameter include $\sim$h2 in its formula (e.g., lambda0$\sim$h2). See [secr-finitemixtures.pdf] for more.
 
 Other arguments separated by commas may be used to customise the call to `secr.fit`. Attempts here to change 'capthist', 'mask', 'model' or 'detectfn' are ignored, and 'trace' is always FALSE.
 
-Model formulae may be edited using pre-defined predictors or covariate names as described in <a href="https://www.otago.ac.nz/density/pdfs/secr-overview.pdf"; target="_blank";>secr-overview.pdf</a>. Time covariates ('timecov') and session covariates ('sessioncov') may be specified in <u>Other arguments</u>. There is no provision for time-varying detector covariates.
+Model formulae may be edited using pre-defined predictors or covariate names as described in [secr-overview.pdf]. Time covariates ('timecov') and session covariates ('sessioncov') may be specified in <u>Other arguments</u>. There is no provision for time-varying detector covariates.
 
 The <u>Habitat mask</u> box reports attributes of the mask currently defined on the Habitat mask screen; use the edit link to vary these. 
 
@@ -321,7 +321,7 @@ A model will not be fitted if the predicted time exceeds a limit, currently 10 m
 
 # Bookmarking  <a name="bookmark"></a>
 
-NOTE: Bookmarking is disabled in secrapp 1.4 owing to a problem in Shiny.
+NOTE: Bookmarking is disabled in secrapp 2.0 owing to a problem in Shiny.
 
 <!-- Bookmarking creates a URL that allows you to take up your session where you left off.  -->
 
@@ -345,12 +345,12 @@ Efford, M. G. (2011) Estimation of population density by
 spatially explicit capture--recapture analysis of data from area
 searches. *Ecology* **92**, 2202--2207.
 
-Efford, M. G. (2022) secrdesign: Sampling design for spatially explicit 
-capture--recapture. R package version 2.6.0.
-  https://CRAN.R-project.org/package=secrdesign
+Efford, M. G. (2024a) secr: Spatially explicit capture--recapture models. 
+R package version 5.0.0. https://CRAN.R-project.org/package=secr
 
-Efford, M. G. (2022) secr: Spatially explicit capture--recapture models. 
-R package version 4.5.2. https://CRAN.R-project.org/package=secr
+Efford, M. G. (2024b) secrdesign: Sampling design for spatially explicit 
+capture--recapture. R package version 2.9.2.
+  https://CRAN.R-project.org/package=secrdesign
 
 Efford, M. G. and Boulanger, J. (2019) Fast evaluation of study designs for 
 spatially explicit capture--recapture. *Methods in Ecology and Evolution* **10**, 1529--1535.
@@ -359,10 +359,14 @@ spatially explicit capture--recapture. *Methods in Ecology and Evolution* **10**
 
 [secrdesign-Enrm.pdf]: http://www.otago.ac.nz/density/pdfs/secrdesign-tools.pdf
 [secr-polygondetectors.pdf]: http://www.otago.ac.nz/density/pdfs/secr-polygondetectors.pdf
+[secr-finitemixtures.pdf]: http://www.otago.ac.nz/density/pdfs/secr-finitemixtures.pdf
+[secr-manual.pdf]: http://www.otago.ac.nz/density/pdfs/secr-manual.pdf
+[secr-datainput.pdf]: http://www.otago.ac.nz/density/pdfs/secr-datainput.pdf
+[secr-overview.pdf]: http://www.otago.ac.nz/density/pdfs/secr-overview.pdf
 
 [bias.D]: https://www.otago.ac.nz/density/html/suggest.buffer.html
 [detectfn]: https://www.otago.ac.nz/density/html/detectfn.html
-[pdot.contour]: https://www.otago.ac.nz/density/html/contour.html
+[pdotContour]: https://www.otago.ac.nz/density/html/contour.html
 [esa.plot]: https://www.otago.ac.nz/density/html/esaplot.html
 [subset.capthist]: https://www.otago.ac.nz/density/html/subset.capthist.html
 

@@ -1,0 +1,7 @@
+Mask | File 2021-06-20 FIXED
+
+## 2024-11-01 locked up when region.N with wrong region (GSM) cf line 1438
+
+## 2024-11-03 secr help not working?
+
+## suggest width no longer updates habitat mask
