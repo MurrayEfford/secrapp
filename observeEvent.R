@@ -111,7 +111,7 @@ observeEvent(input$secrdatabox, {
                      inline = TRUE, choices = defaultresultsbtn)
 }, priority = 1000)
 
-observeEvent(input$maskpolyfilename, {
+observeEvent(c(input$maskpolyfilename, input$maskpolyobjectname), {
   polyrv$clear <- FALSE
 }, priority = 1000)
 
@@ -129,7 +129,7 @@ observeEvent(input$maskfilename, {
 observeEvent(c(input$detectfnbox, input$likelihoodbtn, input$distributionbtn,
                input$hcovbox, input$model, input$modelotherargs,
                input$masktype, input$buffer, input$habnx, input$maskshapebtn, 
-               input$maskpolyfilename, input$maskfilename,
+               input$maskpolyfilename, input$maskpolyobjectname, input$maskfilename,
                input$filtercaptlink, input$filtercapttext), 
              ignoreInit = TRUE, {
                fitrv$value <- NULL
@@ -405,6 +405,7 @@ observeEvent(input$clearspatialdata, ignoreInit = TRUE, {
 
 observeEvent(input$clearpolygondata, ignoreInit = TRUE, {
   reset("maskpolyfilename")
+  reset("maskpolyobjectname")
   reset("maskpolyobject")
   polyrv$data <- NULL
   polyrv$clear <- TRUE
@@ -794,6 +795,7 @@ observeEvent(input$resetbtn, ignoreInit = TRUE, {
   updateRadioButtons(session, "includeexcludebtn", selected = "Include")
   
   updateCheckboxInput(session, "dotsbox", value = FALSE)
+  updateNumericInput (session, "maskborder", value = 1)
   updateCheckboxInput(session, "frame", value = TRUE)
   updateCheckboxInput(session, "maskedge2", value = FALSE)
   updateCheckboxInput(session, "legend", value = FALSE)
@@ -864,7 +866,9 @@ observeEvent(input$resetbtn, ignoreInit = TRUE, {
   
   polyrv$data <- NULL
   polyrv$clear <- TRUE
-  reset('maskpolyfilename')
+  reset("maskpolyfilename")
+  reset("maskpolyobjectname")
+  
   
   covariaterv$data <- NULL
   covariaterv$names <- character(0)
@@ -873,7 +877,7 @@ observeEvent(input$resetbtn, ignoreInit = TRUE, {
   
   maskrv$data <- NULL
   maskrv$clear <- TRUE
-  reset('maskfilename') 
+  reset("maskfilename") 
   
   importrv$data <- NULL
   importrv$clear <- TRUE

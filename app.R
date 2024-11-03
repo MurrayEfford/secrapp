@@ -1,21 +1,25 @@
 ## imports stringr, readxl
 
 ## changes 2.0
-##   requires secr >= 5.0
-##   update for secr 5.0: fxiContour, esaPlot
+##   requires secr >= 5.1
+##   update for secr 5.1: fxiContour, esaPlot
 ##   blackbearCH
 ##   replace rgdal with sf:
 ##     st_read; st_as_sfc
 ##     inherits sfc_POLYGON
 ##   limited resultsPrint box height to 350px (scroll for estimates)
+##   suggest width actionlink on Main
+##   code split following:
+##     https://stackoverflow.com/questions/43002914/how-to-split-shiny-app-code-over-multiple-files-in-rstudio#43003577
+##   fix mask fail with polygon + multisession
+##   OVforestL left bank only
 
-## yet to fix
+## yet to fixM
 ## SpatialPolygons
 ## docs 
-## possibly split following
-## https://stackoverflow.com/questions/43002914/how-to-split-shiny-app-code-over-multiple-files-in-rstudio#43003577
+## see bugs.txt
 
-## need to complete mask polygon entry
+## need to complete mask polygon entry from R object (e.g., GSM)
 
 library(secr)
 library(shinyjs)
@@ -29,8 +33,8 @@ source('tab-options.R',     local = TRUE)
 source('tab-help.R',        local = TRUE)
 source('tab-about.R',       local = TRUE)
 
-if (compareVersion(as.character(secrversion), '5.0.0') < 0)
-  stop("secrapp 2.0 requires secr version 5.0.0 or later",
+if (compareVersion(as.character(secrversion), '5.1.0') < 0)
+  stop("secrapp 2.0 requires secr version 5.1.0 or later",
     call. = FALSE)
 
 # for transfer to secrdesign

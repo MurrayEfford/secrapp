@@ -136,7 +136,7 @@ tabhabitat <- tabPanel("Habitat mask",
                                       ),
                                       column(2, 
                                              conditionalPanel ("output.maskpolygonsready", 
-                                                               checkboxInput("showpoly", "polygons", value = FALSE)
+                                                               checkboxInput("showpoly", "polygon(s)", value = FALSE)
                                              )
                                       ),
                                       column(3, 

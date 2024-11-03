@@ -263,7 +263,12 @@ maskOK <- function () {
     TRUE
   }
   else {
-    sum(pointsInPolygon(traprv$data, polyrv$data)) > 0
+    if (ms(traprv$data)) {
+      all(sapply(traprv$data, function(x) sum(pointsInPolygon(x, polyrv$data)) > 0))
+    }
+    else {
+      sum(pointsInPolygon(traprv$data, polyrv$data)) > 0
+    }
   }
 }
 

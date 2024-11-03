@@ -16,7 +16,7 @@ shiny::runGitHub("secrapp", "MurrayEfford")
 
 Note:
 
-- secrapp 2.0 requires secr 5.0.0 or a later version.
+- secrapp 2.0 requires secr 5.1.0 or a later version.
 
 A version of the app may also be run in a web browser without any setup by 
 following this [link](https://www.stats.otago.ac.nz/secrapp). 
@@ -45,8 +45,8 @@ hareCH6.xlsx | Snowshoe hare data as Excel spreadsheet | Data input |
 hareCH6.Rds | Saved snowshoe hare dataset | Data input |
 ovtrap.txt | Locations of possum traps in the Orongorongo Valley | Data input - Detector layout |
 ovcapt.txt | Brushtail possum captures in the Orongorongo Valley | Data input - Captures |
-OVforest.dbf | ESRI polygon shapefile extent of habitat near possum traps | Habitat mask - Mask polygon files |
-OVforest.shp |||
-OVforest.shx |||
+OVforestL.dbf | ESRI polygon shapefile extent of habitat near possum traps | Habitat mask - Mask polygon files |
+OVforestL.shp |||
+OVforestL.shx |||
 ovenCHp.xlsx | Ovenbird proximity data as Excel spreadsheet | Data input |
 ovenCHp.Rds | Saved ovenbird proximity dataset | Data input |

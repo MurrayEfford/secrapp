@@ -157,8 +157,9 @@ tabmain <- tabPanel(
                                                                "possumCH",
                                                                "stoatCH"),
                                                              selected = "blackbearCH",
+                                                             multiple = FALSE,
                                                              selectize = FALSE,
-                                                             size = 11)),
+                                                             size = 12)),
                                           column(8, 
                                                  uiOutput("secrdatadescriptionui"),
                                                  fluidRow(

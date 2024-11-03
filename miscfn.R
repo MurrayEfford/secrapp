@@ -236,7 +236,7 @@ readpolygon <- function (fileupload) {
     ext <- tolower(tools::file_ext(fileupload[1,1]))
     if (ext == "txt") {
       coord <- read.table(fileupload[1,4])
-      poly <- secr:::boundarytoSF(coord[,1:2])
+      poly <- secr::boundarytoSF(coord[,1:2])
     }
     else if (ext %in% c("rdata", "rda", "rds")) {
       if (ext == "rds") {
@@ -247,7 +247,7 @@ readpolygon <- function (fileupload) {
         obj <- get(objlist[1])
       }
       if (is.matrix(obj))
-        poly <- secr:::boundarytoSF(obj[,1:2])
+        poly <- secr::boundarytoSF(obj[,1:2])
       else if (inherits(obj, "sfc_POLYGON"))
         poly <- obj
       else stop("unrecognised boundary object in ", objlist[1])

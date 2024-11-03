@@ -118,16 +118,34 @@ observe({
 })
 ##############################################################################
 
-## read mask polygon file
+## read mask polygon file or object
 observe({
   req(input$maskpolyfilename)
   req(!polyrv$clear)
   removeNotification("badpoly")
   polyrv$data <- readpolygon(input$maskpolyfilename)
-  if (!inherits(polyrv$data, "sfc_POLYGON")) {
+  if (!inherits(polyrv$data, c("sfc_POLYGON", "sfc_MULTIPOLYGON"))) {
     showNotification("invalid polygon file; try again",
                      type = "error", id = "badpoly")
     polyrv$data <- NULL
+  }
+})
+##############################################################################
+
+observe({
+  req(input$maskpolyobjectname)
+  req(!polyrv$clear)
+  removeNotification("badpoly")
+  if (!exists(input$maskpolyobjectname)) {
+    polyrv$data <- NULL
+  }
+  else {
+    polyrv$data <- get(input$maskpolyobjectname)
+    if (!inherits(polyrv$data, c("sfc_POLYGON", "sfc_MULTIPOLYGON"))) {
+      showNotification("invalid polygons; try again",
+                       type = "error", id = "badpoly")
+      polyrv$data <- NULL
+    }
   }
 })
 ##############################################################################

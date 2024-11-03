@@ -1,3 +1,10 @@
+
+## arraycode
+## maskcode
+## captcode
+## fitcode
+## getSPcode
+
 getSPcode <- function (inputfilename, varname, comment = TRUE) {
   filename <- inputfilename[1,1]
   if (is.null(filename)) {
@@ -9,7 +16,7 @@ getSPcode <- function (inputfilename, varname, comment = TRUE) {
       code <- paste0( 
         if (comment) "# coordinates from text file\n" else "",
         "coord <- read.table('", filename, "')   # read boundary coordinates\n",
-        varname, " <- secr:::boundarytoSF(coord)  # convert to sfc_POLYGON\n")
+        varname, " <- secr::boundarytoSF(coord)  # convert to sfc_POLYGON\n")
     }
     else if (ext %in% c("rdata", "rda")) {
       objlist <- load(inputfilename[1,4])
@@ -34,6 +41,7 @@ getSPcode <- function (inputfilename, varname, comment = TRUE) {
     code
   }
 }    
+################################################################################
 
 arraycode <- function (comment = FALSE) {
   # returns the R code needed to generate the specified array, 
@@ -88,7 +96,7 @@ arraycode <- function (comment = FALSE) {
   }
   code        
 }
-##############################################################################
+################################################################################
 
 maskcode <- function () {
   removeNotification("badpoly")
@@ -236,7 +244,7 @@ captcode <- function (comment = FALSE) {
   code
 }
 
-# ##############################################################################
+################################################################################
 
 fitcode <- function() {
   detfn <- input$detectfnbox

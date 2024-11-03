@@ -4,4 +4,4 @@ Mask | File 2021-06-20 FIXED
 
 ## 2024-11-03 secr help not working?
 
-## 2024-11-03 dual use of suggestbufferlink (Main and Habitat mask tabs) needs checking wrt enable/disable
+## 2024-11-03 check dual use of suggestbufferlink (Main and Habitat mask tabs) wrt enable/disable
