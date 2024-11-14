@@ -1,28 +1,27 @@
-## imports stringr, readxl
-
-## changes 2.0
+## user-visible changes 2.0
 ##   requires secr >= 5.1
-##   update for secr 5.1: fxiContour, esaPlot
 ##   blackbearCH
+##   suggest width actionlink on Main
+##   OVforestL left bank only
 ##   replace rgdal with sf:
 ##     st_read; st_as_sfc
-##     inherits sfc_POLYGON
 ##     sf_project in secrapp-tutorial
+
+## other changes 2.0
+##   update for secr 5.1: fxiContour, esaPlot
 ##   limited resultsPrint box height to 350px (scroll for estimates)
-##   suggest width actionlink on Main
 ##   code split following:
 ##     https://stackoverflow.com/questions/43002914/how-to-split-shiny-app-code-over-multiple-files-in-rstudio#43003577
 ##   fix mask fail with polygon + multisession
-##   OVforestL left bank only
-
-## yet to fix -
-## docs 
-## see bugs.txt
-
-## need to complete mask polygon entry from R object (e.g., GSM)
 
 library(secr)
 library(shinyjs)
+
+# requires package sf (polygon operations)
+# requires package stringr (for some string operations)
+# requires package readxl (for reading Excel files)
+# requires package parallel for max cores in simulate options (distributed with base R)
+# requires package tools for file path when reading shapefiles (distributed with base R)
 
 source('globalvars.R',      local = TRUE)
 source('tab-intro.R',       local = TRUE)
@@ -37,20 +36,16 @@ if (compareVersion(as.character(secrversion), '5.1.0') < 0)
   stop("secrapp 2.0 requires secr version 5.1.0 or later",
     call. = FALSE)
 
-# for transfer to secrdesign
-# designurl <- "http://127.0.0.1:4429/"    ## temporarily use 4429 local
-designurl <- "https://www.stats.otago.ac.nz/secrdesignapp/"   # secrdesignapp 1.2 and above reads parameters
-
-# requires package sf to read shapefiles
-# requires package parallel for max cores in simulate options (distributed with base R)
-# requires package tools for file path when reading shapefiles (distributed with base R)
-# requires package stringr for some string operations
-# requires package readxl for reading Excel files
+if (!requireNamespace('stringr')) stop("please install package 'stringr'")
+if (!requireNamespace('sf')) stop("please install package 'sf'")
+if (!requireNamespace('readxl')) stop("please install package 'readxl'")
 
 # interrupt is hard -
 # see http://htmlpreview.github.io/?https://github.com/fellstat/ipc/blob/master/inst/doc/shinymp.html
 
+############################################################################################
 # Define UI 
+
 ui <- function(request) {
   
   fluidPage(
@@ -67,8 +62,8 @@ ui <- function(request) {
                 taboptions,
                 tabhelp,
                 tababout
-    )   # end navlistpanel
-  )     # end fluidPage
+    )   
+  )     
 }
 
 ############################################################################################
@@ -76,6 +71,7 @@ ui <- function(request) {
 
 server <- function(input, output, session) {
   
+  ## summary field names
   summaryfields <- c("date", "time", "note", "traps", "captures", "filter", 
     "n", "r", "ndetectors", "noccasions", "usagepct", "maskbuffer", "masknrow", 
     "maskspace", "likelihood", "distribution", "model", "hcov", 
@@ -83,7 +79,6 @@ server <- function(input, output, session) {
     "D", "se.D", "RSE.D", "g0", "se.g0", "lambda0", "se.lambda0", "sigma", 
     "se.sigma", "z", "se.z", "k", "proctime"
   )
-  
   fieldgroup1 <- 1:18
   fieldgroup2 <- 19:36
   
@@ -106,7 +101,7 @@ server <- function(input, output, session) {
   source('observeEvent.R',    local = TRUE)
   source('observe.R',         local = TRUE)
   source('downloadHandler.R', local = TRUE)
-  source('fitmodel.R',        local = TRUE)   # includes addtosummary()
+  source('fitmodel.R',        local = TRUE)   
   source('bookmark.R',        local = TRUE)
   
   disable("fitbtn")
@@ -127,8 +122,6 @@ server <- function(input, output, session) {
   outputOptions(output, "maskcovariatesready",    suspendWhenHidden = FALSE)
   outputOptions(output, "maskcovariatefileready", suspendWhenHidden = FALSE)
   outputOptions(output, "maskpolygonsready",      suspendWhenHidden = FALSE)
-  # outputOptions(output, "maskpolygonfile",        suspendWhenHidden = FALSE)
-  # outputOptions(output, "maskpolygonobject",      suspendWhenHidden = FALSE)
   outputOptions(output, "modelFitted",            suspendWhenHidden = FALSE)
   outputOptions(output, "capthistLoaded",         suspendWhenHidden = FALSE)
   outputOptions(output, "filterCapt",             suspendWhenHidden = FALSE)
@@ -143,14 +136,15 @@ server <- function(input, output, session) {
   # tidy end of session - app closes in R
   # ?apparently incompatible with bookmarking 2019-01-17
   
-  # session$onSessionEnded(function() {
-  #     stopApp()
-  # })
+  session$onSessionEnded(function() {
+      stopApp()
+  })
 
   ##############################################################################
 }
-  
+## end of server logic
 ##################################################################################
+
 # Run the application
 shinyApp(ui = ui, server = server, enableBookmarking = "server")
 ##################################################################################

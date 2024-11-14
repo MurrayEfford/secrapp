@@ -35,6 +35,13 @@ The analyses available through the Shiny app are a subset of those in **secr**. 
 
 TIP: on small displays, running your browser in full-screen mode will avoid the need to scroll down (often F11 will get you there; otherwise try the options menu of the browser).
 
+Version 2.0 (November 2024) has these user-visible changes:
+
+* requires **secr** >= 5.1.0
+* new dataset blackbearCH
+* habitat mask buffer width 'suggest' link on the Main screen
+* spatial data processing uses package **sf** ([Pebesma 2018](*references)), replacing defunct rgdal
+
 # Main screen  <a name="main"></a>
 
 *Use settings on this page to input data and fit simple models.*
@@ -47,7 +54,7 @@ By default, input is from two text files, one for the detector layout and one fo
 
 The detector layout file typically should have three columns (trapID, x, y) with no headers. These may optionally be followed by binary usage codes (0/1), one per occasion. Columns after a '/' are interpreted as detector covariates. Headers are required for input from Excel files.
 
-Options for <u>detector type</u>  follow **secr** ([Efford (2024a)](#references)): "multi" refers to a multi-catch trap; "proximity" to binary proximity detectors, and "count" to detectors that yield integer counts. Counts are assumed to be Poisson-distributed. Data from searches of areas or transects use the types "polygon", "polygonX", "transect" or "transectX" (Efford 2011; see also [secr-polygondetectors.pdf]).
+Options for <u>detector type</u>  follow **secr** ([Efford 2024a](#references)): "multi" refers to a multi-catch trap; "proximity" to binary proximity detectors, and "count" to detectors that yield integer counts. Counts are assumed to be Poisson-distributed. Data from searches of areas or transects use the types "polygon", "polygonX", "transect" or "transectX" (Efford 2011; see also [secr-polygondetectors.pdf]).
 
 If detector covariates are included then one or more covariate names should be provided (without quotes, separated by commas).
 
@@ -72,6 +79,7 @@ A filter may be applied to captures loaded from text files or spreadsheets. Clic
 |  traps     | detectors  | `traps = traps(ch)$x < 500` | only western part of array |
 |  sessions  | sessions   | `sessions = 1` | may select one or more sessions |
 
+\
 Each argument is a vector of subscripts that may be logical- (length equal to the relevant dimension of ch), character- or integer-valued, except that occasions should be specified by their number. Arguments `occasions`, `traps` and `sessions` should be named, but may be shortened (e.g. `occ = 1:3`). Criteria may be combined (separated by commas).
 
 Selecting individuals (argument subset) can be problematic, especially from multi-session data. If `covariates(ch)` has more than one column then specify with, e.g., `covariates(ch)$sex == "M"`. 
@@ -82,7 +90,13 @@ The Summary table includes the filter text unless that summary field is deselect
 
 ## Model
 
-<table style="width:60%">
+<table style="width:800px">
+    <colgroup>
+       <col span="1" style="width: 20%;">
+       <col span="1" style="width: 7%;">
+       <col span="1" style="width: 25%;">
+       <col span="1" style="width: 48%;">
+    </colgroup>
   <tr>
     <td> Detection function </td>
     <td> HN </td> 
@@ -122,7 +136,11 @@ The Summary table includes the filter text unless that summary field is deselect
 </table> 
   
 <br>
-<table style="width:60%">
+<table style="width:600px">
+    <colgroup>
+       <col span="1" style="width: 27%;">
+       <col span="1" style="width: 73%;">
+    </colgroup>
   <tr>
     <td>Likelihood</td>
     <td>maximize full likelihood or likelihood conditional on \( \small n\)</td>
@@ -162,7 +180,11 @@ The application is designed for small- to medium-sized models. An internal algor
 
 ## Actions
 
-<table style="width:50%">
+<table style="width:600px">
+    <colgroup>
+       <col span="1" style="width: 27%;">
+       <col span="1" style="width: 73%;">
+    </colgroup>
   <tr>
     <td>Fit model</td>
     <td>Fit closed-population SECR model</td>
@@ -178,6 +200,7 @@ The application is designed for small- to medium-sized models. An internal algor
 </table> 
 
 <br>
+
 'Reset all' does not delete Summary results from the current session. Use the buttons on the Summary page to manage the summaries. Summary results will be lost if you close the application without downloading to a local file.
 
 The option 'Switch to secrdesign' appears once a model has been fitted if the detection function is HHN or HEX and the detector type is multi, proximity or count. This opens 'secrdesignapp' on the Otago University server in a new browser window. Settings and parameter estimates are transferred automatically. Detector locations are not transferred; they should be provided either by selecting the file in secrdesignapp, or by the usual options (Grid, Line, Region).
@@ -354,6 +377,9 @@ capture--recapture. R package version 2.9.2.
 
 Efford, M. G. and Boulanger, J. (2019) Fast evaluation of study designs for 
 spatially explicit capture--recapture. *Methods in Ecology and Evolution* **10**, 1529--1535.
+
+Pebesma, E. (2018) Simple Features for R: Standardized Support for Spatial Vector Data. 
+  *The R Journal* **10**, 439--446. https://doi.org/10.32614/RJ-2018-009
 
 ----------------------------------------------------
 

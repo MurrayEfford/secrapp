@@ -19,5 +19,9 @@ secryear <- substring(packageDate('secr'),1,4)
 polygondetectors <- c("polygon", "polygonX", "transect", "transectX")
 hazarddetectfn <- c("HHN", "HHR", "HEX", "HVP")
 
+# for transfer to secrdesign
+# secrdesignapp 1.2 and above reads parameters
+designurl <- "https://www.stats.otago.ac.nz/secrdesignapp/"  
+
 ##############################################################################
 
