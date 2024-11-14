@@ -144,8 +144,8 @@ tabmain <- tabPanel(
                                                  div(style = "margin-top:-15px"),
                                                  selectInput("secrdatabox", "", 
                                                              choices = c(
-                                                               "blackbearCH",
                                                                "captdata", 
+                                                               "blackbearCH",
                                                                "deermouse.ESG", 
                                                                "deermouse.WSG",
                                                                "hornedlizardCH",
@@ -156,7 +156,7 @@ tabmain <- tabPanel(
                                                                "OVpossumCH",
                                                                "possumCH",
                                                                "stoatCH"),
-                                                             selected = "blackbearCH",
+                                                             selected = "captdata",
                                                              multiple = FALSE,
                                                              selectize = FALSE,
                                                              size = 12)),
