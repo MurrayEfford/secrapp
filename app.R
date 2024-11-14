@@ -6,6 +6,7 @@
 ##   replace rgdal with sf:
 ##     st_read; st_as_sfc
 ##     sf_project in secrapp-tutorial
+##   clear summaries actionLink on Summary
 
 ## other changes 2.0
 ##   update for secr 5.1: fxiContour, esaPlot
@@ -111,11 +112,13 @@ server <- function(input, output, session) {
 
   output$selectingfields   <- renderText('false')
   output$selectinganalyses <- renderText('false')
+  output$summaries         <- renderText('false')
   output$multisession      <- renderText('false')
   output$nontrap           <- renderText('false')
 
   outputOptions(output, "selectingfields",        suspendWhenHidden = FALSE)
   outputOptions(output, "selectinganalyses",      suspendWhenHidden = FALSE)
+  outputOptions(output, "summaries",              suspendWhenHidden = FALSE)
   outputOptions(output, "multisession",           suspendWhenHidden = FALSE)
   outputOptions(output, "nontrap",                suspendWhenHidden = FALSE)
   outputOptions(output, "maskready",              suspendWhenHidden = FALSE)

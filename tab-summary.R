@@ -21,6 +21,13 @@ tabsummary <- tabPanel(
                       actionLink("selectallanalyseslink",  "All",  title = "Select all analyses")
                )
              ), 
+             conditionalPanel("output.summaries == 'true'",
+                              br(),
+                              fluidRow(
+                                column(6, ""),
+                                column(4, actionLink("clearallanalyseslink", "Clear", title = "Clear all analyses"))
+                              )
+             ), 
              br(), 
              h2("Download"),
              fluidRow(

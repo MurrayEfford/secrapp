@@ -293,6 +293,27 @@ observeEvent(input$selectallanalyseslink, {
 
 ##############################################################################
 
+observeEvent(input$clearallanalyseslink, {
+  showModal(modalDialog(
+    title="Clear all summaries",
+    footer = tagList(actionButton("confirmclearall", "Yes"),
+                     modalButton("No")
+    ),
+    size = 's'
+  ))
+})
+
+observeEvent(input$confirmclearall, {
+  sumrv$value <- sumrv$value[0,]
+  updateCheckboxGroupInput(session, "analyses",
+                           choices = character(0), selected = character(0))
+  updateCheckboxInput(session, "keepselectedbox", value = FALSE)
+  output$summaries <- renderText("false")
+  removeModal()
+})
+
+##############################################################################
+
 observeEvent(c(input$clearimportlink, input$datasource), ignoreInit = TRUE, {
   
   reset('trapfilename')
@@ -813,13 +834,11 @@ observeEvent(input$resetbtn, ignoreInit = TRUE, {
   
   ## Summary
   
-  # safer to leave this for manual reset using Summary page buttons        
-  sumrv$value <- sumrv$value[0,]
-  
-  updateCheckboxGroupInput(session, "analyses", 
-                           choices = character(0), selected = character(0)
-  )
-  updateCheckboxInput(session, "keepselectedbox", value = FALSE)
+  # safer to leave this for manual reset using Summary page buttons       
+  # sumrv$value <- sumrv$value[0,]
+  # updateCheckboxGroupInput(session, "analyses", 
+  #                          choices = character(0), selected = character(0))
+  # updateCheckboxInput(session, "keepselectedbox", value = FALSE)
   
   ## Options
   

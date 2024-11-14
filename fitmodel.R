@@ -84,6 +84,7 @@ addtosummary <- function() {
                              choices = rownames(sumrv$value),
                              selected = c(input$analyses, paste0("Analysis", nrow(sumrv$value)))
     )
+    output$summaries <- renderText("true")
   }
   return(OK)
 }
