@@ -15,6 +15,14 @@ output$maskpolygonsready <- reactive({
   return(!is.null(polyrv$data))
 })
 
+# output$maskpolygonfile <- reactive({
+#   return(input$maskpolybtn == "File(s)")
+# })
+# 
+# output$maskpolygonobject <- reactive({
+#   return(input$maskpolybtn == "R object")
+# })
+# 
 output$modelFitted <- reactive({
   return(!is.null(fitrv$value))
 })
@@ -317,16 +325,27 @@ mask <- reactive( {
     msk <- addCovariates (msk, covariaterv$data)
     covariates(msk) <- secr:::stringsAsFactors(covariates(msk))
     
-    OK <- apply(!is.na(covariates(msk)),1,all)
-    if (sum(OK)<nrow(msk)) {
-      if (input$dropmissing) {
-        msk <- subset(msk, OK)
+    purgemissing <- function (msk) {
+      OK <- apply(!is.na(covariates(msk)),1,all)
+      if (sum(OK)<nrow(msk)) {
+        if (input$dropmissing) {
+          msk <- subset(msk, OK)
+        }
+        else {
+          showNotification("covariate(s) missing at some mask points",
+                           id = "lastaction", duration = NULL)
+        }
       }
-      else {
-        showNotification("covariate(s) missing at some mask points",
-                         id = "lastaction", duration = NULL)
-      }
+      msk
     }
+    if (ms(msk)) {
+      msk <- lapply(msk, purgemissing)
+      class(msk) <- c('mask','list')
+    }
+    else {
+      msk <- purgemissing(msk)
+    }
+    
     if (!is.null(covariates(msk))) {
       if (input$filtermasktext != "" && filtermaskrv$value) {
         OKF <- try(with (covariates(msk), {

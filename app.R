@@ -7,6 +7,7 @@
 ##   replace rgdal with sf:
 ##     st_read; st_as_sfc
 ##     inherits sfc_POLYGON
+##     sf_project in secrapp-tutorial
 ##   limited resultsPrint box height to 350px (scroll for estimates)
 ##   suggest width actionlink on Main
 ##   code split following:
@@ -14,8 +15,7 @@
 ##   fix mask fail with polygon + multisession
 ##   OVforestL left bank only
 
-## yet to fixM
-## SpatialPolygons
+## yet to fix -
 ## docs 
 ## see bugs.txt
 
@@ -127,6 +127,8 @@ server <- function(input, output, session) {
   outputOptions(output, "maskcovariatesready",    suspendWhenHidden = FALSE)
   outputOptions(output, "maskcovariatefileready", suspendWhenHidden = FALSE)
   outputOptions(output, "maskpolygonsready",      suspendWhenHidden = FALSE)
+  # outputOptions(output, "maskpolygonfile",        suspendWhenHidden = FALSE)
+  # outputOptions(output, "maskpolygonobject",      suspendWhenHidden = FALSE)
   outputOptions(output, "modelFitted",            suspendWhenHidden = FALSE)
   outputOptions(output, "capthistLoaded",         suspendWhenHidden = FALSE)
   outputOptions(output, "filterCapt",             suspendWhenHidden = FALSE)

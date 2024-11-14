@@ -21,13 +21,13 @@ getSPcode <- function (inputfilename, varname, comment = TRUE) {
     else if (ext %in% c("rdata", "rda")) {
       objlist <- load(inputfilename[1,4])
       code <- paste0( 
-        if (comment) "# SpatialPolygons from RData file\n" else "",
+        if (comment) "# polygons from RData file\n" else "",
         "objlist <- load('", filename, "')\n",
         varname, " <- get(objlist[1]) \n")
     }
     else if (ext == "rds") {
       code <- paste0( 
-        if (comment) "# SpatialPolygons from RDS file\n" else "",
+        if (comment) "# polygons from RDS file\n" else "",
         varname, " <- readRDS('", filename, "') \n")
     }
     else {

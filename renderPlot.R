@@ -205,6 +205,7 @@ output$maskPlot <- renderPlot({
     }
   }
   core <- traprv$data
+  border <- input$buffer*input$maskborder
   msk <- mask()
   if (ms(core)) {
     core <- core[[input$masksess]]
@@ -214,7 +215,7 @@ output$maskPlot <- renderPlot({
   par(mar=c(2,1,2,5), xaxs='i', yaxs='i', xpd = !input$frame)
   if (input$masktype == "Build") {
     if (is.null(core)) return (NULL)
-    plot (core, border = input$buffer*input$maskborder, gridlines = FALSE)
+    plot (core, border = border, gridlines = FALSE)
     plotmsk(add = TRUE)
     plot (core, add = TRUE)
     if (!is.null(polyrv$data) && input$showpoly) {

@@ -23,11 +23,11 @@ taboptions <- tabPanel("Options",
                   h2("Model fitting"),
                   wellPanel(class = "mypanel",
                             fluidRow(
-                              column(11, selectInput("method", "Maximization method",
+                              column(10, selectInput("method", "Maximization method",
                                                      ## 2020-02-10 choices = c("Newton-Raphson", "Nelder-Mead", "none"),
                                                      choices = c("Newton-Raphson", "Nelder-Mead"),
-                                                     selected = "Newton-Raphson", width=160)),
-                              column(1, br(), br(), actionLink("incrementtime", label = "."))
+                                                     selected = "Newton-Raphson", width=150)),
+                              column(2, br(), actionLink("incrementtime", label = "."))
                             ),
                             fluidRow(
                               column(6, numericInput("ncores", "Number of cores", 
@@ -93,7 +93,7 @@ taboptions <- tabPanel("Options",
                   wellPanel(class = "mypanel", 
                             fluidRow(
                               column(6, numericInput("maskborder", "Border (buffer units)", 
-                                                     min = 1, 
+                                                     min = 0, 
                                                      max = 1000, 
                                                      step = 0.5, 
                                                      value = 1, 

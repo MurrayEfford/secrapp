@@ -280,7 +280,7 @@ The 'Suggest width' button runs the **secr** function `suggest.buffer` which is 
 
 A mask built by buffering around a detector array may include known non-habitat. Polygon data from an ESRI shapefile may be used to include or exclude sites from the mask.
 
-Mask covariates are used to build spatial models of density (D). Covariate data may be added from a spatial data source - either a polygon shapefile, a SpatialPolygonsDataFrame stored in an .rds file, or a text file in the format used for habitat masks (below). Covariate values at each mask point are inferred from spatial overlap (shapefile or SpatialPolygonsDataFrame) or the nearest source point (mask file).
+Mask covariates are used to build spatial models of density (D). Covariate data may be added from a spatial data source - either a polygon shapefile, a spatial data source (sf or SpatialPolygonsDataFrame) stored in an .rds file, or a text file in the format used for habitat masks (below). Covariate values at each mask point are inferred from spatial overlap (shapefile, sf or SpatialPolygonsDataFrame) or the nearest source point (mask file).
 
 A mask text file should have a header line. The first two columns ('x', 'y') are read as the x- and y-coordinates. Further columns are assumed to represent covariates and their names may be used in formulae for density.
 

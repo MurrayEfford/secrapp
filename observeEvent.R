@@ -129,8 +129,8 @@ observeEvent(input$maskfilename, {
 observeEvent(c(input$detectfnbox, input$likelihoodbtn, input$distributionbtn,
                input$hcovbox, input$model, input$modelotherargs,
                input$masktype, input$buffer, input$habnx, input$maskshapebtn, 
-               input$maskpolyfilename, input$maskpolyobjectname, input$maskfilename,
-               input$filtercaptlink, input$filtercapttext), 
+               input$maskpolybtn, input$maskpolyfilename, input$maskpolyobjectname, 
+               input$maskfilename, input$filtercaptlink, input$filtercapttext), 
              ignoreInit = TRUE, {
                fitrv$value <- NULL
                updateRadioButtons(session, "resultsbtn", label = "", 
@@ -403,13 +403,20 @@ observeEvent(input$clearspatialdata, ignoreInit = TRUE, {
   covariaterv$clear <- TRUE
 }, priority = 1000)
 
+observeEvent(input$maskpolybtn, ignoreInit = TRUE, {
+  reset("maskpolyfilename")
+  reset("maskpolyobjectname")
+  polyrv$data <- NULL
+  polyrv$clear <- TRUE
+}, priority = 1000)
+
 observeEvent(input$clearpolygondata, ignoreInit = TRUE, {
   reset("maskpolyfilename")
   reset("maskpolyobjectname")
-  reset("maskpolyobject")
   polyrv$data <- NULL
   polyrv$clear <- TRUE
   updateRadioButtons(session, "includeexcludebtn", selected = "Include")
+  updateRadioButtons(session, "maskpolybtn", selected = "None")
 }, priority = 1000)
 
 observeEvent(input$clearbufferspec, ignoreInit = TRUE, {
@@ -790,6 +797,7 @@ observeEvent(input$resetbtn, ignoreInit = TRUE, {
   updateNumericInput(session, "buffer", value = 100)
   updateNumericInput(session, "habnx", value = 32)
   updateRadioButtons(session, "maskshapebtn", selected = "Trap buffer")
+  updateRadioButtons(session, "maskpolybtn", selected = "None")
   
   updateCheckboxInput(session, "dropmissing", value = FALSE)
   updateRadioButtons(session, "includeexcludebtn", selected = "Include")

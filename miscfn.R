@@ -246,11 +246,18 @@ readpolygon <- function (fileupload) {
         objlist <- load(fileupload[1,4])
         obj <- get(objlist[1])
       }
-      if (is.matrix(obj))
+      if (is.matrix(obj)) {
         poly <- secr::boundarytoSF(obj[,1:2])
-      else if (inherits(obj, "sfc_POLYGON"))
-        poly <- obj
-      else stop("unrecognised boundary object in ", objlist[1])
+      }
+      else {
+        if (inherits(obj, "sf")) obj <- sf::st_as_sfc(obj)
+        if (inherits(obj, c("sfc_POLYGON", "sfc_MULTIPOLYGON"))) {
+          poly <- secr::boundarytoSF(obj)
+        }
+        else {
+          stop("unrecognised boundary object in ", objlist[1])
+        }
+      }
     }
     else {
       

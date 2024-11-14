@@ -120,29 +120,28 @@ observe({
 
 ## read mask polygon file or object
 observe({
-  req(input$maskpolyfilename)
+  #req(input$maskpolyfilename)
+  #req(input$maskpolyobjectname)
+  req(input$maskpolybtn)
   req(!polyrv$clear)
   removeNotification("badpoly")
-  polyrv$data <- readpolygon(input$maskpolyfilename)
-  if (!inherits(polyrv$data, c("sfc_POLYGON", "sfc_MULTIPOLYGON"))) {
-    showNotification("invalid polygon file; try again",
-                     type = "error", id = "badpoly")
+  if (input$maskpolybtn == "None") {
     polyrv$data <- NULL
   }
-})
-##############################################################################
-
-observe({
-  req(input$maskpolyobjectname)
-  req(!polyrv$clear)
-  removeNotification("badpoly")
-  if (!exists(input$maskpolyobjectname)) {
-    polyrv$data <- NULL
+  else if (input$maskpolybtn == "File(s)") {
+    polyrv$data <- readpolygon(input$maskpolyfilename)
   }
-  else {
-    polyrv$data <- get(input$maskpolyobjectname)
+  else if (input$maskpolybtn == "R object") {
+    if (!exists(input$maskpolyobjectname)) {
+      polyrv$data <- NULL
+    }
+    else {
+      polyrv$data <- get(input$maskpolyobjectname)
+    }
+  }
+  if (!is.null(polyrv$data)) {
     if (!inherits(polyrv$data, c("sfc_POLYGON", "sfc_MULTIPOLYGON"))) {
-      showNotification("invalid polygons; try again",
+      showNotification("invalid polygon file; try again",
                        type = "error", id = "badpoly")
       polyrv$data <- NULL
     }
@@ -167,14 +166,17 @@ observe({
     covariaterv$data <- readpolygon(input$maskcovariatefilename)
   }
   
-  if (!inherits(covariaterv$data, c("SpatialPolygonsDataFrame", "mask"))) {
+  if (!inherits(covariaterv$data, c("SpatialPolygonsDataFrame", "sf", "mask"))) {
     showNotification("invalid covariate file; try again",
                      type = "error", id = "bad covariate file")
     covariaterv$data <- NULL
     covariaterv$names <- character(0)
   }
   else {
-    if (inherits(covariaterv$data, "mask")) {
+    if (inherits(covariaterv$data, "sf")) {
+      covariaterv$names <- names(st_drop_geometry(covariaterv$data))
+    }
+    else if (inherits(covariaterv$data, "mask")) {
       covariaterv$names <- names(covariates(covariaterv$data))
     }
     else {
