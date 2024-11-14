@@ -71,18 +71,7 @@ ui <- function(request) {
 # Define server logic
 
 server <- function(input, output, session) {
-  
-  ## summary field names
-  summaryfields <- c("date", "time", "note", "traps", "captures", "filter", 
-    "n", "r", "ndetectors", "noccasions", "usagepct", "maskbuffer", "masknrow", 
-    "maskspace", "likelihood", "distribution", "model", "hcov", 
-    "detectfn", "npar", "logLik", "AIC", "dAIC",
-    "D", "se.D", "RSE.D", "g0", "se.g0", "lambda0", "se.lambda0", "sigma", 
-    "se.sigma", "z", "se.z", "k", "proctime"
-  )
-  fieldgroup1 <- 1:18
-  fieldgroup2 <- 19:36
-  
+
   ## for cycling through animals at one detector 2019-03-08
   lasttrap <- 0
   clickno <- 0
@@ -137,7 +126,7 @@ server <- function(input, output, session) {
   ##############################################################################
   
   # tidy end of session - app closes in R
-  # ?apparently incompatible with bookmarking 2019-01-17
+  # apparently incompatible with bookmarking 2019-01-17
   
   session$onSessionEnded(function() {
       stopApp()

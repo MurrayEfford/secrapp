@@ -935,6 +935,12 @@ observeEvent(input$selectallfieldslink, {
 }   )
 ##############################################################################
 
+observeEvent(input$selectdefaultfieldslink, {
+  updateCheckboxGroupInput(session, "fields1", selected = defaultfields1)
+  updateCheckboxGroupInput(session, "fields2", selected = defaultfields2)
+}   )
+##############################################################################
+
 observeEvent(input$selectfieldsbtn, {
   selectingfieldsrv$value <- ! selectingfieldsrv$value
   output$selectingfields <- renderText(selectingfieldsrv$value)

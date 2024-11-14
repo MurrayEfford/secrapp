@@ -10,6 +10,7 @@ tabsummary <- tabPanel(
                column(6, actionButton("selectfieldsbtn", "Select", title = "Choose fields to display")), 
                column(6, 
                       actionLink("selectnofieldslink", "None", title = "Unselect all fields"), br(), 
+                      actionLink("selectdefaultfieldslink", "Default", title = "Select default fields"), br(), 
                       actionLink("selectallfieldslink", "All", title = "Select all fields"))
              ),
              br(),
@@ -45,33 +46,16 @@ tabsummary <- tabPanel(
              column(5, offset=1,
                     conditionalPanel("output.selectingfields == 'TRUE'",
                                      checkboxGroupInput("fields1", "",
-                                                        choices = c("date", "time", "note", "traps", "captures", "filter",
-                                                                    "n", "r", "ndetectors", "noccasions",
-                                                                    "usagepct", "maskbuffer", "masknrow", "maskspace",
-                                                                    "likelihood", "distribution","model", "hcov"
-                                                        ),
-                                                        selected = c("date", "time", "note", "traps", "captures", "filter",
-                                                                     "n", "r", "ndetectors", "noccasions",
-                                                                     "usagepct", "maskbuffer", "masknrow", "maskspace",
-                                                                     "likelihood", "distribution", "model"
-                                                        )
+                                                        choices = summaryfields[fieldgroup1],
+                                                        selected = defaultfields1
                                      )
                     )
              ),
              column(6,
                     conditionalPanel("output.selectingfields == 'TRUE'",
                                      checkboxGroupInput("fields2", "",
-                                                        choices = c("detectfn", 
-                                                                    "npar", "logLik", "AIC", "dAIC",
-                                                                    "D", "se.D", "RSE.D", 
-                                                                    "g0", "se.g0", "lambda0", "se.lambda0","sigma", "se.sigma", "z", "se.z",
-                                                                    "k", "proctime"
-                                                        ),
-                                                        selected = c("detectfn",
-                                                                     "npar", "logLik", "AIC", "dAIC",
-                                                                     "D", "se.D", "RSE.D", "g0", "se.g0", "lambda0", "se.lambda0", "sigma", "se.sigma",
-                                                                     "k", "proctime"
-                                                        )
+                                                        choices = summaryfields[fieldgroup2],
+                                                        selected = defaultfields2
                                      )
                     )
              )

@@ -23,5 +23,24 @@ hazarddetectfn <- c("HHN", "HHR", "HEX", "HVP")
 # secrdesignapp 1.2 and above reads parameters
 designurl <- "https://www.stats.otago.ac.nz/secrdesignapp/"  
 
+## summary field names
+summaryfields <- c("date", "time", "note", "traps", "captures", "filter", 
+                   "n", "r", "ndetectors", "noccasions", "usagepct", "maskbuffer", "masknrow", 
+                   "maskspace", "likelihood", "distribution", "model", "hcov", 
+                   "detectfn", "npar", "logLik", "AIC", "dAIC",
+                   "D", "se.D", "RSE.D", "g0", "se.g0", "lambda0", "se.lambda0", "sigma", 
+                   "se.sigma", "z", "se.z", "k", "proctime")
+defaultfields1 <- c("date", "time", "note", "traps", "captures", "filter",
+                    "n", "r", "ndetectors", "noccasions",
+                    "usagepct", "maskbuffer", "masknrow", "maskspace",
+                    "likelihood", "distribution", "model")
+defaultfields2 <- c("detectfn",
+                    "npar", "logLik", "AIC", "dAIC",
+                    "D", "se.D", "RSE.D", "g0", "se.g0", "lambda0", "se.lambda0", "sigma", "se.sigma",
+                    "k", "proctime")
+fieldgroup1 <- 1:18
+fieldgroup2 <- 19:36
+
+
 ##############################################################################
 
