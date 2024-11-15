@@ -1,4 +1,4 @@
-## user-visible changes 2.0
+## user-visible changes 2.0 November 2024
 ##   requires secr >= 5.1
 ##   blackbearCH
 ##   suggest width actionlink on Main
@@ -14,6 +14,7 @@
 ##   code split following:
 ##     https://stackoverflow.com/questions/43002914/how-to-split-shiny-app-code-over-multiple-files-in-rstudio#43003577
 ##   fix mask fail with polygon + multisession
+##   fix bugs in select summary fields (tmp$dAIC etc.)
 
 library(secr)
 library(shinyjs)
