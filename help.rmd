@@ -40,6 +40,7 @@ Version 2.0 (November 2024) has these user-visible changes:
 * requires **secr** >= 5.1.0
 * new dataset blackbearCH
 * habitat mask buffer width 'suggest' link on the Main screen
+* 'Clear' link on the Summary screen
 * spatial data processing uses package **sf** ([Pebesma 2018](*references)), replacing defunct rgdal
 
 # Main screen  <a name="main"></a>
