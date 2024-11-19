@@ -421,9 +421,26 @@ observeEvent(input$clearspatialdata, ignoreInit = TRUE, {
   updateRadioButtons(session, "maskcovariatebtn", select = "None")
   updateSelectInput(session, "maskcov", choices = "none", select = "none")
   updateCheckboxInput(session, "legend", value = FALSE)
+  updateCheckboxInput(session, "dropmissing", value = FALSE)
   reset("maskcovariatefilename")
-  removeNotification("badcovariatefile")
+  removeNotification(id = "badcovariatefile")
+  removeNotification(id = "nofile")
+  removeNotification(id = "lastaction")
   covariaterv$data <- NULL
+  covariaterv$names <- character(0)
+  covariaterv$clear <- TRUE
+}, priority = 1000)
+
+observeEvent(input$maskcovariatebtn, ignoreInit = TRUE, {
+  # identical but does not reset itself
+  updateSelectInput(session, "maskcov", choices = "none", select = "none")
+  updateCheckboxInput(session, "legend", value = FALSE)
+  updateCheckboxInput(session, "dropmissing", value = FALSE)
+  reset("maskcovariatefilename")
+  removeNotification(id = "badcovariatefile")
+  removeNotification(id = "nofile")
+  removeNotification(id = "lastaction")
+  covariaterv$data  <- NULL
   covariaterv$names <- character(0)
   covariaterv$clear <- TRUE
 }, priority = 1000)
@@ -433,13 +450,6 @@ observeEvent(input$maskpolybtn, ignoreInit = TRUE, {
   reset("maskpolyobjectname")
   polyrv$data <- NULL
   polyrv$clear <- TRUE
-}, priority = 1000)
-
-observeEvent(input$maskcovariatebtn, ignoreInit = TRUE, {
-  removeNotification(id = "badcovariatefile")
-  removeNotification(id = "nofile")
-  covariaterv$data <- NULL
-  covariaterv$clear <- TRUE
 }, priority = 1000)
 
 observeEvent(input$clearpolygondata, ignoreInit = TRUE, {

@@ -113,7 +113,8 @@ tabhabitat <- tabPanel("Habitat mask",
                                                                                            ),
                                                                                            column(2,
                                                                                                   tags$div(style="text-align: right",
-                                                                                                           actionLink("filtermask", HTML("<small>filter</small>")), br(),
+                                                                                                           actionLink("filtermask", HTML("<small>filter</small>")),
+                                                                                                           br(),
                                                                                                            actionLink("clearspatialdata", HTML("<small>clear</small>"))
                                                                                                   )
                                                                                            )
