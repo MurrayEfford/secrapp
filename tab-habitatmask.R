@@ -84,7 +84,9 @@ tabhabitat <- tabPanel("Habitat mask",
                                                                        ),
                                                                        column(3,
                                                                               br(),
-                                                                              actionLink("clearpolygondata", HTML("<small>clear</small>"))
+                                                                              tags$div(style="text-align: right",
+                                                                                      actionLink("clearpolygondata", HTML("<small>clear</small>"))
+                                                                              )
                                                                        )
                                                                        )
                                                      )
@@ -105,13 +107,15 @@ tabhabitat <- tabPanel("Habitat mask",
                                                                        uiOutput("covariatefile"),
                                                                        conditionalPanel ("output.maskcovariatefileready", 
                                                                                          fluidRow(
-                                                                                           column(9, 
+                                                                                           column(10, 
                                                                                                   checkboxInput("dropmissing", 
                                                                                                                 "Drop point if any covariate missing", value = FALSE)
                                                                                            ),
-                                                                                           column(3,
-                                                                                                  actionLink("filtermask", HTML("<small>filter</small>")), br(),
-                                                                                                  actionLink("clearspatialdata", HTML("<small>clear</small>"))
+                                                                                           column(2,
+                                                                                                  tags$div(style="text-align: right",
+                                                                                                           actionLink("filtermask", HTML("<small>filter</small>")), br(),
+                                                                                                           actionLink("clearspatialdata", HTML("<small>clear</small>"))
+                                                                                                  )
                                                                                            )
                                                                                          ),
                                                                                          conditionalPanel("output.filterMask",
