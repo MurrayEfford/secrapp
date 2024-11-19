@@ -100,7 +100,7 @@ modellist <- function() {
 
 fitmodel <- function(LLonly = FALSE) {
   
-  removeNotification("nofit")
+  removeNotification(id = "nofit")
   if (!LLonly) {
     progress <- Progress$new(session, min = 1, max = 15)
     on.exit(progress$close())
