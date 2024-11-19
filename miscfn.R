@@ -225,6 +225,39 @@ plotpowerCI <- function (RSE = seq(0.05,0.25,0.05), effectRange = c(-99,150),
 }
 ##############################################################################
 
+readshapefile <- function (fileupload) {
+  poly <- NULL
+  
+  if (!is.null(fileupload) & is.data.frame(fileupload))
+  {
+    if (!file.exists(fileupload[1,4])) {
+      return(NULL)   ## protect against bad shapefile
+    }
+    if (!(any(grepl(".shp", fileupload[,1])) &&
+          any(grepl(".dbf", fileupload[,1])) &&
+          any(grepl(".shx", fileupload[,1])))) {
+      showNotification("need shapefile components .shp, .dbf, .shx",
+                       type = "error", id = "nofile", duration = NULL)
+    }
+    else  if (!requireNamespace("sf"))
+      showNotification("need package sf to read shapefile", 
+                       type = "error", id = "nosf", duration = NULL)
+    else {
+      removeNotification(id = "nofile")
+      removeNotification(id = "nosf")
+      ## not working on restore bookmark 2019-01-24
+      dsnname <- dirname(fileupload[1,4])
+      ## make temp copy with uniform layername
+      file.copy(from = fileupload[,4], 
+                to = paste0(dsnname, "/temp.", tools::file_ext(fileupload[,4])),     
+                overwrite = TRUE)
+      poly <- sf::st_read(dsn = paste0(dsnname, '/temp.shp')) 
+      
+    }  
+  }
+  poly
+}
+
 ## patched in revised version from secrdesignapp 2019-02-11    
 readpolygon <- function (fileupload) {
   poly <- NULL
@@ -260,26 +293,8 @@ readpolygon <- function (fileupload) {
       }
     }
     else {
-      
-      if (!(any(grepl(".shp", fileupload[,1])) &&
-            any(grepl(".dbf", fileupload[,1])) &&
-            any(grepl(".shx", fileupload[,1])))) {
-        showNotification("need shapefile components .shp, .dbf, .shx",
-                         type = "error", id = "nofile", duration = NULL)
-      }
-      else  if (!requireNamespace("sf"))
-        showNotification("need package sf to read shapefile", 
-                         type = "error", id = "nosf", duration = NULL)
-      else {
-        removeNotification(id = "nofile")
-        removeNotification(id = "nosf")
-        ## not working on restore bookmark 2019-01-24
-        dsnname <- dirname(fileupload[1,4])
-        ## make temp copy with uniform layername
-        file.copy(from = fileupload[,4], 
-                  to = paste0(dsnname, "/temp.", tools::file_ext(fileupload[,4])),     
-                  overwrite = TRUE)
-        poly <- sf::st_read(dsn = paste0(dsnname, '/temp.shp')) 
+      poly <- readshapefile(fileupload)
+      if (!is.null(poly)) {
         poly <- sf::st_as_sfc(poly)
       }
     }
