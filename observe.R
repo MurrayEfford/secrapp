@@ -120,8 +120,6 @@ observe({
 
 ## read mask polygon file or object
 observe({
-  #req(input$maskpolyfilename)
-  #req(input$maskpolyobjectname)
   req(input$maskpolybtn)
   req(!polyrv$clear)
   removeNotification("badpoly")
@@ -163,18 +161,19 @@ observe({
   }
   else {
     # shapefile
-    covariaterv$data <- readpolygon(input$maskcovariatefilename)
+    covariaterv$data <- readshapefile(input$maskcovariatefilename)
   }
   
-  if (!inherits(covariaterv$data, c("SpatialPolygonsDataFrame", "sf", "mask"))) {
+  if (!inherits(covariaterv$data, c("SpatialPolygonsDataFrame", "sf",  "mask"))) {
     showNotification("invalid covariate file; try again",
-                     type = "error", id = "bad covariate file")
+                     type = "error", id = "badcovariatefile")
     covariaterv$data <- NULL
     covariaterv$names <- character(0)
+    reset("maskcovariatefilename")
   }
   else {
     if (inherits(covariaterv$data, "sf")) {
-      covariaterv$names <- names(st_drop_geometry(covariaterv$data))
+      covariaterv$names <- names(sf::st_drop_geometry(covariaterv$data))
     }
     else if (inherits(covariaterv$data, "mask")) {
       covariaterv$names <- names(covariates(covariaterv$data))

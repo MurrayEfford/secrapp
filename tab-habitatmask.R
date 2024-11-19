@@ -7,7 +7,7 @@ tabhabitat <- tabPanel("Habitat mask",
                                   tabPanel("Build",
                                            wellPanel(class = "mypanel", 
                                                      fluidRow(
-                                                       column(8, 
+                                                       column(7, 
                                                               numericInput("buffer", "Buffer width (m)",
                                                                            min = 0,
                                                                            max = 100000,
@@ -23,10 +23,12 @@ tabhabitat <- tabPanel("Habitat mask",
                                                                                     width = 180)
                                                               )
                                                        ),
-                                                       column(4,
+                                                       column(5,
                                                               br(),
-                                                              actionLink("suggestbufferlink", HTML("<small>suggest width</small>"),
+                                                              tags$div(style="text-align: right",
+                                                                actionLink("suggestbufferlink", HTML("<small>suggest width</small>"),
                                                                          title = "Based on RPSV(ch, CC = TRUE); RB <= 0.1%")
+                                                              )
                                                        )
                                                      ),
                                                      fluidRow(
@@ -39,7 +41,9 @@ tabhabitat <- tabPanel("Habitat mask",
                                                        ),
                                                        column(3,
                                                               br(),
-                                                              actionLink("clearbufferspec", HTML("<small>reset</small>"))
+                                                              tags$div(style = "text-align: right",
+                                                                       actionLink("clearbufferspec", HTML("<small>reset</small>"))
+                                                              )
                                                        )
                                                        
                                                      )
@@ -86,29 +90,35 @@ tabhabitat <- tabPanel("Habitat mask",
                                                      )
                                            ),
                                            wellPanel(class = "mypanel",
-                                                     div(style="height: 80px;",
-                                                         fileInput("maskcovariatefilename",
-                                                                   paste0("Spatial data source for covariates (optional)"),
-                                                                   accept = c('.shp', '.dbf', '.sbn', '.sbx',
-                                                                              '.shx', '.prj', '.txt', '.rds'),
-                                                                   multiple = TRUE)),
-                                                     uiOutput("covariatefile"),
-                                                     conditionalPanel ("output.maskcovariatefileready", 
-                                                                       fluidRow(
-                                                                         column(9, 
-                                                                                checkboxInput("dropmissing", 
-                                                                                              "Drop point if any covariate missing", value = FALSE)
-                                                                         ),
-                                                                         column(3,
-                                                                                actionLink("filtermask", HTML("<small>filter</small>")), br(),
-                                                                                actionLink("clearspatialdata", HTML("<small>clear</small>"))
-                                                                         )
-                                                                       ),
-                                                                       conditionalPanel("output.filterMask",
-                                                                                        fluidRow(
-                                                                                          column(12, textInput("filtermasktext", "Filter",
-                                                                                                               placeholder = "e.g., forest == 'beech'"))
-                                                                                        ))
+                                                     tags$div(title = "Optional mask covariates",
+                                                              radioButtons("maskcovariatebtn", label = "Mask covariate source",
+                                                                           choices = c("None", "File(s)"), 
+                                                                           selected = "None", inline = TRUE)
+                                                     ),
+                                                     conditionalPanel( condition = "input.maskcovariatebtn == 'File(s)'",
+                                                                       div(style="height: 80px;",
+                                                                           fileInput("maskcovariatefilename",
+                                                                                     paste0("Spatial data source for covariates"),
+                                                                                     accept = c('.shp', '.dbf', '.sbn', '.sbx',
+                                                                                                '.shx', '.prj', '.txt', '.rds'),
+                                                                                     multiple = TRUE)),
+                                                                       uiOutput("covariatefile"),
+                                                                       conditionalPanel ("output.maskcovariatefileready", 
+                                                                                         fluidRow(
+                                                                                           column(9, 
+                                                                                                  checkboxInput("dropmissing", 
+                                                                                                                "Drop point if any covariate missing", value = FALSE)
+                                                                                           ),
+                                                                                           column(3,
+                                                                                                  actionLink("filtermask", HTML("<small>filter</small>")), br(),
+                                                                                                  actionLink("clearspatialdata", HTML("<small>clear</small>"))
+                                                                                           )
+                                                                                         ),
+                                                                                         conditionalPanel("output.filterMask",
+                                                                                                          fluidRow(
+                                                                                                            column(12, textInput("filtermasktext", "Filter",
+                                                                                                                                 placeholder = "e.g., forest == 'beech'"))
+                                                                                                          )))
                                                      )
                                            )
                                   ),
@@ -125,7 +135,7 @@ tabhabitat <- tabPanel("Habitat mask",
                                 fluidRow(
                                   column(6, actionLink("mainlink", "Return to Main screen")),
                                   column(6, conditionalPanel ("output.maskready", 
-                                                              downloadLink("savemask", "Save to text file")))
+                                                              downloadLink("savemask", "Save mask to text file")))
                                 )
                          ),
                          column(5, plotOutput("maskPlot"),

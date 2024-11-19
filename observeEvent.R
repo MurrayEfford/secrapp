@@ -130,6 +130,8 @@ observeEvent(c(input$detectfnbox, input$likelihoodbtn, input$distributionbtn,
                input$hcovbox, input$model, input$modelotherargs,
                input$masktype, input$buffer, input$habnx, input$maskshapebtn, 
                input$maskpolybtn, input$maskpolyfilename, input$maskpolyobjectname, 
+               input$maskcovariatefilename, input$clearspatialdata,
+               input$clearpolygondata,
                input$maskfilename, input$filtercaptlink, input$filtercapttext), 
              ignoreInit = TRUE, {
                fitrv$value <- NULL
@@ -416,9 +418,11 @@ observeEvent(input$masklink, ignoreInit = TRUE, {
 })
 
 observeEvent(input$clearspatialdata, ignoreInit = TRUE, {
+  updateRadioButtons(session, "maskcovariatebtn", select = "None")
   updateSelectInput(session, "maskcov", choices = "none", select = "none")
   updateCheckboxInput(session, "legend", value = FALSE)
   reset("maskcovariatefilename")
+  removeNotification("badcovariatefile")
   covariaterv$data <- NULL
   covariaterv$names <- character(0)
   covariaterv$clear <- TRUE
@@ -429,6 +433,13 @@ observeEvent(input$maskpolybtn, ignoreInit = TRUE, {
   reset("maskpolyobjectname")
   polyrv$data <- NULL
   polyrv$clear <- TRUE
+}, priority = 1000)
+
+observeEvent(input$maskcovariatebtn, ignoreInit = TRUE, {
+  removeNotification(id = "badcovariatefile")
+  removeNotification(id = "nofile")
+  covariaterv$data <- NULL
+  covariaterv$clear <- TRUE
 }, priority = 1000)
 
 observeEvent(input$clearpolygondata, ignoreInit = TRUE, {
