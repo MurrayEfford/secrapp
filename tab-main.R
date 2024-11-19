@@ -140,7 +140,7 @@ tabmain <- tabPanel(
             conditionalPanel( condition = "input.datasource == 'secr dataset'",
                               wellPanel(class = "mypanel",
                                         fluidRow(
-                                          column(4, 
+                                          column(5, 
                                                  div(style = "margin-top:-15px"),
                                                  selectInput("secrdatabox", "", 
                                                              choices = c(
@@ -160,7 +160,7 @@ tabmain <- tabPanel(
                                                              multiple = FALSE,
                                                              selectize = FALSE,
                                                              size = 12)),
-                                          column(8, 
+                                          column(7, 
                                                  uiOutput("secrdatadescriptionui"),
                                                  fluidRow(
                                                    column(8),
