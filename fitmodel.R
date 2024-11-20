@@ -137,6 +137,8 @@ fitmodel <- function(LLonly = FALSE) {
       args$details <- as.list(replace (args$details, "LLonly", TRUE))
       args$biaslimit <- NA
       # suppress warning "multi-catch likelihood used for single-catch traps"
+      # force garbage collection for greater accuracy of timing
+      gc(verbose = FALSE)
       isolate(fit <- suppressWarnings(try(do.call("secr.fit", args), silent = TRUE)))
     }
     else {

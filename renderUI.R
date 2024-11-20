@@ -125,8 +125,6 @@ output$ncoresui <- renderUI({
 
 output$secrdesignurl <- renderUI ({
   if (is.null(fitrv$value) & !is.null(capthist())) {
-    # force garbage collection for greater accuracy of timing
-    gc(verbose = FALSE)
     LL <- try(fitmodel(LLonly = TRUE) , silent = TRUE)
     if (is.null(LL) || inherits(LL, 'try-error')) {
       NULL # tag$a(" ")
