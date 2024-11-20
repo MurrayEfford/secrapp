@@ -143,10 +143,18 @@ observeEvent(c(input$detectfnbox, input$likelihoodbtn, input$distributionbtn,
 ##############################################################################
 
 # Invalidate mask
-observeEvent(input$masktype, {
+observeEvent(c(input$datasource, input$secrdatabox, input$masktype), {
   reset("maskfilename")
   reset("maskpolygonsfilename")
   reset("maskcovariatefilename")
+  updateNumericInput(session, "buffer", value = 100)
+  updateNumericInput(session, "habnx", value = 32)
+  updateRadioButtons(session, "maskshapebtn", selected = "Trap buffer")
+  updateRadioButtons(session, "maskpolybtn", select = "None")
+  updateRadioButtons(session, "maskcovariatebtn", select = "None")
+  updateSelectInput(session, "maskcov", choices = "none", select = "none")
+  updateCheckboxInput(session, "legend", value = FALSE)
+  updateCheckboxInput(session, "dropmissing", value = FALSE)
   maskrv$data <- NULL
   maskrv$clear <- TRUE
   filtermaskrv$value <- FALSE
