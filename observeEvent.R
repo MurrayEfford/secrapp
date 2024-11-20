@@ -561,19 +561,21 @@ observeEvent(input$fitbtn, ignoreInit = TRUE, {
   }
   else {
     # one likelihood
-    LL <- try(fitmodel(LLonly = TRUE) )
-    if (inherits(LL, 'try-error')) {
+    # LL <- try(fitmodel(LLonly = TRUE) )
+    # if (inherits(LL, 'try-error')) {
+    #   showNotification("failed to compute expected time")
+    #   expectedtime <- Inf
+    # }
+    if (is.na(timerv$expected)) {
       showNotification("failed to compute expected time")
-      expectedtime <- Inf
     }
     else {
-      expectedtime <- timefn(LL)  # minutes
-      if (expectedtime > timerv$timewarning) {
-        if (expectedtime > timerv$timelimit) {
+      if (timerv$expected > timerv$timewarning) {
+        if (timerv$expected > timerv$timelimit) {
           showNotification("exceeds time limit")
         }
         else {
-          showModal(OKModal(expectedtime))
+          showModal(OKModal(timerv$expected))
           # okbtn continues with fitmodel()
         }
       }
@@ -772,6 +774,7 @@ observeEvent(input$resetbtn, ignoreInit = TRUE, {
   filtermaskrv$value <- FALSE
   timerv$timewarning <- timewarning
   timerv$timelimit <- timelimit
+  timerv$expected <- NA
   
   ## Data input
   updateRadioButtons(session, "datasource", selected = "Text files")

@@ -16,7 +16,7 @@ selectingfieldsrv   <- reactiveValues(value   = FALSE)
 selectinganalysesrv <- reactiveValues(value   = FALSE)
 sumrv               <- reactiveValues(value   = read.csv(text = paste(summaryfields, collapse = ", ")))
 traptextrv          <- reactiveValues(value   = FALSE)
-timerv              <- reactiveValues(timewarning = timewarning, timelimit = timelimit)
+timerv              <- reactiveValues(timewarning = timewarning, timelimit = timelimit, expected = NA)
 
 ## using advice of Joe Cheng 2018-03-23 to allow resetting of fileInputs
 ## https://stackoverflow.com/questions/49344468/resetting-fileinput-in-shiny-app

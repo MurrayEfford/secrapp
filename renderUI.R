@@ -130,8 +130,8 @@ output$secrdesignurl <- renderUI ({
       NULL # tag$a(" ")
     }
     else {
-      expectedtime <- timefn(LL)
-      tags$a(paste0('Fit time ~', format(round(expectedtime,2), nsmall=2), ' min'))
+      timerv$expected <- timefn(LL)
+      tags$a(paste0('Fit time ~', format(round(timerv$expected,2), nsmall=2), ' min'))
     }
   }
   else  {
