@@ -15,14 +15,6 @@ output$maskpolygonsready <- reactive({
   return(!is.null(polyrv$data))
 })
 
-# output$maskpolygonfile <- reactive({
-#   return(input$maskpolybtn == "File(s)")
-# })
-# 
-# output$maskpolygonobject <- reactive({
-#   return(input$maskpolybtn == "R object")
-# })
-# 
 output$modelFitted <- reactive({
   return(!is.null(fitrv$value))
 })
