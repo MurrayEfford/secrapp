@@ -560,6 +560,8 @@ observeEvent(input$fitbtn, ignoreInit = TRUE, {
   }
   else {
     # one likelihood
+    # force garbage collection for greater accuracy of timing
+    gc(verbose = FALSE)
     LL <- try(fitmodel(LLonly = TRUE) )
     if (inherits(LL, 'try-error')) {
       showNotification("failed to compute expected time")

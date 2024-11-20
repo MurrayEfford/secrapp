@@ -125,13 +125,15 @@ output$ncoresui <- renderUI({
 
 output$secrdesignurl <- renderUI ({
   if (is.null(fitrv$value) & !is.null(capthist())) {
+    # force garbage collection for greater accuracy of timing
+    gc(verbose = FALSE)
     LL <- try(fitmodel(LLonly = TRUE) , silent = TRUE)
     if (is.null(LL) || inherits(LL, 'try-error')) {
       NULL # tag$a(" ")
     }
     else {
       expectedtime <- timefn(LL)/60
-      tags$a(paste0('Fit time ~', round(expectedtime,1), ' min'))
+      tags$a(paste0('Fit time ~', format(round(expectedtime,2), nsmall=2), ' min'))
     }
   }
   else  {
