@@ -345,6 +345,9 @@ observeEvent(c(input$clearimportlink, input$datasource), ignoreInit = TRUE, {
   importrv$data <- NULL
   importrv$clear <- TRUE
   
+  traprv$data <- NULL
+  traprv$clear <- TRUE
+  
   captrv$data <- NULL
   captrv$clear <- TRUE
   
