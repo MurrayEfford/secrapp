@@ -569,13 +569,15 @@ observeEvent(input$fitbtn, ignoreInit = TRUE, {
       expectedtime <- Inf
     }
     else {
-      expectedtime <- timefn(LL)/60
-      if (expectedtime > timerv$timewarning)
+      expectedtime <- timefn(LL)  # minutes
+      if (expectedtime > timerv$timewarning) {
         if (expectedtime > timerv$timelimit) {
           showNotification("exceeds time limit")
         }
-      else {
-        showModal(OKModal(expectedtime))
+        else {
+          showModal(OKModal(expectedtime))
+          # okbtn continues with fitmodel()
+        }
       }
       else {
         fitmodel()

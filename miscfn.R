@@ -314,4 +314,10 @@ shpfile <- function (filename) {
 }
 ##############################################################################
 
-timefn <- function(LL) attr(LL,'preptime') + attr(LL,'npar')^2 * attr(LL,'LLtime') * 10
+# estimated fit time in minutes
+# LL is the output from secr.fit() with details$LLonly = TRUE
+timefn <- function(LL) {
+  seconds <- attr(LL,'preptime') + attr(LL,'npar')^2 * attr(LL,'LLtime') * 10
+  seconds/60
+}
+##############################################################################
