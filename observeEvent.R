@@ -541,8 +541,9 @@ observeEvent(input$secrhelptopicbtn, ignoreInit = TRUE, {
 ##############################################################################
 ## Modal dialogue to confirm fitting if it might take a long time
 OKModal <- function(expectedtime) {
+  timestr <- format(round(expectedtime,2), nsmall = 2)
   modalDialog(
-    paste("Fitting is predicted to take ", round(expectedtime,1), " minutes"),
+    paste("Fitting is predicted to take ", timestr, " minutes"),
     size = "s",
     easyClose = TRUE,
     footer = tagList(
