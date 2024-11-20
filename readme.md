@@ -16,9 +16,10 @@ shiny::runGitHub("secrapp", "MurrayEfford")
 
 Note:
 
+- for some functions you will also need the packages 'sf', 'stringr', and 'readxl'  
 - secrapp 2.0 requires secr 5.1.0 or a later version.
 
-A version of the app may also be run in a web browser without any setup by 
+A version of the app may be run in a web browser without any setup by 
 following this [link](https://www.stats.otago.ac.nz/secrapp). 
 This arrangement has limited capacity for simultaneous users.
 
