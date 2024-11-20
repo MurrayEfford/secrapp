@@ -5,3 +5,13 @@ Mask | File 2021-06-20 FIXED
 ## 2024-11-03 secr help not working?
 
 ## 2024-11-03 check dual use of suggestbufferlink (Main and Habitat mask tabs) wrt enable/disable
+
+# 2024-11-21 The calculation of expected time for fitting a model is based on a 
+single call to secr.fit() with the details argument LLonly = TRUE. Prior to 2024-11-21 this was done twice, 
+once for display purposes and once at the point of model fitting to compare to the warning and total limits. 
+Strangely, the second expected time was typically many times larger.
+
+This could be reproduced in the browser simply by calling secr.fit twice, even with identical 
+arguments, sessionInfo and environment variables (checked with Sys.getenv). The effect only happens reliably in a fresh R session.
+
+The spurious overestimate has been largely avoided by making the calculation only once and saving the value in timerv$expected.
