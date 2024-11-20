@@ -5,13 +5,10 @@ tabmain <- tabPanel(
             h2("Data input"),
             fluidRow(
               column(12, radioButtons("datasource", "", inline = TRUE, 
-                                      # choices = c("Text files", "Excel files", "Stored capthist object"),
                                       choices = c("Text files", "Excel files", "Stored capthist object", "secr dataset"),
                                       selected = "Text files"))
             ),
             
-            # conditionalPanel( condition = "input.datasource != 'Stored capthist object'",
-            #conditionalPanel( condition = "input.datasource %in% c('Text files', 'Excel files')",
             conditionalPanel( condition = "input.datasource == 'Text files' | input.datasource == 'Excel files'",
                               
                               fluidRow(
