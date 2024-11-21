@@ -259,8 +259,9 @@ output$codePrint <- renderPrint({
   
   if (!is.null(capthist())) {
     cat("summary(ch)\n")
-    cat("\n# fit model\n")
+    cat("\n# habitat mask\n")
     cat(maskcode())
+    cat("\n# fit model\n")
     cat(fitcode())
     cat("summary(fitted)\n")
   }

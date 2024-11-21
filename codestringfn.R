@@ -113,11 +113,15 @@ maskcode <- function () {
       addcovcode <- ""
       dropcode <- ""
       
-      if (!is.null(input$maskpolyfilename)) { 
+      if (!is.null(input$maskpolyfilename) && 
+          input$maskpolybtn %in% c("File(s)", "R object")) { 
         polyhabitat <- input$includeexcludebtn == "Include"
-        polycode <- getSPcode(input$maskpolyfilename, "poly")
+        if (input$maskpolybtn == "File(s)")
+          polycode <- getSPcode(input$maskpolyfilename, "poly")
+        else
+          polycode <- maskpolyobjectname    
       }
-      if (!is.null(input$maskcovariatefilename)) { 
+      if (!is.null(input$maskcovariatefilename) && input$maskcovariatebtn == "File(s)") { 
         ext <- tolower(tools::file_ext(input$maskcovariatefilename[1,1]))
         if (ext == "txt") {
           sourcecode <- paste0(
@@ -219,6 +223,7 @@ captcode <- function (comment = FALSE) {
           sheet <- paste0(", sheet = '", input$captsheet, "'")
         }
         code <- paste0("capt <- readxl::read_excel('", filename, "'", args, sheet, ")\n")
+        code <- paste0(code, "capt <- data.frame(capt)\n")
       }
       
       code <- paste0(code, "ch <- make.capthist (capt, traps = array", fmt, cov, ")\n")
