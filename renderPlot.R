@@ -195,12 +195,16 @@ output$maskPlot <- renderPlot({
     }
     else {
       # debug cat(input$maskcov, "\n")
-      plot (msk, add = add, dots = input$dotsbox, border = input$buffer*input$maskborder,
-            covariate = input$maskcov, legend = input$legend, inset = 0)
       nacovariate <- is.na(covariates(msk)[,input$maskcov])
       if (any(nacovariate)) {
+        plot (subset(msk, !nacovariate), add = add, dots = input$dotsbox, border = input$buffer*input$maskborder,
+              covariate = input$maskcov, legend = input$legend, inset = 0)
         plot (subset(msk, nacovariate), add = TRUE, dots = input$dotsbox, 
               col = 'red')
+      }
+      else {
+        plot (msk, add = add, dots = input$dotsbox, border = input$buffer*input$maskborder,
+              covariate = input$maskcov, legend = input$legend, inset = 0)
       }
     }
   }
