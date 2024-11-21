@@ -127,7 +127,7 @@ tabmain <- tabPanel(
                                           # only in browsers
                                           # https://github.com/rstudio/shiny/issues/951
                                           column(9, fileInput("importfilename", 
-                                                              "Import capthist from Rds file",
+                                                              "Import capthist from RDS file",
                                                               accept = c(".RDS", ".Rds",".rds"))),
                                           column(3, br(), actionLink("clearimportlink", "Clear"))
                                         )

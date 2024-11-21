@@ -31,7 +31,7 @@ observe({
   else {
     importrv$data <- NULL
     traprv$data <- NULL
-    showNotification("not a valid capthist Rds", 
+    showNotification("not a valid capthist RDS file", 
                      type = "error", id = "badcapt", duration = NULL)
   }
 })

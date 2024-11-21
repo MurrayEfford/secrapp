@@ -15,7 +15,7 @@ taboptions <- tabPanel("Options",
                   conditionalPanel("output.capthistLoaded", 
                                    wellPanel(class = "mypanel",
                                              fluidRow(
-                                               column(8, downloadLink("exportbtn", "Export current capthist to Rds file", 
+                                               column(8, downloadLink("exportbtn", "Export current capthist to RDS file", 
                                                                       title = "Save as RDS file"))),
                                              br()
                                    )

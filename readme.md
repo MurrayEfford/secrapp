@@ -36,18 +36,18 @@ capt.txt | secr test file |Data input - Captures |
 mask.txt | Demo mask file for capt.txt | Habitat mask - File input |
 FTHLtrap.txt | Perimeter of horned lizard search area | Data input - Detector layout |
 FTHLcapt.txt | Flat-tailed horned lizard test data |Data input - Captures |
-FTHL.Rds | Saved flat-tailed horned lizard dataset | Data input |
+FTHL.rds | Saved flat-tailed horned lizard dataset | Data input |
 GSMboundary.dbf | ESRI polygon shapefile extent of habitat near black bear hair snags | Habitat mask - Mask polygon files |
 GSMboundary.shp |||
 GSMboundary.shx |||
 hareCH6trap.txt | Snowshow hare data | Data input - Detector layout |
 hareCH6capt.txt | Snowshow hare data | Data input - Captures |
 hareCH6.xlsx | Snowshoe hare data as Excel spreadsheet | Data input |
-hareCH6.Rds | Saved snowshoe hare dataset | Data input |
+hareCH6.rds | Saved snowshoe hare dataset | Data input |
 ovtrap.txt | Locations of possum traps in the Orongorongo Valley | Data input - Detector layout |
 ovcapt.txt | Brushtail possum captures in the Orongorongo Valley | Data input - Captures |
 OVforestL.dbf | ESRI polygon shapefile extent of habitat near possum traps | Habitat mask - Mask polygon files |
 OVforestL.shp |||
 OVforestL.shx |||
 ovenCHp.xlsx | Ovenbird proximity data as Excel spreadsheet | Data input |
-ovenCHp.Rds | Saved ovenbird proximity dataset | Data input |
+ovenCHp.rds | Saved ovenbird proximity dataset | Data input |
