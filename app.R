@@ -17,6 +17,16 @@
 ##   fix bugs in select summary fields (tmp$dAIC etc.)
 ##   expected time calculated once in output$secrdesignurl <- renderUI ()
 
+## changes after 2.0
+
+## re-vamped notifications: 
+
+# version      duration = seconds; startup only
+# lastaction   duration = seconds
+# warning      duration = warningseconds
+# invalidinput duration = invalidseconds
+# error        duration = errorseconds
+
 
 library(secr)
 library(shinyjs)
@@ -123,8 +133,9 @@ server <- function(input, output, session) {
   outputOptions(output, "filterMask",             suspendWhenHidden = FALSE)
   outputOptions(output, "usage",                  suspendWhenHidden = FALSE)
 
-  showNotification(paste("secr", secrversion, secryear), id = "version",
-                   closeButton = FALSE, type = "message", duration = seconds)
+  showNotification(paste("secr", secrversion, secryear), 
+                   id = "version", type = "message", duration = seconds, 
+                   closeButton = FALSE)
   
   ##############################################################################
   

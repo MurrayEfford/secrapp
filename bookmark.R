@@ -20,8 +20,8 @@ onBookmark(function(state) {
   maskcovshp <- sapply(input$maskcovariatefilename, shpfile)
   shp <- any(maskpolyshp) | any(maskcovshp)
   if (shp) {
-    showNotification("ESRI shapefile(s) will not be bookmarked", type = "warning",
-                     id = "noshapefile")
+    showNotification("ESRI shapefile(s) will not be bookmarked",
+                     id = "warning", type = "warning", duration = warningseconds)
   }
   state$values$shp <- shp
   state$values$sumrv <- sumrv$value            # works
@@ -57,7 +57,8 @@ onRestore(function(state) {
   fitrv$value <- state$values$fit
   current$unit <- input$areaunit
   if (any(state$values$shp)) {
-    showNotification("Cannot restore ESRI shapefile(s); re-select", type = "error", id = "noshapefile2")
+    showNotification("Cannot restore ESRI shapefile(s); re-select",
+                     type = "error", id = "error", duration = errorseconds)
   }
 })
 # Read values from state$values when we restore

@@ -237,14 +237,14 @@ readshapefile <- function (fileupload) {
           any(grepl(".dbf", fileupload[,1])) &&
           any(grepl(".shx", fileupload[,1])))) {
       showNotification("need shapefile components .shp, .dbf, .shx",
-                       type = "error", id = "nofile", duration = NULL)
+                       type = "error", id = "invalidinput", duration = invalidseconds)
     }
     else  if (!requireNamespace("sf"))
       showNotification("need package sf to read shapefile", 
-                       type = "error", id = "nosf", duration = NULL)
+                       type = "error", id = "error", duration = errorseconds)
     else {
-      removeNotification(id = "nofile")
-      removeNotification(id = "nosf")
+      removeNotification(id = "invalidinput")
+      removeNotification(id = "error")
       ## not working on restore bookmark 2019-01-24
       dsnname <- dirname(fileupload[1,4])
       ## make temp copy with uniform layername

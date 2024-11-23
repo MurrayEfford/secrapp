@@ -99,7 +99,7 @@ arraycode <- function (comment = FALSE) {
 ################################################################################
 
 maskcode <- function () {
-  removeNotification("badpoly")
+  removeNotification("invalidinput")
   
   if (input$masktype == 'Build') {
     if (is.null(traprv$data))

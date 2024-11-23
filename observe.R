@@ -1,7 +1,7 @@
 ## read import file
 observe({
   req(input$importfilename)
-  removeNotification("badcapt")
+  removeNotification("invalidinput")
   req(!importrv$clear)
   ch <- readRDS(input$importfilename[1,"datapath"])
   if (inherits(ch, 'capthist')) {
@@ -25,14 +25,15 @@ observe({
                         selected = "HN")
       enable('suggestbufferlink')
     }
-    showNotification("capthist imported", closeButton = FALSE, 
+    removeNotification("invalidinput")
+    showNotification("capthist imported", 
                      type = "message", id = "lastaction", duration = seconds)
   }
   else {
     importrv$data <- NULL
     traprv$data <- NULL
     showNotification("not a valid capthist RDS file", 
-                     type = "error", id = "badcapt", duration = NULL)
+                     type = "error", id = "invalidinput", duration = invalidseconds)
   }
 })
 
@@ -40,7 +41,7 @@ observe({
 ## read capture file
 observe({
   req(!captrv$clear)
-  removeNotification("badcapt")
+  removeNotification("invalidinput")
   sheet <- ""
   if (input$datasource == 'Text files') {
     req(input$captfilename)
@@ -68,8 +69,8 @@ observe({
     
     samexls <- captfilename == input$trapxlsname[1,"name"]
     if (samexls && input$captsheet %in% input$trapsheet) {
-      showNotification(id = "lastaction", type = "error", duration = NULL,
-                       "cannot use same xls sheet")
+      showNotification("cannot use same xls sheet",
+                       id = "invalidinput", type = "error", duration = invalidseconds)
       captrv$data <- NULL
       return()
     }
@@ -82,11 +83,11 @@ observe({
   mincol <- (input$fmt == "XY") + 4
   tempargs <- try(eval(parse(text = paste0("list(", args, ")"))), silent = TRUE)
   if (inherits(tempargs, "try-error")) {
-    showNotification("arguments incomplete or invalid", type = "error", 
-                     id = "badcaptotherargs", duration = NULL)
+    showNotification("arguments incomplete or invalid",
+                     id = "invalidinput", type = "error", duration = invalidseconds)
   }
   else {
-    removeNotification(id = "badcaptotherargs")
+    removeNotification(id = "invalidinput")
     if (args != "")
       args <- paste0(", ", args)
     if (grepl('.xls', captdataname)) {
@@ -106,12 +107,12 @@ observe({
     captrv$clear <- TRUE
     if (!inherits(captrv$data, "data.frame") || ncol(captrv$data) < mincol) {
       showNotification("invalid capture file or arguments; try again",
-                       type = "error", id = "badcapt", duration = NULL)
+                       id = "invalidinput", type = "error", duration = invalidseconds)
       captrv$data <- NULL
     }
     else {
-      showNotification("capthist loaded", closeButton = FALSE, 
-                       type = "message", id = "lastaction", duration = seconds)
+      showNotification("capthist loaded",
+                       id = "lastaction", type = "message", duration = seconds)
     }
   }
   
@@ -122,7 +123,7 @@ observe({
 observe({
   req(input$maskpolybtn)
   req(!polyrv$clear)
-  removeNotification("badpoly")
+  removeNotification("invalidinput")
   if (input$maskpolybtn == "None") {
     polyrv$data <- NULL
   }
@@ -139,10 +140,11 @@ observe({
   }
   if (!is.null(polyrv$data)) {
     if (!inherits(polyrv$data, c("sfc_POLYGON", "sfc_MULTIPOLYGON"))) {
-      showNotification("invalid polygon file; try again",
-                       type = "error", id = "badpoly")
+      showNotification("invalid polygon file or object; try again",
+                       id = "invalidinput", type = "error", duration = invalidseconds)
       polyrv$data <- NULL
     }
+    removeNotification("invalidinput")
   }
 })
 ##############################################################################
@@ -166,7 +168,7 @@ observe({
   
   if (!inherits(covariaterv$data, c("SpatialPolygonsDataFrame", "sf",  "mask"))) {
     showNotification("invalid covariate file; try again",
-                     type = "error", id = "badcovariatefile")
+                     id = "invalidinput", type = "error", duration = invalidseconds)
     covariaterv$data <- NULL
     covariaterv$names <- character(0)
     reset("maskcovariatefilename")

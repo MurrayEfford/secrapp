@@ -100,7 +100,7 @@ modellist <- function() {
 
 fitmodel <- function(LLonly = FALSE) {
   
-  removeNotification(id = "nofit")
+  removeNotification(id = "error")
   if (!LLonly) {
     progress <- Progress$new(session, min = 1, max = 15)
     on.exit(progress$close())
@@ -113,7 +113,7 @@ fitmodel <- function(LLonly = FALSE) {
   modelotherargs <- try(eval(parse(text = paste0("list(", input$modelotherargs, ")"))), silent = TRUE)
   if (inherits(modelotherargs, "try-error") && !LLonly) {
     showNotification("model fit failed - check other arguments",
-                     type = "error", id = "nofit", duration = NULL)
+                     id = "error", type = "error", duration = errorseconds)
     fit <- NULL
   }
   else {
@@ -146,7 +146,7 @@ fitmodel <- function(LLonly = FALSE) {
     }
     if (inherits(fit, "try-error") && !LLonly) {
       showNotification("model fit failed - check data, formulae and mask",
-                       type = "error", id = "nofit", duration = NULL)
+                       type = "error", id = "error", duration = errorseconds)
       fit <- NULL
     }
   }
@@ -167,25 +167,25 @@ fitmodel <- function(LLonly = FALSE) {
     }
     
     if (fit$fit$minimum == 1e+10) {
-      showNotification("Model failed to fit", id = "lastaction",
-                       type = "error", duration = NULL)
+      showNotification("Model failed to fit",
+                       type = "error", id = "error", duration = errorseconds)
     }
     else {
       OK <- try(addtosummary())
       if (inherits(OK, 'try-error')) {
-        showNotification("Problem adding results to summary", id = "lastaction",
-                         type = "error", duration = NULL)
+        showNotification("Problem adding results to summary",
+                         type = "warning", id = "warning", duration = warningseconds)
       }
       else {
-        showNotification("Model fitted", id = "lastaction",
-                         closeButton = FALSE, type = "message", duration = seconds)
+        showNotification("Model fitted", 
+                         type = "message", id = "lastaction", duration = seconds, closeButton = FALSE)
         
         if (input$masktype == "Build") {
           x <- suppressWarnings(secr:::bufferbiascheck(fit, 
                                                        buffer = round(input$buffer,2), biasLimit=0.01))
           if (!is.null(x)) {
-            showNotification(x, id = "lastaction",
-                             type = "warning", duration = NULL)
+            showNotification(x, 
+                             type = "warning", id = "warning", duration = warningseconds)
           }
         }
         
@@ -198,8 +198,8 @@ fitmodel <- function(LLonly = FALSE) {
           rankH <- length(which(eigH > svtol))
           nbeta <- nrow(fit$beta.vcv)
           if (rankH < nbeta) {
-            showNotification("at least one beta parameter is not identifiable (svtol=1e-5)", 
-                             id='lastaction', type = "warning", duration = NULL)
+            showNotification("at least one beta parameter is not identifiable (svtol=1e-5)",
+                             type = "warning", id = 'warning', duration = warningseconds)
           }
         }
       }

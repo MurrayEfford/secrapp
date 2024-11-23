@@ -126,6 +126,9 @@ output$ncoresui <- renderUI({
 output$secrdesignurl <- renderUI ({
   if (is.null(fitrv$value) & !is.null(capthist())) {
     LL <- try(fitmodel(LLonly = TRUE) , silent = TRUE)
+    LL <- try(fitmodel(LLonly = TRUE) , silent = TRUE)
+    LL <- try(fitmodel(LLonly = TRUE) , silent = TRUE)
+    
     if (is.null(LL) || inherits(LL, 'try-error')) {
       NULL # tag$a(" ")
     }

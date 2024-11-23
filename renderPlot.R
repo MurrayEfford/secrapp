@@ -32,7 +32,7 @@
 
 output$arrayPlot <- renderPlot( {
   
-  removeNotification("arrayploterror")
+  removeNotification("error")
   boxtype <- if (input$arrayframe) "o" else "n"
   border <- max(input$arrayborder,0)
   par(mar = c(1,1,1,1), cex = 1.3, xpd = TRUE)
@@ -66,7 +66,8 @@ output$arrayPlot <- renderPlot( {
     }
     if (!is.null(fitrv$value) && input$fxi) {
       if (!(input$detector %in% c("multi","proximity","count")))
-        showNotification("fxiContour requires point detector type")
+        showNotification("fxiContour requires point detector type", 
+                         id = "warning", type = "warning", duration = warningseconds)
       else {
         if (input$animal>0) {
           tmp <- try(fxiContour(fitrv$value, i = input$animal, 
@@ -79,8 +80,8 @@ output$arrayPlot <- renderPlot( {
                      silent = TRUE)
         }
         if (inherits(tmp, 'try-error')) {
-          showNotification("error in fxiContour; consider smaller mask spacing", 
-                           id="arrayploterror", type="error")
+          showNotification("error in fxiContour; consider smaller mask spacing",
+                           id = "error", type = "error", duration = errorseconds)
         }
       }
     }

@@ -71,19 +71,19 @@ observeEvent(input$navlist, {
   }
   if (input$navlist == "Main screen") {
     if (is.null(traprv$data)) {
-      showNotification("waiting for input", id = "lastaction", 
-                       closeButton = FALSE, type = "message", duration = NULL)
+      showNotification("waiting for input", 
+                       id = "lastaction", type = "message", duration = NULL)
     }
   }
   else if (input$navlist == "Habitat mask") {
     if (is.null(traprv$data))
-      showNotification("waiting for detector layout on Main screen", id = "lastaction", 
-                       closeButton = FALSE, type = "message", duration = NULL)
+      showNotification("waiting for detector layout on Main screen", 
+                       id = "lastaction", type = "message", duration = NULL)
   }
   else if (input$navlist == "Summary") {
     if (is.null(sumrv$value) || nrow(sumrv$value)==0)
-      showNotification("no model has been fitted", id = "lastaction", 
-                       closeButton = FALSE, type = "message", duration = NULL)
+      showNotification("no model has been fitted", 
+                       id = "lastaction", type = "message", duration = NULL)
   }
 })
 ##############################################################################
@@ -137,8 +137,8 @@ observeEvent(c(input$detectfnbox, input$likelihoodbtn, input$distributionbtn,
                fitrv$value <- NULL
                updateRadioButtons(session, "resultsbtn", label = "", 
                                   inline = TRUE, choices = defaultresultsbtn)
-               showNotification("model modified, yet to be fitted", id="lastaction", 
-                                closeButton = FALSE,type="message", duration = NULL)
+               showNotification("model modified, yet to be fitted", 
+                                id = "lastaction", type = "message", duration = NULL)
              })
 ##############################################################################
 
@@ -244,8 +244,8 @@ observeEvent(input$captxlsname, {
   samexls <- input$captxlsname[1,"name"] == input$trapxlsname[1,"name"]
   sheetnumber <- if (samexls) length(input$trapsheet)+1 else 1
   if (samexls && length(sheets)<2) {
-    showNotification(id = "lastaction", type = "error", duration = NULL,
-                     "cannot use same xls sheet")
+    showNotification("cannot use same xls sheet",
+                     id = "warning", type = "warning", duration = warningseconds)
     sheetnumber <- 1
   }
   updateSelectInput(session, "captsheet", 
@@ -434,8 +434,7 @@ observeEvent(input$clearspatialdata, ignoreInit = TRUE, {
   updateCheckboxInput(session, "legend", value = FALSE)
   updateCheckboxInput(session, "dropmissing", value = FALSE)
   reset("maskcovariatefilename")
-  removeNotification(id = "badcovariatefile")
-  removeNotification(id = "nofile")
+  removeNotification(id = "invalidinput")
   removeNotification(id = "lastaction")
   covariaterv$data <- NULL
   covariaterv$names <- character(0)
@@ -448,8 +447,7 @@ observeEvent(input$maskcovariatebtn, ignoreInit = TRUE, {
   updateCheckboxInput(session, "legend", value = FALSE)
   updateCheckboxInput(session, "dropmissing", value = FALSE)
   reset("maskcovariatefilename")
-  removeNotification(id = "badcovariatefile")
-  removeNotification(id = "nofile")
+  removeNotification(id = "invalidinput")
   removeNotification(id = "lastaction")
   covariaterv$data  <- NULL
   covariaterv$names <- character(0)
@@ -557,22 +555,18 @@ observeEvent(input$fitbtn, ignoreInit = TRUE, {
   ## ignoreInit blocks initial execution when fitbtn goes from NULL to 0
   if (is.null(capthist())) {
     showNotification("load data",
-                     type = "warning", id = "nodata", duration = seconds)
+                     id = "warning", type = "warning", duration = warningseconds)
   }
   else {
-    # one likelihood
-    # LL <- try(fitmodel(LLonly = TRUE) )
-    # if (inherits(LL, 'try-error')) {
-    #   showNotification("failed to compute expected time")
-    #   expectedtime <- Inf
-    # }
     if (is.na(timerv$expected)) {
-      showNotification("failed to compute expected time")
+      showNotification("failed to compute expected time",
+                       id = "warning", type = "warning", duration = warningseconds)
     }
     else {
       if (timerv$expected > timerv$timewarning) {
         if (timerv$expected > timerv$timelimit) {
-          showNotification("exceeds time limit")
+          showNotification("expected time exceeds limit",
+                           id = "error", type = "error", duration = errorseconds)
         }
         else {
           showModal(OKModal(timerv$expected))
@@ -761,7 +755,7 @@ observeEvent(input$randompopbtn, ignoreInit = TRUE, {
 
 observeEvent(input$dummybookmarkbutton, ignoreInit = TRUE, {
   showNotification("Bookmarking is disabled in secrapp 2.0", id = "lastaction", 
-                   duration = NULL)  
+                   duration = seconds)  
 })
 
 observeEvent(input$resetbtn, ignoreInit = TRUE, {
@@ -960,8 +954,12 @@ observeEvent(input$resetbtn, ignoreInit = TRUE, {
   if (input$hidegraphicsbtn %% 2 == 1) shinyjs::click("hidegraphicsbtn")
   if (input$secrhelptopicbtn %%2 == 1) shinyjs::click("secrhelptopicbtn")
   
-  showNotification("all inputs reset", id = "lastaction",
-                   closeButton = FALSE, type = "message", duration = seconds)
+  removeNotification("invalidinput")
+  removeNotification("warning")
+  removeNotification("error")
+  
+  showNotification("all inputs reset", 
+                   id = "lastaction",type = "message", duration = seconds)
   
 }, priority = 1000)
 
@@ -1002,14 +1000,14 @@ observeEvent(input$selectnofieldslink, {
 updatebuffer <- function() {
   ch <- capthist()
   if (is.null(ch)) {
-    showNotification(id = "lastaction", type = "warning", duration = NULL,
-                     "input capthist before selecting suggest buffer")
+    showNotification("input capthist before selecting suggest buffer",
+                     id = "warning", type = "warning", duration = warningseconds)
   }
   else {
     det <- if (ms(ch)) detector(traps(ch[[1]])) else detector(traps(ch))
     if (det[1] %in% polygondetectors) {
-      showNotification(id = "lastaction", type = "warning", duration = NULL,
-                       "suggest.buffer is for point detectors; set manually")
+      showNotification("suggest.buffer is for point detectors; set manually",
+                       id = "warning", type = "warning", duration = warningseconds)
     }
     else {
       ## 2020-09-08 suppressed use of fitted model fitrv$value
@@ -1026,8 +1024,8 @@ updatebuffer <- function() {
                                  detectpar = detectparlist,
                                  noccasions = noccasions()[1], RBtarget = RBtarget))
       if (inherits(buff, "try-error")) {
-        showNotification(id = "lastaction", type = "error", duration = NULL,
-                         "suggest.buffer failed; set width manually")
+        showNotification("suggest.buffer failed; set width manually",
+                         id = "warning", type = "warning", duration = warningseconds)
       }
       else {
         updateNumericInput(session, "buffer", value = signif(buff[1],3))
@@ -1085,7 +1083,6 @@ observeEvent(c(
   hideplotif (is.null(fitrv$value) , "Buffer")
   hideplotif (is.null(fitrv$value) , "Pxy")
   hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != 'Full'), "Dxy")
-  hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != "Full"), "Popn")
   hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != "Full"), "Power")
 })
 
@@ -1101,10 +1098,8 @@ observeEvent(c(input$trapfilename, input$trapxlsname, input$detector,
                else if (input$datasource == 'Excel files') {
                  req(input$trapxlsname)
                }
-               removeNotification("badtrapotherargs")
-               removeNotification("badtrap")
-               removeNotification("badcapt")
-               
+               removeNotification("invalidinput")
+
                if (!bookmarkrv$value) {
                  reset('importfilename')
                  importrv$data <- NULL
@@ -1144,8 +1139,8 @@ observeEvent(c(input$trapfilename, input$trapxlsname, input$detector,
                
                tempargs <- try(eval(parse(text = paste0("list(", input$trapotherargs, ")"))), silent = TRUE)
                if (inherits(tempargs, "try-error")) {
-                 showNotification("trap arguments incomplete or invalid", type = "error", 
-                                  id = "badtrapotherargs", duration = NULL)
+                 showNotification("trap arguments incomplete or invalid", 
+                                  id = "invalidinput", type = "error", duration = invalidseconds)
                }
                else {
                  args <- input$trapotherargs
@@ -1159,7 +1154,7 @@ observeEvent(c(input$trapfilename, input$trapxlsname, input$detector,
                  temp <- try(eval(parse(text = readtrapcall)))
                  if (!inherits(temp, "traps")) {
                    showNotification("invalid trap file or arguments; try again",
-                                    type = "error", id = "badtrap", duration = NULL)
+                                    id = "invalidinput", type = "error", duration = invalidseconds)
                    traprv$data <- NULL
                  }
                  else {
@@ -1182,8 +1177,8 @@ observeEvent(c(input$trapfilename, input$trapxlsname, input$detector,
                    traprv$data <- temp
                    enable("captfilename")
                    enable("captxlsname")
-                   showNotification("detector layout loaded", closeButton = FALSE, 
-                                    type = "message", id = "lastaction", duration = seconds)
+                   showNotification("detector layout loaded",
+                                    id = "lastaction", type = "message", duration = seconds)
                  }
                }
              })
@@ -1192,7 +1187,7 @@ observeEvent(c(input$trapfilename, input$trapxlsname, input$detector,
 ## use builtin data 
 observeEvent(c(input$datasource, input$secrdatabox), ignoreInit = TRUE, {
   req(input$secrdatabox)
-  removeNotification("badcapt")
+  removeNotification("invalidinput")
   secrrv$data <- NULL
   traprv$data <- NULL
   fitrv$value <- NULL
@@ -1219,12 +1214,13 @@ observeEvent(c(input$datasource, input$secrdatabox), ignoreInit = TRUE, {
                           selected = "HN")
         enable('suggestbufferlink')
       }
-      showNotification(paste("using", input$secrdatabox), closeButton = FALSE, 
-                       type = "message", id = "lastaction", duration = seconds)
+      showNotification(paste("using", input$secrdatabox), 
+                       id = "lastaction", type = "message", duration = seconds)
     }
     else {
-      showNotification("not a builtin capthist object", 
-                       type = "error", id = "badcapt", duration = NULL)
+      # likely a transient error as name is typed
+      showNotification(paste0(input$secrdatabox, " not a builtin capthist object"), 
+                       type = "error", id = "invalidinput", duration = seconds)
     }
   }
 })

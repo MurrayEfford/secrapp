@@ -64,7 +64,6 @@ output$usage <- reactive({
 # usagepct 
 
 capthist <- reactive( {
-  # showNotification("debug: capthist eval", closeButton = FALSE, type = "message", duration = 0.1)
   ch <- NULL
   covnames <- character(0)
   if ((is.null(traprv$data) || is.null(captrv$data)) && 
@@ -92,7 +91,7 @@ capthist <- reactive( {
           }
           else if (any(numbset<0)) {
             showNotification("filter indices must be all positive or all negative",
-                             id = "lastaction", duration = NULL)
+                             id = "warning", type = "warning", duration = warningseconds)
           }
         }
         
@@ -101,7 +100,7 @@ capthist <- reactive( {
     }
     if (inherits(ch, 'try-error')) {
       showNotification("invalid capture file or arguments; try again",
-                       type = "error", id = "badcapt")
+                       id = "invalidinput", type = "error", duration = invalidseconds)
       ch <- NULL
     }
     else {
@@ -150,6 +149,7 @@ capthist <- reactive( {
     disable("fitbtn")
   }
   else {
+    removeNotification("invalidinput")
     enable("fitbtn")
   }
   ch
@@ -206,7 +206,7 @@ derivedresult <- reactive({
   # progress$set(message = 'Computing derived estimates ...', detail = '')
   if (inherits(fitrv$value, 'secr') && (!any(is.na(coef(fitrv$value)[,'beta'])))) {
     showNotification("Computing derived estimates ...",
-                     id = "derived", duration = seconds)
+                     id = "lastaction", type = "message", duration = seconds)
     
     der <- derived(fitrv$value, distribution = tolower(input$distributionbtn),
                    se.esa = TRUE)
@@ -283,8 +283,7 @@ mask <- reactive( {
     else {
       if (!maskOK()) {
         showNotification("no detectors in habitat polygon(s)",
-                         type = "warning", id = "notrapsinpoly",
-                         duration = seconds)
+                         id = "warning", type = "warning", duration = warningseconds)
       }
       msk <- make.mask (traprv$data,
                         buffer = input$buffer,
@@ -297,14 +296,14 @@ mask <- reactive( {
       nrw <- if (ms(msk)) nrow(msk[[1]]) else nrow(msk)
       if (nrw > 10000) {
         showNotification(paste0(nrw, " mask points is excessive; reduce buffer or nx?"),
-                         type = "warning", id = "maskrows", duration = NULL)
+                         id = "warning", type = "warning", duration = warningseconds)
       }
       else if (nrw < 500) {
         showNotification(paste0("only ", nrw, " mask points; increase buffer or nx?"),
-                         type = "warning", id = "maskrows", duration = NULL)
+                         id = "warning", type = "warning", duration = warningseconds)
       }
       else {
-        removeNotification(id = "maskrows")
+        removeNotification(id = "warning")
       }
     }
     # covariaterv$names <- character(0)
@@ -325,7 +324,7 @@ mask <- reactive( {
         }
         else {
           showNotification("covariate(s) missing at some mask points",
-                           id = "lastaction", duration = NULL)
+                           id = "warning", type = "warning", duration = warningseconds)
         }
       }
       msk
@@ -354,8 +353,8 @@ mask <- reactive( {
     rpsv <- unlist(RPSV(capthist(), CC = TRUE))[input$sess]
     sp <- unlist(spacing(msk))[1] # custom for this session
     if (!is.null(sp) && sp > rpsv) {    # check for NULL 2021-06-20
-      showNotification(id = "lastaction", type = "warning", duration = NULL,
-                       paste0("mask spacing ", signif(sp,3), " exceeds naive sigma ", signif(rpsv,3)))
+      showNotification(paste0("mask spacing ", signif(sp,3), " exceeds naive sigma ", signif(rpsv,3)),
+                       id = "warning", type = "warning", duration = warningseconds)
     }
   }
   msk
@@ -478,14 +477,14 @@ pop <- reactive(
   {
     poprv$v
     input$Dshowpopn
-    removeNotification("bigpop")
+    removeNotification("error")
     core <- if (ms(traprv$data)) traprv$data[input$sess] else traprv$data
     if (is.null(core) || (density() == 0) || is.na(density())) {
       return (NULL)
     }
     if (density() * maskarea(mask()) > 10000) {
       showNotification("population exceeds 10000; try again",
-                       type = "error", id = "bigpop")
+                       id = "error", type = "error", duration = errorseconds)
       return(NULL)
     }
     Ndist <- if (input$distributionbtn == 'Poisson') 'poisson' else 'fixed'

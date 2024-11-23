@@ -2,7 +2,12 @@
 ## global variables
 
 linewidth <- 2      # for various plots 
-seconds <- 6        # default duration for showNotification()
+
+# durations for showNotification
+seconds        <- 6   # default
+warningseconds <- 12  
+errorseconds   <- 12   
+invalidseconds <- NULL
 
 timewarning <- 0.5  # minutes
 timelimit <- 10.0   # minutes
