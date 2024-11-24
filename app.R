@@ -27,6 +27,7 @@
 # invalidinput duration = invalidseconds
 # error        duration = errorseconds
 
+## option to specify mask spacing instead of nx
 
 library(secr)
 library(shinyjs)

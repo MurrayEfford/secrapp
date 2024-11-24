@@ -1,4 +1,4 @@
-# secrapp 2.0
+# secrapp 2.1
 
 This Shiny app performs simple spatially explicit capture-recapture analyses using the 
 R package [secr](https://CRAN.R-project.org/package=secr). For details see the 
@@ -19,9 +19,13 @@ Note:
 - for some functions you will also need the packages 'sf', 'stringr', and 'readxl'  
 - secrapp 2.0 requires secr 5.1.0 or a later version.
 
-A version of the app may be run in a web browser without any setup by 
+Version 2.0 of the app may be run in a web browser without any setup by 
 following this [link](https://www.stats.otago.ac.nz/secrapp). 
 This arrangement has limited capacity for simultaneous users.
+
+Changes from 2.0 to 2.1  
+- option to specify spacing of habitat mask (by spacing)alternative to nx)
+- notifications reorganised
 
 ----
 
