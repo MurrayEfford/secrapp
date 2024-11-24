@@ -854,6 +854,8 @@ observeEvent(input$resetbtn, ignoreInit = TRUE, {
   updateRadioButtons(session, "meshdimensionbtn", selected = "Number in x-direction  ")
   updateNumericInput(session, "habnx", value = 32)
   updateNumericInput(session, "habspacing", value = 10)
+  disable("habspacing")
+  enable("habnx")
   updateRadioButtons(session, "maskshapebtn", selected = "Trap buffer")
   updateRadioButtons(session, "maskpolybtn", selected = "None")
   
