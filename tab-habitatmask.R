@@ -7,29 +7,48 @@ tabhabitat <- tabPanel("Habitat mask",
                                   tabPanel("Build",
                                            wellPanel(class = "mypanel", 
                                                      fluidRow(
-                                                       column(7, 
+                                                       column(6, 
                                                               numericInput("buffer", "Buffer width (m)",
                                                                            min = 0,
                                                                            max = 100000,
                                                                            value = 100,
                                                                            step = 5,
-                                                                           width = 180),
-                                                              tags$div(title = "Resolution of mesh - number of columns in x-direction",
-                                                                       numericInput("habnx", "Mesh dimension nx",
-                                                                                    min = 10,
-                                                                                    max = 1000,
-                                                                                    value = 32,
-                                                                                    step = 1,
-                                                                                    width = 180)
-                                                              )
+                                                                           width = 160)
                                                        ),
-                                                       column(5,
+                                                       column(6,
                                                               br(),
                                                               tags$div(style="text-align: right",
                                                                 actionLink("suggestbufferlink", HTML("<small>suggest width</small>"),
                                                                          title = "Based on RPSV(ch, CC = TRUE); RB <= 0.1%")
                                                               )
                                                        )
+                                                     ),
+                                                     fluidRow(
+                                                       column(12,
+                                                              radioButtons("meshdimensionbtn", label = "Specify mesh by -",
+                                                                    choices = c("Number in x-direction  ", "Spacing"), 
+                                                                    selected = "Number in x-direction  ", inline = TRUE))
+                                                       ),
+                                                       fluidRow(
+                                                         column(6, 
+                                                                tags$div(title = "Resolution of mesh - number of columns in x-direction",
+                                                                  numericInput("habnx", "nx",
+                                                                               min = 10,
+                                                                               max = 1000,
+                                                                               value = 32,
+                                                                               step = 1,
+                                                                               width = 160)
+                                                                )
+                                                         ),
+                                                         column(6, 
+                                                                numericInput("habspacing", "spacing m",
+                                                                             min = 1,
+                                                                             max = 10000,
+                                                                             value = 10,
+                                                                             step = 2,
+                                                                             width = 160)
+                                                         )
+                                                       
                                                      ),
                                                      fluidRow(
                                                        column(9, 

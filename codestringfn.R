@@ -147,7 +147,9 @@ maskcode <- function () {
         polycode,
         "mask <- make.mask (", trps,  
         ", buffer = ", buffer, 
-        ", nx = ", input$habnx, 
+        if (input$meshdimensionbtn == "Spacing") 
+          paste0(", spacing = ", input$habspacing)
+        else paste0(", nx = ", input$habnx), 
         ", type = '", type, "'",  
         if (polycode == "") "" else ",\n    poly = poly",
         if (polycode == "") "" else ", poly.habitat = ", polyhabitat,

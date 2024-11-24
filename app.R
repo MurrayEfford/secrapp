@@ -111,6 +111,7 @@ server <- function(input, output, session) {
   disable("captfilename")
   disable("captxlsname")
   disable("dummybookmarkbutton")
+  disable ("habspacing")
 
   output$selectingfields   <- renderText('false')
   output$selectinganalyses <- renderText('false')

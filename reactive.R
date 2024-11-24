@@ -285,13 +285,21 @@ mask <- reactive( {
         showNotification("no detectors in habitat polygon(s)",
                          id = "warning", type = "warning", duration = warningseconds)
       }
-      msk <- make.mask (traprv$data,
-                        buffer = input$buffer,
-                        nx = input$habnx,
-                        type = if (input$maskshapebtn=='Rectangular') 'traprect' else 'trapbuffer',
-                        poly = polyrv$data,
-                        poly.habitat = input$includeexcludebtn == "Include",
-                        keep.poly = FALSE)
+      
+      maskargs <- list(traps = traprv$data,
+                       buffer = input$buffer,
+                       type = if (input$maskshapebtn=='Rectangular') 'traprect' else 'trapbuffer',
+                       poly = polyrv$data,
+                       poly.habitat = input$includeexcludebtn == "Include",
+                       keep.poly = FALSE)
+      if (input$meshdimensionbtn == "Spacing") 
+        maskargs$spacing <- input$habspacing
+      else 
+        maskargs$nx <- input$habnx
+      
+      msk <- do.call(make.mask, maskargs)
+      
+      
       if (ms(msk) && !is.null(capthist())) names(msk) <- names(capthist())
       nrw <- if (ms(msk)) nrow(msk[[1]]) else nrow(msk)
       if (nrw > 10000) {

@@ -54,7 +54,7 @@
 # otherarg
 
 # detectfnbox, likelihoodbtn, distributionbtn, hcovbox, model, modelotherargs,
-#     masktype, buffer, habnx, maskshapebtn, maskpolyfilename, maskfilename,
+#     masktype, buffer, habnx, habspacing, maskshapebtn, maskpolyfilename, maskfilename,
 #     filtercaptlink, filtercapttext
 # masktype
 # arrayClick
@@ -128,10 +128,10 @@ observeEvent(input$maskfilename, {
 # Invalidate model
 observeEvent(c(input$detectfnbox, input$likelihoodbtn, input$distributionbtn,
                input$hcovbox, input$model, input$modelotherargs,
-               input$masktype, input$buffer, input$habnx, input$maskshapebtn, 
-               input$maskpolybtn, input$maskpolyfilename, input$maskpolyobjectname, 
-               input$maskcovariatefilename, input$clearspatialdata,
-               input$clearpolygondata,
+               input$masktype, input$buffer, input$habnx, input$habspacing, 
+               input$maskshapebtn, input$maskpolybtn, input$maskpolyfilename,
+               input$maskpolyobjectname, input$maskcovariatefilename, 
+               input$clearspatialdata,input$clearpolygondata,
                input$maskfilename, input$filtercaptlink, input$filtercapttext), 
              ignoreInit = TRUE, {
                fitrv$value <- NULL
@@ -149,6 +149,7 @@ observeEvent(c(input$datasource, input$secrdatabox, input$masktype), {
   reset("maskcovariatefilename")
   updateNumericInput(session, "buffer", value = 100)
   updateNumericInput(session, "habnx", value = 32)
+  updateNumericInput(session, "habspacing", value = 10)
   updateRadioButtons(session, "maskshapebtn", selected = "Trap buffer")
   updateRadioButtons(session, "maskpolybtn", select = "None")
   updateRadioButtons(session, "maskcovariatebtn", select = "None")
@@ -473,7 +474,9 @@ observeEvent(input$clearpolygondata, ignoreInit = TRUE, {
 observeEvent(input$clearbufferspec, ignoreInit = TRUE, {
   updateNumericInput(session, "buffer", value = 100)
   updateNumericInput(session, "habnx", value = 32)
+  updateNumericInput(session, "habspacing", value = 10)
   updateRadioButtons(session, "maskshapebtn", selected = "Trap buffer")
+  updateRadioButtons(session, "meshdimensionbtn", selected = "Number in x-direction  ")
 }, priority = 1000)
 
 observeEvent(input$helplink, ignoreInit = TRUE, {
@@ -848,7 +851,9 @@ observeEvent(input$resetbtn, ignoreInit = TRUE, {
   ## Habitat mask
   
   updateNumericInput(session, "buffer", value = 100)
+  updateRadioButtons(session, "meshdimensionbtn", selected = "Number in x-direction  ")
   updateNumericInput(session, "habnx", value = 32)
+  updateNumericInput(session, "habspacing", value = 10)
   updateRadioButtons(session, "maskshapebtn", selected = "Trap buffer")
   updateRadioButtons(session, "maskpolybtn", selected = "None")
   
@@ -1048,6 +1053,26 @@ observeEvent(input$maskcovariatefilename, {
   updateSelectInput(session, "maskcov", 
                     choices = c("none", covariaterv$names))
   removeNotification(id="lastaction")
+})
+
+
+##############################################################################
+observeEvent(c(input$habnx, input$habspacing, input$buffer, 
+               input$meshdimensionbtn, input$suggestbufferlink), {
+  if (!is.null(mask()) && input$masktype == 'Build') {
+    msk <- if (ms(mask())) mask()[[input$sess]] else mask()
+    dx <- diff(range(msk$x))
+    if (input$meshdimensionbtn == 'Spacing') {
+      disable("habnx")
+      enable("habspacing")
+      updateNumericInput(session, "habnx", value = dx/input$habspacing)
+    }
+    else {
+      enable("habnx")
+      disable("habspacing")
+      updateNumericInput(session, "habspacing", value = round(dx/input$habnx,3))
+    }
+  }
 })
 
 
