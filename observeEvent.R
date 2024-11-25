@@ -137,7 +137,8 @@ observeEvent(c(input$detectfnbox, input$likelihoodbtn, input$distributionbtn,
                fitrv$value <- NULL
                updateRadioButtons(session, "resultsbtn", label = "", 
                                   inline = TRUE, choices = defaultresultsbtn)
-               showNotification("model modified, yet to be fitted", 
+               if (!is.null(capthist()))
+                 showNotification("model modified, yet to be fitted", 
                                 id = "lastaction", type = "message", duration = NULL)
              })
 ##############################################################################
@@ -768,7 +769,7 @@ observeEvent(input$dummybookmarkbutton, ignoreInit = TRUE, {
 })
 
 observeEvent(input$resetbtn, ignoreInit = TRUE, {
-  
+
   current$unit <- "ha"
   fitrv$value <- NULL
   traptextrv$value <- FALSE
@@ -968,12 +969,13 @@ observeEvent(input$resetbtn, ignoreInit = TRUE, {
   if (input$hidegraphicsbtn %% 2 == 1) shinyjs::click("hidegraphicsbtn")
   if (input$secrhelptopicbtn %%2 == 1) shinyjs::click("secrhelptopicbtn")
   
+  removeNotification("lastaction")
   removeNotification("invalidinput")
   removeNotification("warning")
   removeNotification("error")
   
   showNotification("all inputs reset", 
-                   id = "lastaction",type = "message", duration = seconds)
+                   id = "lastaction", type = "message", duration = seconds)
   
 }, priority = 1000)
 
