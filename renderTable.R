@@ -15,7 +15,6 @@ output$summarytable <- renderTable({
     }
   }
   tmp <- t(tmp)
-  # if (ncol(tmp)>0) colnames(tmp) <- paste0('Analysis', 1:ncol(tmp))
   tmp <- cbind(Field = fields, tmp)
   tmp } , spacing = "xs"
 )
