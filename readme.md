@@ -23,9 +23,7 @@ Version 2.0 of the app may be run in a web browser without any setup by
 following this [link](https://www.stats.otago.ac.nz/secrapp). 
 This arrangement has limited capacity for simultaneous users.
 
-Changes from 2.0 to 2.1  
-- option to specify spacing of habitat mask (alternative to nx)
-- notifications reorganised
+See help.rmd for recent changes.
 
 ----
 

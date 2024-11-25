@@ -23,11 +23,10 @@ taboptions <- tabPanel("Options",
                   h2("Model fitting"),
                   wellPanel(class = "mypanel",
                             fluidRow(
-                              column(10, selectInput("method", "Maximization method",
+                              column(11, selectInput("method", "Maximization method",
                                                      ## 2020-02-10 choices = c("Newton-Raphson", "Nelder-Mead", "none"),
                                                      choices = c("Newton-Raphson", "Nelder-Mead"),
-                                                     selected = "Newton-Raphson", width=150)),
-                              column(2, br(), actionLink("incrementtime", label = "."))
+                                                     selected = "Newton-Raphson", width=160))
                             ),
                             fluidRow(
                               column(6, numericInput("ncores", "Number of cores", 
@@ -39,12 +38,13 @@ taboptions <- tabPanel("Options",
                               column(6, br(), uiOutput("ncoresui") )
                             ),
                             fluidRow(
-                              column(8, uiOutput("timelimitui") )
+                              column(8, uiOutput("timelimitui") ),
+                              column(4, actionLink("incrementtime", label = "."))
                             ),
                             fluidRow(
-                              column(10, selectInput("refitmethod", "Re-fit method",
+                              column(11, selectInput("refitmethod", "Re-fit method",
                                                      choices = c("Newton-Raphson", "Nelder-Mead", "none"),
-                                                     selected = "Newton-Raphson", width=150))
+                                                     selected = "Newton-Raphson", width=160))
                             )
                   ),
                   h2("Summary"),

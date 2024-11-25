@@ -1,7 +1,7 @@
 ---
-title: "secr app 2.0"
+title: "secr app 2.1"
 author: "Murray Efford"
-date: '2024-11-03'
+date: '2024-11-26'
 output:
   html_document:
     toc: yes
@@ -42,6 +42,13 @@ Version 2.0 (November 2024) has these user-visible changes:
 * habitat mask buffer width 'suggest' link on the Main screen
 * 'Clear' link on the Summary screen
 * spatial data processing uses package **sf** ([Pebesma 2018](*references)), replacing defunct rgdal
+
+Version 2.1 (November 2024) has these user-visible changes:
+
+* new Re-fit action
+* re-styled u>Habitat mask</u> box on main tab
+* option to specify mask spacing instead of nx
+* improved notifications
 
 # Main screen  <a name="main"></a>
 
@@ -195,14 +202,16 @@ The application is designed for small- to medium-sized models. An internal algor
     <td>Reset all input options to defaults</td>
   </tr>
   <tr>
-    <td>Bookmark</td>
-    <td> (see Bookmarking)</td>
+    <td>Re-fit model</td>
+    <td> Re-fit the model, possibly changing the 'method' argument.</td>
   </tr>
 </table> 
 
 <br>
 
 'Reset all' does not delete Summary results from the current session. Use the 'Clear' link on the Summary page to remove summaries. Summary results will be lost if you close the application without downloading to a local file.
+
+'Re-fit model' repeats the call to secr.fit() with all current settings except that (i) existing parameter estimates are used as starting values, and (ii) the "method" argument is taken from the Options tab. Re-fitting a model with method "none" merely re-computes variance estimates, and may correct missing SE and confidence limits.
 
 The option 'Switch to secrdesign' appears once a model has been fitted if the detection function is HHN or HEX and the detector type is multi, proximity or count. This opens 'secrdesignapp' on the Otago University server in a new browser window. Settings and parameter estimates are transferred automatically. Detector locations are not transferred; they should be provided either by selecting the file in secrdesignapp, or by the usual options (Grid, Line, Region).
 
@@ -343,9 +352,9 @@ A model will not be fitted if the predicted time exceeds a limit, currently 10 m
 
 ----------------------------------------------------
 
-# Bookmarking  <a name="bookmark"></a>
+<!-- # Bookmarking  <a name="bookmark"></a> -->
 
-NOTE: Bookmarking is disabled in secrapp 2.0 owing to a problem in Shiny.
+<!-- NOTE: Bookmarking is disabled in secrapp 2.0 owing to a problem in Shiny. -->
 
 <!-- Bookmarking creates a URL that allows you to take up your session where you left off.  -->
 

@@ -1,6 +1,6 @@
 tababout <- tabPanel(
   "About",
-  h2("secr app 2.0"), br(),
+  h2("secr app 2.1"), br(),
   
   h5(paste("This Shiny application provides an interface to the R package 'secr', version", 
            secrversion, ".")),

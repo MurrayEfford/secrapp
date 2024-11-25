@@ -28,7 +28,8 @@
 # error        duration = errorseconds
 
 ## option to specify mask spacing instead of nx
-## new re-fit button
+## new Re-fit button
+## re-styled habitat mask summary on main tab
 
 library(secr)
 library(shinyjs)
@@ -49,7 +50,7 @@ source('tab-help.R',        local = TRUE)
 source('tab-about.R',       local = TRUE)
 
 if (compareVersion(as.character(secrversion), '5.1.0') < 0)
-  stop("secrapp 2.0 requires secr version 5.1.0 or later",
+  stop("secrapp 2.1 requires secr version 5.1.0 or later",
     call. = FALSE)
 
 if (!requireNamespace('stringr')) stop("please install package 'stringr'")
@@ -65,12 +66,12 @@ if (!requireNamespace('readxl')) stop("please install package 'readxl'")
 ui <- function(request) {
   
   fluidPage(
-    title = "secr app 2.0",
+    title = "secr app 2.1",
     includeCSS("secrstyle.css"),
     useShinyjs(),
     withMathJax(),
     br(),
-    navlistPanel(id = "navlist", widths = c(2,10), well = TRUE, "secr app 2.0",
+    navlistPanel(id = "navlist", widths = c(2,10), well = TRUE, "secr app 2.1",
                 tabintro, 
                 tabmain,
                 tabhabitat,

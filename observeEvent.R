@@ -764,7 +764,7 @@ observeEvent(input$randompopbtn, ignoreInit = TRUE, {
 ##############################################################################
 
 observeEvent(input$dummybookmarkbutton, ignoreInit = TRUE, {
-  showNotification("Bookmarking is disabled in secrapp 2.0", id = "lastaction", 
+  showNotification("Bookmarking is disabled in secrapp 2.1", id = "lastaction", 
                    duration = seconds)  
 })
 
