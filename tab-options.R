@@ -40,6 +40,11 @@ taboptions <- tabPanel("Options",
                             ),
                             fluidRow(
                               column(8, uiOutput("timelimitui") )
+                            ),
+                            fluidRow(
+                              column(10, selectInput("refitmethod", "Re-fit method",
+                                                     choices = c("Newton-Raphson", "Nelder-Mead", "none"),
+                                                     selected = "Newton-Raphson", width=150))
                             )
                   ),
                   h2("Summary"),

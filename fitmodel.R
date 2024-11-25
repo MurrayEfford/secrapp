@@ -178,7 +178,7 @@ fitmodel <- function(LLonly = FALSE) {
       }
       else {
         showNotification("Model fitted", 
-                         type = "message", id = "lastaction", duration = seconds, closeButton = FALSE)
+                         type = "message", id = "lastaction", duration = seconds)
         
         if (input$masktype == "Build") {
           x <- suppressWarnings(secr:::bufferbiascheck(fit, 
@@ -209,6 +209,37 @@ fitmodel <- function(LLonly = FALSE) {
   if (is.null(fitrv$value)) {
     updateRadioButtons (session, "resultsbtn", label = "", 
                         inline = TRUE, choices = defaultresultsbtn)
+    disable("refitbtn")
+  }
+  else {
+    enable("refitbtn")
   }
 }
 ##############################################################################
+
+# 2024-11-23
+# may later add to 'secr'
+
+refit <- function (method = NULL, trace = FALSE, ncores = NULL) {
+  # omit start, dframe, verify, biasLimit, trace, ncores
+  object <- fitrv$value
+  if (!is.null(fitrv$value) && inherits(object, 'secr')) {
+    argnames <- c("capthist", "model", "mask", "CL", "detectfn", 
+                  "link", "fixed", "timecov", "sessioncov", "hcov", "groups",
+                  "details", "method")
+    args <- object[argnames]
+    args$start  <- object
+    args$trace  <- trace
+    args$ncores <- ncores
+    args$binomN <- object$details$binomN  
+    if (is.null(object$method)) {
+      # not saved in secr object until 5.1.1
+      object$method <- "Newton-Raphson"
+    }
+    if (!is.null(method)) args$method <- method
+    fitrv$value <- do.call(secr.fit, args)
+    showNotification("Model re-fitted", 
+                     type = "message", id = "lastaction", duration = seconds)
+    
+  }
+}

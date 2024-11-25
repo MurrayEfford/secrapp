@@ -109,6 +109,7 @@ server <- function(input, output, session) {
   source('bookmark.R',        local = TRUE)
   
   disable("fitbtn")
+  disable("refitbtn")
   disable("captfilename")
   disable("captxlsname")
   disable("dummybookmarkbutton")
@@ -136,8 +137,7 @@ server <- function(input, output, session) {
   outputOptions(output, "usage",                  suspendWhenHidden = FALSE)
 
   showNotification(paste("secr", secrversion, secryear), 
-                   id = "version", type = "message", duration = seconds, 
-                   closeButton = FALSE)
+                   id = "version", type = "message", duration = seconds)
   
   ##############################################################################
   

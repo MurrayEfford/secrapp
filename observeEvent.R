@@ -585,6 +585,12 @@ observeEvent(input$fitbtn, ignoreInit = TRUE, {
 
 ##############################################################################
 
+observeEvent(input$refitbtn, ignoreInit = TRUE, {
+        refit(method = input$refitmethod)
+})
+
+##############################################################################
+
 # defunct 2020-09-07 as browseURL doesn't work on server  
 # observeEvent(input$secrhelpbtn, ignoreInit = TRUE, {
 #   secrhelp <- file.path(path.package("secr"), "html",  "00Index.html")
@@ -883,6 +889,7 @@ observeEvent(input$resetbtn, ignoreInit = TRUE, {
   
   updateNumericInput(session, "ncores", value = defaultcores)
   updateSelectInput(session, "method", selected = "Newton-Raphson")
+  updateSelectInput(session, "refitmethod", selected = "Newton-Raphson")
   
   ## detector array
   updateRadioButtons(session, "areaunit", selected = "ha")

@@ -225,7 +225,8 @@ tabmain <- tabPanel(
               column(3, actionButton("resetbtn", "Reset all", width = 130, 
                                      title = "Reset all inputs to initial values")),
               # column(3, bookmarkButton(width = 130)), # NOT WORKING 1.3
-              column(3, actionButton("dummybookmarkbutton", "Bookmark", width = 130, title = "Bookmarking is disabled in secrapp 2.0")),
+              # column(3, actionButton("dummybookmarkbutton", "Bookmark", width = 130, title = "Bookmarking is disabled in secrapp 2.0")),
+              column(3, actionButton("refitbtn", "Re-fit model", width = 130, title = "Re-fit with method from Options")),
               column(3),
               column(3, helpText(HTML("F11 full screen")))
             )
