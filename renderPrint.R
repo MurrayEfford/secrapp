@@ -21,12 +21,14 @@ output$maskPrint <- renderPrint({
 ##############################################################################
 
 output$maskdetailPrint <- renderPrint({
-  if (input$masktype == 'Build')
-    x1 <- paste0(input$buffer, "-m  buffer, nx = ", input$habnx)
+  if (input$masktype == 'Build') {
+    if (input$meshdimensionbtn == "Spacing")
+      x1 <- paste0("Buffer ", input$buffer, " m, spacing ", signif(input$habspacing,3), " m")
+    else
+      x1 <- paste0("Buffer ", input$buffer, " m,  nx ", input$habnx)
+  }
   else
     x1 <- paste0("Habitat mask from file")
-  
-  cat(x1, "\n")
   
   if (is.null(mask())) { 
     if (input$masktype == 'File')
@@ -36,10 +38,23 @@ output$maskdetailPrint <- renderPrint({
   }
   else {
     if (ms(mask()))
-      x2 <- paste0("Session 1 ", nrow(mask()[[1]]), " points, spacing ", signif(spacing(mask()[[1]]),3), " m")
+      x2 <- paste0("S1: ", nrow(mask()[[1]]), " points")
     else
-      x2 <- paste0(nrow(mask()), " points, spacing ", signif(spacing(mask()),3), " m")
+      x2 <- paste0(nrow(mask()), " points")
+    if (input$meshdimensionbtn == "Spacing" && input$masktype == 'Build') {
+      # spacing already displayed      
+    }
+    else {
+      x2 <- paste0(x2, 
+                   ", spacing ",
+                   if (ms(mask())) signif(spacing(mask()[[1]]),3) 
+                   else signif(spacing(mask()), 3),
+                   " m")
+    }
+    
   }
+  
+  cat(x1, "\n")
   cat(x2, "\n")
   
 })
