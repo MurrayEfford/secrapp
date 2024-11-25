@@ -48,6 +48,8 @@ Version 2.1 (November 2024) has these user-visible changes:
 * new Re-fit action
 * re-styled u>Habitat mask</u> box on main tab
 * option to specify mask spacing instead of nx
+* optional 'method' field in Summary
+* user control of summary prefix (e.g. 'Analysis')
 * improved notifications
 
 # Main screen  <a name="main"></a>
