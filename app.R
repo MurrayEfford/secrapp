@@ -28,6 +28,7 @@
 # error        duration = errorseconds
 
 ## option to specify mask spacing instead of nx
+## new re-fit button
 
 library(secr)
 library(shinyjs)
