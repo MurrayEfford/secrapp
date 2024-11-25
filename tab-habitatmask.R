@@ -45,7 +45,7 @@ tabhabitat <- tabPanel("Habitat mask",
                                                                              min = 1,
                                                                              max = 10000,
                                                                              value = 10,
-                                                                             step = 2,
+                                                                             step = 1,
                                                                              width = 160)
                                                          )
                                                        
