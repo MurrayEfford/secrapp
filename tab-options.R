@@ -57,8 +57,11 @@ taboptions <- tabPanel("Options",
                                                       width=160))
                             ),
                             fluidRow(
-                              column(12, textInput("title", "", value = "", 
-                                                   placeholder = "note for Summary"))
+                              column(12, textInput("summaryprefix", "Prefix",value = "Analysis"))
+                            ),
+                            fluidRow(
+                              column(12, textInput("title", "Note", value = "", 
+                                                   placeholder = "note for summary"))
                             )
                   )
            ),

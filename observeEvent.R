@@ -299,7 +299,7 @@ observeEvent(input$selectallanalyseslink, {
   if (nrow(sumrv$value) == 0) 
     selected <- character(0)
   else
-    selected <-  paste0("Analysis", 1:nrow(sumrv$value))
+    selected <-  paste0(input$summaryprefix, 1:nrow(sumrv$value))
   updateCheckboxGroupInput(session, "analyses", selected =  selected)
 })
 
@@ -891,6 +891,8 @@ observeEvent(input$resetbtn, ignoreInit = TRUE, {
   updateNumericInput(session, "ncores", value = defaultcores)
   updateSelectInput(session, "method", selected = "Newton-Raphson")
   updateSelectInput(session, "refitmethod", selected = "Newton-Raphson")
+
+  updateTextInput(session, "summaryprefix", value = "Analysis", placeholder = "")
   
   ## detector array
   updateRadioButtons(session, "areaunit", selected = "ha")
