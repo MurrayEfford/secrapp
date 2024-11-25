@@ -34,7 +34,7 @@ summaryfields <- c("date", "time", "note", "traps", "captures", "filter",
                    "maskspace", "likelihood", "distribution", "model", "hcov", 
                    "detectfn", "npar", "logLik", "AIC", "dAIC",
                    "D", "se.D", "RSE.D", "g0", "se.g0", "lambda0", "se.lambda0", "sigma", 
-                   "se.sigma", "z", "se.z", "k", "proctime")
+                   "se.sigma", "z", "se.z", "k", "proctime", "method")
 defaultfields1 <- c("date", "time", "note", "traps", "captures", "filter",
                     "n", "r", "ndetectors", "noccasions",
                     "usagepct", "maskbuffer", "masknrow", "maskspace",
@@ -44,7 +44,7 @@ defaultfields2 <- c("detectfn",
                     "D", "se.D", "RSE.D", "g0", "se.g0", "lambda0", "se.lambda0", "sigma", "se.sigma",
                     "k", "proctime")
 fieldgroup1 <- 1:18
-fieldgroup2 <- 19:36
+fieldgroup2 <- 19:37
 
 
 ##############################################################################

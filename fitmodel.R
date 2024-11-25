@@ -45,7 +45,8 @@ addtosummary <- function() {
     z = NA_real_, 
     se.z = NA_real_,
     k = NA_real_,
-    proctime = NA_real_
+    proctime = NA_real_,
+    method = ""
   )
   
   if (inherits(fitrv$value, "secr")) {
@@ -71,6 +72,7 @@ addtosummary <- function() {
     else 
       df$k <- NA_real_ # force numeric NA
     df$proctime <- fitrv$value$proctime
+    if (!is.null(fitrv$value$method)) df$method <- fitrv$value$method
     df[,21:22] <- round(df[,21:22], 2)   # logLik, AIC
     df[,23:35] <- signif(df[,23:35], input$dec)
     OK <- TRUE
@@ -78,11 +80,11 @@ addtosummary <- function() {
   sumrv$value <- rbind (sumrv$value, df)
   
   if (nrow(sumrv$value)>0) {
-    rownames(sumrv$value) <- paste0("Analysis", 1:nrow(sumrv$value))
+    rownames(sumrv$value) <- paste0(input$summaryprefix, 1:nrow(sumrv$value))
     
     updateCheckboxGroupInput(session, "analyses", 
                              choices = rownames(sumrv$value),
-                             selected = c(input$analyses, paste0("Analysis", nrow(sumrv$value)))
+                             selected = c(input$analyses, paste0(input$summaryprefix, nrow(sumrv$value)))
     )
     output$summaries <- renderText("true")
   }
@@ -238,8 +240,15 @@ refit <- function (method = NULL, trace = FALSE, ncores = NULL) {
     }
     if (!is.null(method)) args$method <- method
     fitrv$value <- do.call(secr.fit, args)
-    showNotification("Model re-fitted", 
-                     type = "message", id = "lastaction", duration = seconds)
+    OK <- try(addtosummary())
+    if (inherits(OK, 'try-error')) {
+      showNotification("Problem adding refit to summary",
+                       type = "warning", id = "warning", duration = warningseconds)
+    }
+    else {
+      showNotification("Model re-fitted", 
+                       type = "message", id = "lastaction", duration = seconds)
+    }
     
   }
 }
