@@ -31,14 +31,12 @@
 ## new Re-fit button
 ## re-styled habitat mask summary on main tab
 
+## 2025-10-28 switch from try() to tryCatch
+## 2025-10-28 Log tab catches some messages, warnings, errors
+## 2025-10-29 mask from file assumed to be single-session
+
 library(secr)
 library(shinyjs)
-
-# requires package sf (polygon operations)
-# requires package stringr (for some string operations)
-# requires package readxl (for reading Excel files)
-# requires package parallel for max cores in simulate options (distributed with base R)
-# requires package tools for file path when reading shapefiles (distributed with base R)
 
 source('globalvars.R',      local = TRUE)
 source('tab-intro.R',       local = TRUE)
@@ -49,9 +47,15 @@ source('tab-options.R',     local = TRUE)
 source('tab-help.R',        local = TRUE)
 source('tab-about.R',       local = TRUE)
 
-if (compareVersion(as.character(secrversion), '5.1.0') < 0)
-  stop("secrapp 2.1 requires secr version 5.1.0 or later",
+if (compareVersion(as.character(secrversion), '5.3.0') < 0)
+  stop("secrapp 2.2 requires secr version 5.3.0 or later",
     call. = FALSE)
+
+# requires package sf (polygon operations)
+# requires package stringr (for some string operations)
+# requires package readxl (for reading Excel files)
+# requires package parallel for max cores in simulate options (distributed with base R)
+# requires package tools for file path when reading shapefiles (distributed with base R)
 
 if (!requireNamespace('stringr')) stop("please install package 'stringr'")
 if (!requireNamespace('sf')) stop("please install package 'sf'")
@@ -66,12 +70,12 @@ if (!requireNamespace('readxl')) stop("please install package 'readxl'")
 ui <- function(request) {
   
   fluidPage(
-    title = "secr app 2.1",
+    title = "secr app 2.2",
     includeCSS("secrstyle.css"),
     useShinyjs(),
     withMathJax(),
     br(),
-    navlistPanel(id = "navlist", widths = c(2,10), well = TRUE, "secr app 2.1",
+    navlistPanel(id = "navlist", widths = c(2,10), well = TRUE, "secr app 2.2",
                 tabintro, 
                 tabmain,
                 tabhabitat,
