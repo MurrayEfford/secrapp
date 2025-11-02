@@ -52,22 +52,24 @@ arraycode <- function (comment = FALSE) {
   if (args != "") {
     args <- paste0(", ", args)
   }
-  if (!is.null(traprv$data) && is.null(importrv$data) && is.null(secrrv$data)) {
-    if (input$datasource == "Text files") {
-      filename <- input$trapfilename[,"name"]
-    }
-    else {
-      filename <- input$trapxlsname[,"name"]
-      if (length(filename)==1) {
-        dataname <- input$trapxlsname[1,"datapath"]
-        if (!input$trapsheet %in% readxl::excel_sheets(dataname)) return()
-        if(!grepl("sheet", args)) {
-          sheet <- paste0(", sheet = '", input$trapsheet, "'")
-        }
+  if (input$datasource == "Text files") {
+    filename <- input$trapfilename[,"name"]
+  }
+  else if (input$datasource == "Excel files") {
+    filename <- input$trapxlsname[,"name"]
+    if (length(filename)==1) {
+      dataname <- input$trapxlsname[1,"datapath"]
+      if (!input$trapsheet %in% readxl::excel_sheets(dataname)) return()
+      if(!grepl("sheet", args)) {
+        sheet <- paste0(", sheet = '", input$trapsheet, "'")
       }
     }
-    
-    ## 2020-08-16
+  }
+  else {
+    filename <- ""
+  }
+  
+  if (nchar(filename[1])>0) {
     if (length(filename)>1) {
       cr <- ",\n   "
       filename <- paste0("c('", paste(filename, collapse = "','"), "')")
