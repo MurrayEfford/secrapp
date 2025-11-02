@@ -257,7 +257,7 @@ refit <- function (method = NULL, trace = FALSE, ncores = NULL) {
       object$method <- "Newton-Raphson"
     }
     if (!is.null(method)) args$method <- method
-    fitrv$value <- do.call(secr.fit, args)
+    fitrv$value <- log_and_run(do.call(secr.fit, args), "refit")
     OK <- tryCatch(
       expr = addtosummary(),
       error = function(e) return(NULL))
