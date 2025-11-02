@@ -100,9 +100,12 @@ otherfn <- function (fncall, ch, fitted) {
     RdDB    <- file.path(path, 'secr')
     fetchRdDB <- get('fetchRdDB', envir = asNamespace('tools'))
     # no need for warnings from incomplete topic names
-    Rdfile <- try(suppressWarnings(fetchRdDB(RdDB, basename(ff))), silent = TRUE)
-    if (!inherits(Rdfile, 'try-error')) {
-      tools::Rd2txt(Rd = Rdfile, options = list(underline_titles = FALSE))
+    Rdfile <- tryCatch(
+      expr = suppressWarnings(fetchRdDB(RdDB, basename(ff))), 
+      error = function(e) return(NULL),
+      silent = TRUE)
+    if (!is.null(Rdfile)) {
+        tools::Rd2txt(Rd = Rdfile, options = list(underline_titles = FALSE))
     }
   }
   else {
@@ -111,11 +114,13 @@ otherfn <- function (fncall, ch, fitted) {
     if (fitted) fitted <- fitrv$value  ## 2022-02-10
     if (ch) fncall <- gsub("ch", "capthist()", fncall)
     tr <- traprv$data
-    out <- try(eval(parse(text = fncall)), silent = TRUE)
-    if (inherits(out, "try-error")) {
-      err <- attr(out, 'condition')$message
+    out <- tryCatch(
+      expr = eval(parse(text = fncall)), 
+      error = function(e) e,
+      silent = TRUE)
+    if (inherits(out, "simpleError")) {
       cat("Did not compute\n")
-      err
+      out$message
     }
     else {
       out
@@ -265,7 +270,10 @@ output$resultsPrint <- renderPrint({
 output$codePrint <- renderPrint({
   cat("library(secr)\n")
   if (!is.null(traprv$data)) {
-    cat("\n# input data\n")
+    if (input$datasource == 'secr dataset')
+      cat("\n# use built-in secr dataset\n")
+    else 
+      cat("\n# input data\n")
     cat(arraycode())
   }
   if (!is.null(captrv$data) || !is.null(importrv$data) || !is.null(secrrv$data)) {
@@ -297,5 +305,16 @@ output$movesPrint <- renderPrint({
     cat("Longest move", round(maxm,1), "m\n")
     cat("by animal ID", IDmax, "\n")
   }
+})
+##############################################################################
+
+# Render the log content
+# 2025-10-30
+output$logPrint <- renderPrint({
+    if (length(log_data$messages) > 0) {
+      cat(paste(log_data$messages, collapse = ""))
+    } else {
+      cat("No calls, messages, warnings, or errors captured.")
+    }
 })
 ##############################################################################
