@@ -101,7 +101,6 @@ modellist <- function() {
 }
 
 fitmodel <- function(LLonly = FALSE) {
-  
   removeNotification(id = "error")
   if (!LLonly) {
     progress <- Progress$new(session, min = 1, max = 15)
@@ -112,8 +111,11 @@ fitmodel <- function(LLonly = FALSE) {
   
   model <- modellist()
   
-  modelotherargs <- try(eval(parse(text = paste0("list(", input$modelotherargs, ")"))), silent = TRUE)
-  if (inherits(modelotherargs, "try-error") && !LLonly) {
+  modelotherargs <- tryCatch(
+    expr = eval(parse(text = paste0("list(", input$modelotherargs, ")"))), 
+    error = function(e) return(NULL),
+    silent = TRUE)
+  if (is.null(modelotherargs) && !LLonly) {
     showNotification("model fit failed - check other arguments",
                      id = "error", type = "error", duration = errorseconds)
     fit <- NULL
@@ -141,19 +143,25 @@ fitmodel <- function(LLonly = FALSE) {
       # suppress warning "multi-catch likelihood used for single-catch traps"
       # force garbage collection for greater accuracy of timing
       gc(verbose = FALSE)
-      isolate(fit <- suppressWarnings(try(do.call("secr.fit", args), silent = TRUE)))
+      isolate(fit <- suppressWarnings(do.call("secr.fit", args)))
     }
     else {
-      isolate(fit <- try(do.call("secr.fit", args), silent = TRUE))
+      fit <- 
+        log_and_run(
+          expr = do.call("secr.fit", args), 
+          fitcode()
+        )
     }
-    if (inherits(fit, "try-error") && !LLonly) {
-      showNotification("model fit failed - check data, formulae and mask",
+    if (is.null(fit) && !LLonly) {
+        showNotification("model fit failed - check data, formulae and mask",
                        type = "error", id = "error", duration = errorseconds)
-      fit <- NULL
     }
   }
   if (LLonly) {
-    return(fit)
+    # if (is.null(fit)) 
+    #   stop("model failed to fit")
+    # else
+      return(fit)
   }
   else {
     updateRadioButtons(session, "resultsbtn", label = "", 
@@ -168,13 +176,17 @@ fitmodel <- function(LLonly = FALSE) {
       fitrv$dsurf <- NULL
     }
     
-    if (fit$fit$minimum == 1e+10) {
+    if (is.null(fit) || fit$fit$minimum == 1e+10) {
       showNotification("Model failed to fit",
                        type = "error", id = "error", duration = errorseconds)
     }
     else {
-      OK <- try(addtosummary())
-      if (inherits(OK, 'try-error')) {
+      OK <- tryCatch(
+        expr = addtosummary(),
+        error = function(e) return(NULL)  
+      )
+      
+      if (is.null(OK)) {
         showNotification("Problem adding results to summary",
                          type = "warning", id = "warning", duration = warningseconds)
       }
@@ -183,10 +195,16 @@ fitmodel <- function(LLonly = FALSE) {
                          type = "message", id = "lastaction", duration = seconds)
         
         if (input$masktype == "Build") {
-          x <- suppressWarnings(secr:::bufferbiascheck(fit, 
-                                                       buffer = round(input$buffer,2), biasLimit=0.01))
-          if (!is.null(x)) {
-            showNotification(x, 
+          x <- log_and_run(
+            expr = secr::bufferBiasCheck(
+              object = fit, 
+              buffer = round(input$buffer,2), 
+              biasLimit = 0.01
+            ),
+            ""
+          )
+          if (!is.null(x) && !x) {
+            showNotification("predicted buffer bias > 1%", 
                              type = "warning", id = "warning", duration = warningseconds)
           }
         }
@@ -240,9 +258,11 @@ refit <- function (method = NULL, trace = FALSE, ncores = NULL) {
     }
     if (!is.null(method)) args$method <- method
     fitrv$value <- do.call(secr.fit, args)
-    OK <- try(addtosummary())
-    if (inherits(OK, 'try-error')) {
-      showNotification("Problem adding refit to summary",
+    OK <- tryCatch(
+      expr = addtosummary(),
+      error = function(e) return(NULL))
+    if (is.null(OK)) {
+        showNotification("Problem adding refit to summary",
                        type = "warning", id = "warning", duration = warningseconds)
     }
     else {
