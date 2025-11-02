@@ -6,7 +6,9 @@ OVforest1.dbf
 OVforest1.shp
 OVforest1.shx
 ovtrap.txt
-secrdesignapp.Rproj
+OVmask.txt
+ovmask2.txt
+secrapp.Rproj
 readme.html
 checktiming.R
 Rprof1.out
