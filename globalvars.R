@@ -21,6 +21,9 @@ fittedresultsbtn <- c("summary", "predict", "derived", "other")
 secrversion <- packageVersion('secr')
 secryear <- substring(packageDate('secr'),1,4)
 
+publishedversion <- "5.3.0"
+publishedyear <- 2025
+
 polygondetectors <- c("polygon", "polygonX", "transect", "transectX")
 hazarddetectfn <- c("HHN", "HHR", "HEX", "HVP")
 
