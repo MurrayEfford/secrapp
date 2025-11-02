@@ -42,6 +42,7 @@ tabintro <- tabPanel(
            "The internal", 
            actionLink("helplink", "Help screen"),
            "details the options available in", strong("secrapp"), ".",
+           a(href="https://murrayefford.github.io/SECRbook/", target="_blank", "The SECR Book"), " should be useful.",
            "There is also a ", 
            a(href="https://www.otago.ac.nz/density/pdfs/secrapp-tutorial.html", target="_blank", "step-by-step guide."),
            
@@ -69,15 +70,15 @@ tabintro <- tabPanel(
            a("Density estimation in live-trapping studies.",
              href="https://www.otago.ac.nz/density/pdfs/Efford 2004 Oikos.pdf"), em("Oikos"), "106: 598-610.", br(),
            
+           paste0("Efford, M. G. (", publishedyear, ")"),
+           a(HTML("secr: Spatially explicit capture&ndash;recapture models."), href = "https://CRAN.R-project.org/package=secr"),
+           paste0(" R package version ", publishedversion, "."), br(),
+           
            "Efford, M. G., Borchers D. L. and Byrom, A. E. (2009)", 
            a(HTML("Density estimation by spatially explicit capture&ndash;recapture: likelihood-based methods."),
              href = "https://www.otago.ac.nz/density/pdfs/Efford Borchers & Byrom 2009.pdf"), 
            "In: D. L. Thomson, E. G. Cooch, M. J. Conroy (eds)",
            em("Modeling Demographic Processes in Marked Populations."), "Springer. Pp 255-269.", br(),
-           
-           paste0("Efford, M. G. (", secryear, ")"),
-           a(HTML("secr: Spatially explicit capture&ndash;recapture models."), href = "https://CRAN.R-project.org/package=secr"),
-           paste0(" R package version ", secrversion, "."), br(),
            
            "Efford, M. G., Dawson, D. K. and Robbins, C. R. (2004)",
            a(HTML("DENSITY: software for analysing capture&ndash;recapture data from passive detector arrays."), 
