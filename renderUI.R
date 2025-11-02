@@ -125,14 +125,19 @@ output$ncoresui <- renderUI({
 
 output$secrdesignurl <- renderUI ({
   if (is.null(fitrv$value) & !is.null(capthist())) {
-    LL <- try(fitmodel(LLonly = TRUE) , silent = TRUE)
-    LL <- try(fitmodel(LLonly = TRUE) , silent = TRUE)
-    LL <- try(fitmodel(LLonly = TRUE) , silent = TRUE)
-    
-    if (is.null(LL) || inherits(LL, 'try-error')) {
-      NULL # tag$a(" ")
+    LL <- tryCatch(
+      expr = fitmodel(LLonly = TRUE),
+      error = function(e) return(NULL),
+      silent = TRUE)
+    if (is.null(LL)) {
+      NULL 
     }
     else {
+      # repeat
+      LL <- tryCatch(
+        expr = fitmodel(LLonly = TRUE),
+        error = function(e) return(NULL),
+        silent = TRUE)
       timerv$expected <- timefn(LL)
       tags$a(paste0('Fit time ~', format(round(timerv$expected,2), nsmall=2), ' min'))
     }
