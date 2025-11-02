@@ -70,6 +70,10 @@ tabintro <- tabPanel(
            a("Density estimation in live-trapping studies.",
              href="https://www.otago.ac.nz/density/pdfs/Efford 2004 Oikos.pdf"), em("Oikos"), "106: 598-610.", br(),
            
+           paste0("Efford, M. G. (2025) "),
+           a(href="https://murrayefford.github.io/SECRbook/", target="_blank", em(HTML("The SECR Book. A handbook of spatially explicit capture&ndash;recapture methods. "))), 
+           "Version 1.0.1.", a(href="https://doi.org/10.5281/zenodo.15109938", target="_blank", " Zenodo 15109938"), br(),
+
            paste0("Efford, M. G. (", publishedyear, ")"),
            a(HTML("secr: Spatially explicit capture&ndash;recapture models."), href = "https://CRAN.R-project.org/package=secr"),
            paste0(" R package version ", publishedversion, "."), br(),
