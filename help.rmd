@@ -1,10 +1,10 @@
 ---
-title: "secr app 2.1"
+title: "secr app 2.2"
 author: "Murray Efford"
-date: '2024-11-26'
+date: '2025-11-03'
 output:
   html_document:
-    toc: yes
+    toc: true
     toc_depth: 2
 ---
 
@@ -22,7 +22,7 @@ output:
 
 # Introduction  <a name="introduction"></a>
 
-This Shiny application is an interactive interface to parts of the R package **secr** ([Efford 2024a](#references)). The current source code is available from https://GitHub.com/MurrayEfford/secrapp.
+This Shiny application is an interactive interface to parts of the R package **secr** ([Efford 2025a](#references)). The current source code is available from https://GitHub.com/MurrayEfford/secrapp.
 The [step-by-step guide] overlaps in scope with this document and may ultimately replace it.
 
 Documentation of **secr** is available at www.otago.ac.nz/density. For example:
@@ -43,8 +43,9 @@ Version 2.0 (November 2024) has these user-visible changes:
 * 'Clear' link on the Summary screen
 * spatial data processing uses package **sf** ([Pebesma 2018](*references)), replacing defunct rgdal
 
-Version 2.1 (November 2024) has these user-visible changes:
+Version 2.2 (November 2025) has these user-visible changes:
 
+* requires **secr** >= 5.3.0
 * new Re-fit action
 * re-styled <u>Habitat mask</u> box on main tab
 * option to specify mask spacing instead of nx
@@ -64,7 +65,7 @@ By default, input is from two text files, one for the detector layout and one fo
 
 The detector layout file typically should have three columns (trapID, x, y) with no headers. These may optionally be followed by binary usage codes (0/1), one per occasion. Columns after a '/' are interpreted as detector covariates. Headers are required for input from Excel files.
 
-Options for <u>detector type</u>  follow **secr** ([Efford 2024a](#references)): "multi" refers to a multi-catch trap; "proximity" to binary proximity detectors, and "count" to detectors that yield integer counts. Counts are assumed to be Poisson-distributed. Data from searches of areas or transects use the types "polygon", "polygonX", "transect" or "transectX" (Efford 2011; see also [secr-polygondetectors.pdf]).
+Options for <u>detector type</u>  follow **secr** ([Efford 2025a](#references)): "multi" refers to a multi-catch trap; "proximity" to binary proximity detectors, and "count" to detectors that yield integer counts. Counts are assumed to be Poisson-distributed. Data from searches of areas or transects use the types "polygon", "polygonX", "transect" or "transectX" (Efford 2011; see also [secr-polygondetectors.pdf]).
 
 If detector covariates are included then one or more covariate names should be provided (without quotes, separated by commas).
 
@@ -305,6 +306,11 @@ The default method assumes that \( \small \mbox{RSE}(\hat D)\) is the same in th
 
 As an alternative to conventional power analysis we can construct intervals for the estimated ratio of densities, given the true ratio and the sampling errors. The interval is the region between the upper and lower curves for a given true population change on the x axis. 
 
+### Log
+
+The log attempts to capture key messages, warnings and errors that would otherwise be sent to the console and 
+not be seen by the user. Coverage is patchy.
+
 ----------------------------------------------------
 
 # Habitat mask  <a name="habitatmask"></a>
@@ -380,11 +386,11 @@ Efford, M. G. (2011) Estimation of population density by
 spatially explicit capture--recapture analysis of data from area
 searches. *Ecology* **92**, 2202--2207.
 
-Efford, M. G. (2024a) secr: Spatially explicit capture--recapture models. 
-R package version 5.0.0. https://CRAN.R-project.org/package=secr
+Efford, M. G. (2025a) secr: Spatially explicit capture--recapture models. 
+R package version 5.3.0. https://CRAN.R-project.org/package=secr
 
-Efford, M. G. (2024b) secrdesign: Sampling design for spatially explicit 
-capture--recapture. R package version 2.9.2.
+Efford, M. G. (2025b) secrdesign: Sampling design for spatially explicit 
+capture--recapture. R package version 2.10.0.
   https://CRAN.R-project.org/package=secrdesign
 
 Efford, M. G. and Boulanger, J. (2019) Fast evaluation of study designs for 
