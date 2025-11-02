@@ -237,15 +237,26 @@ tabmain <- tabPanel(
             
             fluidRow(
               column(6, 
-                     radioButtons("resultsbtn", label = "", 
-                                  inline = TRUE, choices = defaultresultsbtn)
+                     # Apply CSS margin-top to adjust alignment
+                     div(style = "margin-top: 18px;", # Adjust this value (e.g., -10px, 0px, 5px)
+                         
+                         radioButtons("resultsbtn", label = "", 
+                                      inline = TRUE, choices = defaultresultsbtn)
+                     )
               ),
-              
               column(4,  
                      textInput("otherfunction", label="", placeholder = "e.g., RPSV(ch, CC=TRUE)")
               ),
               conditionalPanel("output.modelFitted", 
-                               column(2, br(), downloadLink("savebtn", HTML("<small>Save fitted model</small>"))))
+                               column(2, 
+                                      # Remove br() and use CSS for alignment
+                                      div(style = "padding-top: 18px;", 
+                                          downloadLink("savebtn", HTML("<small>Save fitted model</small>"))
+                                      )
+                               )
+              )
+              # conditionalPanel("output.modelFitted", 
+              #                  column(2, br(), downloadLink("savebtn", HTML("<small>Save fitted model</small>"))))
             ),
             fluidRow(
               column(12,
@@ -398,7 +409,16 @@ tabmain <- tabPanel(
                                                                post = "%",
                                                                width = "90%"))
                                           )
+                                 ),
+                                 
+                                 tabPanel("Log",
+                                          br(),
+                                          fluidRow(
+                                            column(12, 
+                                                   verbatimTextOutput("logPrint"))
+                                          )
                                  )
+                                          
                      ),
                      actionButton("hidegraphicsbtn", HTML("<small>hide</small>"), class = "btn-link")
                      
