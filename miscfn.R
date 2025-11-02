@@ -321,3 +321,39 @@ timefn <- function(LL) {
   seconds/60
 }
 ##############################################################################
+
+
+# Function to wrap and log an expression
+# It must be defined where it can access or be passed the reactiveValues object
+log_and_run <- function(expr, callstr = "") {
+  if (callstr != "") {
+    if (substring(callstr, nchar(callstr), nchar(callstr)) != "\n") callstr <- paste0(callstr, "\n")
+    shiny::isolate({
+      log_data$messages <- c(log_data$messages, paste0("CALL: [", trunc(Sys.time()), "]: ", callstr))
+    })
+  }
+  tryCatch (
+    withCallingHandlers( 
+      expr,
+      message = function(m) {
+        shiny::isolate({
+          log_data$messages <- c(log_data$messages, paste0("MESSAGE [", trunc(Sys.time()), "]: ", m$message))
+          invokeRestart("muffleMessage")
+        })
+      },
+      warning = function(w) {
+        shiny::isolate({
+          log_data$messages <- c(log_data$messages, paste0("WARNING [", trunc(Sys.time()), "]: ", w$message, "\n"))
+          invokeRestart("muffleWarning")
+        })
+      },
+      error = function(e) {
+        shiny::isolate({
+          log_data$messages <- c(log_data$messages, paste0("ERROR [", trunc(Sys.time()), "]: ", e$message, "\n"))
+        })
+        # Errors halt execution unless caught by tryCatch
+      }
+    ),
+    error = function(e) return(NULL)
+  )
+}
