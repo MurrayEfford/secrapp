@@ -31,5 +31,7 @@ polyrv      <- reactiveValues(data = NULL, clear = FALSE)
 maskrv      <- reactiveValues(data = NULL, clear = FALSE)
 covariaterv <- reactiveValues(data = NULL, clear = FALSE, covariates = NULL, names = character(0))
 
+# tentative log ex Gemini
+log_data <<- reactiveValues(messages = character(0))
 
 ##############################################################################
