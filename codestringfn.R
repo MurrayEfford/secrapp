@@ -275,3 +275,22 @@ fitcode <- function() {
   code
 }
 ##############################################################################
+
+fxicode <- function(add = FALSE) {
+  i <- input$animal
+  sessnum <- input$sess
+  border <- input$buffer
+  if (ms(capthist()))
+    code <- paste0("plot(ch[[", sessnum, "]]); ")  
+  else
+    code <- paste0("plot(ch); ")  
+  
+  code <- paste0(code,
+                 "fxiContour(fitted",
+                 ", i = ", i, 
+                 ", sessnum = ", sessnum, 
+                 ", border = ", border, 
+                 ", add = TRUE)\n") 
+  code
+}
+##############################################################################
