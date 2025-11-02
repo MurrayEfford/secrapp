@@ -181,9 +181,9 @@ fitmodel <- function(LLonly = FALSE) {
                        type = "error", id = "error", duration = errorseconds)
     }
     else {
-      OK <- tryCatch(
+      OK <- log_and_run(
         expr = addtosummary(),
-        error = function(e) return(NULL)  
+        ""     # no call message
       )
       
       if (is.null(OK)) {

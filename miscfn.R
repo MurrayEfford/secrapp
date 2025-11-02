@@ -93,14 +93,15 @@ modelstring <- function () {
     }
   }
   fn <- function(f) {
-    chf <- tryCatch(parse(text = f), error = function(e) NULL)
     model <- eval(f)
-    if (is.null(model))
-      return ("")
-    else {
-      chf <- as.character(eval(chf))
-      if (chf[3]=="1") "" else f
-    }
+    if (is.null(model)) return ("")
+    log_and_run(
+      {
+        chf <- parse(text = f)
+        chf <- as.character(eval(chf))
+        if (chf[3]=="1") "" else f
+      },
+    "")
   }
   out <- sapply(form, fn)
   out <- out[out != ""]
