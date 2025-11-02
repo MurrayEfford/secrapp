@@ -80,8 +80,10 @@ capthist <- reactive( {
       ch <- importrv$data
     }
     else {
-      ch <- try(suppressWarnings(make.capthist(captrv$data, traprv$data, 
-                                               fmt = input$fmt)))
+      ch <- log_and_run(
+        expr = make.capthist(captrv$data, traprv$data, fmt = input$fmt),
+        captcode()  
+      )
       if (filtercaptrv$value && !input$filtercapttext=="") {
         subset <- input$filtercapttext
         numsubset <- as.numeric(subset)
@@ -98,10 +100,9 @@ capthist <- reactive( {
         subsetcaptcall <- paste0("subset (ch,",subset, ")")
       }
     }
-    if (inherits(ch, 'try-error')) {
-      showNotification("invalid capture file or arguments; try again",
+    if (is.null(ch)) {
+        showNotification("invalid capture file or arguments; try again",
                        id = "invalidinput", type = "error", duration = invalidseconds)
-      ch <- NULL
     }
     else {
       if (ms(ch)) {
@@ -126,10 +127,9 @@ capthist <- reactive( {
       }
       
       if (filtercaptrv$value && !input$filtercapttext=="") {
-        ch <- try(eval(parse(text = subsetcaptcall)))
-        if (inherits(ch, "try-error")) {
-          ch <- NULL
-        }
+        ch <- tryCatch(
+          expr = eval(parse(text = subsetcaptcall)),
+          error = function(e) return(NULL))
       }
       
       if (ms(ch)) 
@@ -297,7 +297,7 @@ mask <- reactive( {
       else 
         maskargs$nx <- input$habnx
       
-      msk <- do.call(make.mask, maskargs)
+      msk <- log_and_run(do.call(make.mask, maskargs), maskcode())
       
       
       if (ms(msk) && !is.null(capthist())) names(msk) <- names(capthist())
@@ -322,7 +322,7 @@ mask <- reactive( {
   if (!is.null(covariaterv$data)) {
     removeNotification(id = "lastaction")
     msk <- addCovariates (msk, covariaterv$data)
-    covariates(msk) <- secr:::stringsAsFactors(covariates(msk))
+    covariates(msk) <- secr:::secr_stringsAsFactors(covariates(msk))
     
     purgemissing <- function (msk) {
       OK <- apply(!is.na(covariates(msk)),1,all)
@@ -347,10 +347,11 @@ mask <- reactive( {
     
     if (!is.null(covariates(msk))) {
       if (input$filtermasktext != "" && filtermaskrv$value) {
-        OKF <- try(with (covariates(msk), {
-          eval(parse(text = input$filtermasktext))
-        }), silent = TRUE)
-        if (!inherits(OKF, "try-error")) {
+        OKF <- tryCatch(
+          expr = with (covariates(msk), eval(parse(text = input$filtermasktext))),
+          error = function(e) return(NULL), 
+          silent = TRUE)
+        if (!is.null(OKF)) {
           msk <- subset (msk, OKF)
         }
       }
