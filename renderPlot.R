@@ -70,16 +70,18 @@ output$arrayPlot <- renderPlot( {
                          id = "warning", type = "warning", duration = warningseconds)
       else {
         if (input$animal>0) {
-          tmp <- try(fxiContour(fitrv$value, i = input$animal, 
-                                sessnum = input$sess, border = input$buffer, add = TRUE), 
-                     silent = TRUE)
+          tmp <- log_and_run(
+            expr = fxiContour(fitrv$value, i = input$animal, 
+                              sessnum = input$sess, border = input$buffer, add = TRUE), 
+            "fxiContour(...)")
         }
         else {
-          tmp <- try(fxiContour(fitrv$value, i = NULL, 
+          tmp <- log_and_run(
+            expr = fxiContour(fitrv$value, i = NULL, 
                                 sessnum = input$sess,  border = input$buffer, add = TRUE), 
-                     silent = TRUE)
+            "fxiContour(...)")
         }
-        if (inherits(tmp, 'try-error')) {
+        if (is.null(tmp)) {
           showNotification("error in fxiContour; consider smaller mask spacing",
                            id = "error", type = "error", duration = errorseconds)
         }
@@ -174,7 +176,7 @@ output$esaPlot <- renderPlot( height = 290, width = 400, {
   req(fitrv$value)
   par(mar=c(4,5,2,5))
   if (input$masktype == "Build") {
-    spscale <- secr:::spatialscale(fitrv$value, detectfn = input$detectfnbox, 
+    spscale <- secr:::secr_spatialscale(fitrv$value, detectfn = input$detectfnbox, 
                                    sessnum = input$sess)
     max.buffer <- max(input$buffer*1.5, 5*spscale)  # 2020-08-13 *1.5
     esaPlot(fitrv$value, session = input$sess, max.buffer = max.buffer, thin = 1)
@@ -214,7 +216,10 @@ output$maskPlot <- renderPlot({
   msk <- mask()
   if (ms(core)) {
     core <- core[[input$masksess]]
-    msk <- msk[[input$masksess]]
+    # 2025-10-29 assume read mask is for a single session
+    if (input$masktype == "Build") {  
+      msk <- msk[[input$masksess]]
+    }
   }
   
   par(mar=c(2,1,2,5), xaxs='i', yaxs='i', xpd = !input$frame)
@@ -328,10 +333,12 @@ output$DPlot <- renderPlot( {
   invalidateOutputs()
   par(mar=c(1,1,1,5))
   if (input$likelihoodbtn!='CL' && !is.null(fitrv$value)) {
-    col <- try(eval(parse(text = input$Dxycol)), silent = TRUE)
+    col <- tryCatch(
+      expr = eval(parse(text = input$Dxycol)), 
+      error = function(e) return(NULL),
+      silent = TRUE)
     plot (fitrv$dsurf, border = 0, scale = 1, title="D(x)", col = col)
     if (input$Dshowdetectors) {
-      # plot(traprv$data, add = TRUE)
       plot(traps(capthist()), add = TRUE)
     }
     if (input$Dshowdetections) {
