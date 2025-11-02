@@ -3,7 +3,10 @@ observe({
   req(input$importfilename)
   removeNotification("invalidinput")
   req(!importrv$clear)
-  ch <- readRDS(input$importfilename[1,"datapath"])
+  ch <- log_and_run(
+    readRDS(input$importfilename[1,"datapath"]),
+    captcode()
+  )
   if (inherits(ch, 'capthist')) {
     importrv$data <- ch
     traprv$data <- traps(ch)
@@ -81,8 +84,11 @@ observe({
   }
   args <- input$captotherargs
   mincol <- (input$fmt == "XY") + 4
-  tempargs <- try(eval(parse(text = paste0("list(", args, ")"))), silent = TRUE)
-  if (inherits(tempargs, "try-error")) {
+  tempargs <- tryCatch(
+    expr = eval(parse(text = paste0("list(", args, ")"))), 
+    error = function(e) return(NULL),
+    silent = TRUE)
+  if (is.null(tempargs)) {
     showNotification("arguments incomplete or invalid",
                      id = "invalidinput", type = "error", duration = invalidseconds)
   }
@@ -102,11 +108,13 @@ observe({
       }
       readcaptcall <- paste0("read.table (captdataname", args, ")")
     }
-    captrv$data <- try(eval(parse(text = readcaptcall)))
+    captrv$data <- tryCatch(
+      expr = eval(parse(text = readcaptcall)),
+      error = function(e) return(NULL))
     captrv$data <- as.data.frame(captrv$data)
     captrv$clear <- TRUE
-    if (!inherits(captrv$data, "data.frame") || ncol(captrv$data) < mincol) {
-      showNotification("invalid capture file or arguments; try again",
+    if (nrow(captrv$data) == 0 || ncol(captrv$data) < mincol) {
+        showNotification("invalid capture file or arguments; try again",
                        id = "invalidinput", type = "error", duration = invalidseconds)
       captrv$data <- NULL
     }
@@ -203,8 +211,10 @@ observe({
                                  stringsAsFactors = TRUE) 
       }
       else {
-        maskrv$data <- read.mask(input$maskfilename[1,4], header = TRUE, 
-                                 stringsAsFactors = TRUE) 
+        maskrv$data <- log_and_run(
+          read.mask(input$maskfilename[1,4], header = TRUE, 
+                                 stringsAsFactors = TRUE),
+          "read.mask()")
       }
       covariaterv$names <- names(covariates(maskrv$data))
       updateSelectInput(session, "maskcov", 
