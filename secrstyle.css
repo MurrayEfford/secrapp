@@ -117,6 +117,15 @@ background: ghostwhite;
   background: ghostwhite;
 }
 
+#logPrint{
+  color: black; 
+  font-size: 12px; 
+  overflow-y: scroll; 
+  min-height: 250px; 
+  max-height: 320px; 
+  background: ghostwhite;
+}
+
 #maskPrint{
   color:blue; 
   font-size: 12px; 
