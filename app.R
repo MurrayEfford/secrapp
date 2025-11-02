@@ -31,7 +31,7 @@
 ## new Re-fit button
 ## re-styled habitat mask summary on main tab
 
-## 2025-10-28 switch from try() to tryCatch
+## 2025-10-28 switch from try() to tryCatch()
 ## 2025-10-28 Log tab catches some messages, warnings, errors
 ## 2025-10-29 mask from file assumed to be single-session
 
