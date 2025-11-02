@@ -73,13 +73,14 @@ output$arrayPlot <- renderPlot( {
           tmp <- log_and_run(
             expr = fxiContour(fitrv$value, i = input$animal, 
                               sessnum = input$sess, border = input$buffer, add = TRUE), 
-            "fxiContour(...)")
+            fxicode())
         }
         else {
+          # all
           tmp <- log_and_run(
             expr = fxiContour(fitrv$value, i = NULL, 
                                 sessnum = input$sess,  border = input$buffer, add = TRUE), 
-            "fxiContour(...)")
+            fxicode())
         }
         if (is.null(tmp)) {
           showNotification("error in fxiContour; consider smaller mask spacing",
