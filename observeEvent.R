@@ -976,6 +976,8 @@ observeEvent(input$resetbtn, ignoreInit = TRUE, {
   removeNotification("warning")
   removeNotification("error")
   
+  log_data$messages <- character(0)
+  
   showNotification("all inputs reset", 
                    id = "lastaction", type = "message", duration = seconds)
   
@@ -1038,10 +1040,13 @@ updatebuffer <- function() {
       # 0.3 is a guess
       detectparlist <- list(0.3, RPSV(ch, CC = TRUE), 1)
       names(detectparlist) <- c(detectrv$value, 'sigma', 'z')
-      buff <- try(suggest.buffer(ch, detectfn = input$detectfnbox,
+      buff <- log_and_run(
+        expr = suggest.buffer(ch, detectfn = input$detectfnbox,
                                  detectpar = detectparlist,
-                                 noccasions = noccasions()[1], RBtarget = RBtarget))
-      if (inherits(buff, "try-error")) {
+                                 noccasions = noccasions()[1], RBtarget = RBtarget),
+        "suggest.buffer(...)"
+      )
+      if (is.null(buff)) {
         showNotification("suggest.buffer failed; set width manually",
                          id = "warning", type = "warning", duration = warningseconds)
       }
@@ -1120,6 +1125,7 @@ observeEvent(c(
   hideplotif (is.null(fitrv$value), "Detectfn")
   hideplotif (is.null(fitrv$value) , "Buffer")
   hideplotif (is.null(fitrv$value) , "Pxy")
+  hideplotif (FALSE, "Log")
   hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != 'Full'), "Dxy")
   hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != "Full"), "Power")
 })
@@ -1175,9 +1181,12 @@ observeEvent(c(input$trapfilename, input$trapxlsname, input$detector,
                  }
                }
                
-               tempargs <- try(eval(parse(text = paste0("list(", input$trapotherargs, ")"))), silent = TRUE)
-               if (inherits(tempargs, "try-error")) {
-                 showNotification("trap arguments incomplete or invalid", 
+               tempargs <- tryCatch(
+                 expr = eval(parse(text = paste0("list(", input$trapotherargs, ")"))), 
+                 error = function(e) return(NULL),
+                 silent = TRUE)
+               if (is.null(tempargs)) {
+                   showNotification("trap arguments incomplete or invalid", 
                                   id = "invalidinput", type = "error", duration = invalidseconds)
                }
                else {
@@ -1189,7 +1198,10 @@ observeEvent(c(input$trapfilename, input$trapxlsname, input$detector,
                  readtrapcall <-  paste0("read.traps (trapdataname, detector = input$detector", 
                                          args, sheet, ")")
                  
-                 temp <- try(eval(parse(text = readtrapcall)))
+                 temp <- log_and_run(
+                   expr = eval(parse(text = readtrapcall)),
+                   arraycode()
+                 )
                  if (!inherits(temp, "traps")) {
                    showNotification("invalid trap file or arguments; try again",
                                     id = "invalidinput", type = "error", duration = invalidseconds)
@@ -1230,7 +1242,8 @@ observeEvent(c(input$datasource, input$secrdatabox), ignoreInit = TRUE, {
   traprv$data <- NULL
   fitrv$value <- NULL
   if (input$datasource == "secr dataset") {
-    ch <- get(input$secrdatabox)
+    callstr <- paste0("ch <- ", input$secrdatabox)
+    ch <- log_and_run(get(input$secrdatabox), callstr)
     if (inherits(ch, 'capthist')) {
       secrrv$data <- ch
       traprv$data <- traps(ch)
