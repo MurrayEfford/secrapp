@@ -71,7 +71,7 @@ ui <- function(request) {
   
   fluidPage(
     title = "secr app 2.2",
-    includeCSS("secrstyle.css"),
+    includeCSS("www/secrstyle.css"),
     useShinyjs(),
     withMathJax(),
     br(),
@@ -151,9 +151,9 @@ server <- function(input, output, session) {
   # apparently incompatible with bookmarking 2019-01-17
   
   session$onSessionEnded(function() {
-      stopApp()
+    stopApp()
   })
-
+  
   ##############################################################################
 }
 ## end of server logic
