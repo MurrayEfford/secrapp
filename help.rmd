@@ -1,7 +1,7 @@
 ---
 title: "secr app 2.2"
 author: "Murray Efford"
-date: '2025-11-03'
+date: '2025-11-05'
 output:
   html_document:
     toc: false
@@ -25,11 +25,7 @@ output:
 This Shiny application is an interactive interface to parts of the R package **secr** ([Efford 2025a](#references)). The current source code is available from https://GitHub.com/MurrayEfford/secrapp.
 The [step-by-step guide] overlaps in scope with this document and may ultimately replace it.
 
-Documentation of **secr** is available at www.otago.ac.nz/density. For example:
-
-[secr-manual.pdf]   (details of each function)  
-[secr-datainput.pdf]    
-[secr-overview.pdf]  
+Documentation of **secr** is available at www.otago.ac.nz/density and in the online [SECR book] ([Efford 2025b](#references)). 
 
 The analyses available through the Shiny app are a subset of those in **secr**. Support for multi-session analyses is limited.
 
@@ -65,7 +61,7 @@ By default, input is from two text files, one for the detector layout and one fo
 
 The detector layout file typically should have three columns (trapID, x, y) with no headers. These may optionally be followed by binary usage codes (0/1), one per occasion. Columns after a '/' are interpreted as detector covariates. Headers are required for input from Excel files.
 
-Options for <u>detector type</u>  follow **secr** ([Efford 2025a](#references)): "multi" refers to a multi-catch trap; "proximity" to binary proximity detectors, and "count" to detectors that yield integer counts. Counts are assumed to be Poisson-distributed. Data from searches of areas or transects use the types "polygon", "polygonX", "transect" or "transectX" (Efford 2011; see also [secr-polygondetectors.pdf]).
+Options for <u>detector type</u>  follow **secr** ([Efford 2025a](#references)): "multi" refers to a multi-catch trap; "proximity" to binary proximity detectors, and "count" to detectors that yield integer counts. Counts are assumed to be Poisson-distributed. Data from searches of areas or transects use the types "polygon", "polygonX", "transect" or "transectX" (Efford 2011; Efford 2025b).
 
 If detector covariates are included then one or more covariate names should be provided (without quotes, separated by commas).
 
@@ -101,45 +97,40 @@ The Summary table includes the filter text unless that summary field is deselect
 
 ## Model
 
-<table style="width:800px">
+Detection function
+
+<table style="width:600px">
     <colgroup>
-       <col span="1" style="width: 20%;">
        <col span="1" style="width: 7%;">
        <col span="1" style="width: 25%;">
        <col span="1" style="width: 48%;">
     </colgroup>
   <tr>
-    <td> Detection function </td>
     <td> HN </td> 
     <td> halfnormal </td>
     <td> \( \small g(d) = -g_0 \exp\{-d^2/(2\sigma^2)\} \) </td>
   </tr>
   <tr>
-    <td> </td>
     <td> HR </td>
     <td> hazard rate</td>
     <td> \( \small  g(d) = -g_0 (1 - \exp(-(d/\sigma)^{-z})) \) </td>
   </tr>
   <tr>
-    <td> </td>
     <td> EX </td> 
     <td> negative exponential</td>
     <td> \( \small  g(d) = -g_0 \exp(-d/\sigma) \) </td>
   </tr>
   <tr>
-    <td> </td>
     <td> HHN </td> 
     <td> hazard halfnormal</td>
     <td> \( \small  \lambda(d) = -\lambda_0 \exp(-d^2/(2\sigma^2)) \) </td>
   </tr>
   <tr>
-    <td> </td>
     <td> HHR </td>
     <td> hazard hazard rate </td>
     <td> \( \small  \lambda(d) = -\lambda_0 (1 - \exp(-(d/\sigma)^{-z})) \)  </td>
   </tr>
   <tr>
-    <td> </td>
     <td> HEX </td>
     <td> hazard negative exponential</td>
     <td> \( \small  \lambda(d) = -\lambda_0 \exp(-d/\sigma) \) </td>
@@ -147,6 +138,13 @@ The Summary table includes the filter text unless that summary field is deselect
 </table> 
   
 <br>
+
+The supported <u>detection functions</u> are a subset of those allowed in **secr** (currently 'HN', 'HR', 'EX', 'HHN', 'HHR', 'HEX'). 
+These relate either the probability (g(d)) or hazard (\\( \small \lambda \\)) of detection at a particular detector on a particular sampling occasion  to the distance \\( \small d \\) of the detector from its home-range centre. The probability of detection is \\( \small g(d) = 1 - \exp \{ - \lambda(d)\} \\).
+
+<br>
+Other settings
+
 <table style="width:600px">
     <colgroup>
        <col span="1" style="width: 27%;">
@@ -168,16 +166,13 @@ The Summary table includes the filter text unless that summary field is deselect
 
 <br>
 
-The supported <u>detection functions</u> are a subset of those allowed in **secr** (currently 'HN', 'HR', 'EX', 'HHN', 'HHR', 'HEX'). 
-These relate either the probability (g(d)) or hazard (\( \small \lambda\)) of detection at a particular detector on a particular sampling occasion  to the distance \( \small d\) of the detector from its home-range centre. The probability of detection is \( \small g(d) = 1 - \exp \{ - \lambda(d)\}\).
-
 <a name="distribution"></a>
 
 The <u>Distribution</u> radio button toggles between two models for the number of detected individuals $n$. The "Binomial" option corresponds to fixed number $N$ in the masked area and a binomial point process for the distribution of activity centres.  The "Poisson" option corresponds to Poisson $N$ and a Poisson point process for activity centres. 
 
 <a name="hcov"></a>
 
-The <u>Mixture hcov</u> select input allows the user to choose a variable defining a 2-level mixture class from among the individual covariates. This is passed to `secr.fit` as the argument 'hcov'. The covariate should take two non-missing values (e.g., 'F','M'); missing values are allowed. The mixing proportion 'pmix' is included in the model automatically when hcov is specified. To estimate mixture-specific values of a parameter include $\sim$h2 in its formula (e.g., lambda0$\sim$h2). See [secr-finitemixtures.pdf] for more.
+The <u>Mixture hcov</u> select input allows the user to choose a variable defining a 2-level mixture class from among the individual covariates. This is passed to `secr.fit` as the argument 'hcov'. The covariate should take two non-missing values (e.g., 'F','M'); missing values are allowed. The mixing proportion 'pmix' is included in the model automatically when hcov is specified. To estimate mixture-specific values of a parameter include $\sim$h2 in its formula (e.g., lambda0$\sim$h2). See [Efford 2025b](#references) for more.
 
 Other arguments separated by commas may be used to customise the call to `secr.fit`. Attempts here to change 'capthist', 'mask', 'model' or 'detectfn' are ignored, and 'trace' is always FALSE.
 
@@ -273,11 +268,11 @@ Fitted detection function on the hazard and probability scales.
 
 ### Buffer   <a name="esaplot"></a>
 
-Predicted effect of buffer width on density estimates. The plot is generated with `esa.plot(fit)`. A red vertical line indicates the buffer that was used (there is no line when the mask has been read from a file).
+Predicted effect of buffer width on density estimates. The plot is generated with `esaPlot(fit)`. A red vertical line indicates the buffer that was used (there is no line when the mask has been read from a file).
 
 ### Pxy
 
-Contours of the overall detection probability \( \small p_\cdot(\mathbf x)\) under the fitted model ('Pxy' is the label that has been used for this quantity in the Windows application Density).  Settings in Options toggle the display between filled and unfilled contour plots, and determine whether contours are labelled. The requested contour levels are 0.1, 0.2, ..., 0.9, but higher contours may be missing. Click on the plot to find the value at a point.
+Contours of the overall detection probability \\( \small p_\cdot(\mathbf x) \\) under the fitted model ('Pxy' is the label that has been used for this quantity in the Windows application Density).  Settings in Options toggle the display between filled and unfilled contour plots, and determine whether contours are labelled. The requested contour levels are 0.1, 0.2, ..., 0.9, but higher contours may be missing. Click on the plot to find the value at a point.
 
 ### Dxy
 
@@ -294,13 +289,13 @@ Two styles of plot are offered (see Options | Power plot)
 
 #### Power for test of null hypothesis 
 
-Probability of detecting a change in density in a 2-survey comparison as a function of effect size for a given expected \( \small \mbox{RSE}(\hat D)\). See Efford and Boulanger (2019) for the computation method.
+Probability of detecting a change in density in a 2-survey comparison as a function of effect size for a given expected \\( \small \mbox{RSE}(\hat D) \\). See Efford and Boulanger (2019) for the computation method.
 
-Effect size is the ratio of final density \( \small D_2\) to initial density \( \small D_1\) expressed as a percentage. The alpha level is specified in Options (default \( \small \alpha = 0.05\)). 
+Effect size is the ratio of final density \\( \small D_2 \\) to initial density \\( \small D_1 \\) expressed as a percentage. The alpha level is specified in Options (default \\( \small \alpha = 0.05 \\)). 
 
 The curve is initially computed for the rule-of-thumb RSE from the current design. Use the slider to vary this. Especially, consider adding a safety margin for underestimation of RSE.
 
-The default method assumes that \( \small \mbox{RSE}(\hat D)\) is the same in the initial and final surveys. It is more likely that \( \small \mbox{RSE}(\hat D)\) will increase as density declines. An adjustment is applied to the final RSE when the 'Adjust RSE' box is ticked:  \( \small \mbox{RSE}(\hat D_2) =   \sqrt {D_1/D_2} \mbox{RSE}(\hat D_1) \).
+The default method assumes that \\( \small \mbox{RSE}(\hat D) \\) is the same in the initial and final surveys. It is more likely that \\( \small \mbox{RSE}(\hat D) \\) will increase as density declines. An adjustment is applied to the final RSE when the 'Adjust RSE' box is ticked:  \\( \small \mbox{RSE}(\hat D_2) =   \sqrt {D_1/D_2} \mbox{RSE}(\hat D_1) \\).
 
 #### Confidence interval for population change
 
@@ -358,7 +353,7 @@ Multithreading allows some operations to be performed in parallel for faster mod
 
 A model will not be fitted if the predicted time exceeds a limit, currently 10 minutes. The prediction is quite rough as there is no obvious way to anticipate the number of likelihood evaluations that will be required. 
 
-----------------------------------------------------
+<!-- ---------------------------------------------------- -->
 
 <!-- # Bookmarking  <a name="bookmark"></a> -->
 
@@ -389,7 +384,10 @@ searches. *Ecology* **92**, 2202--2207.
 Efford, M. G. (2025a) secr: Spatially explicit capture--recapture models. 
 R package version 5.3.0. https://CRAN.R-project.org/package=secr
 
-Efford, M. G. (2025b) secrdesign: Sampling design for spatially explicit 
+Efford, M. G. (2025b) The SECR Book. A handbook of spatially explicit capture&ndash;recapture methods. Version 1.0.1.
+Zenodo 15109938. Latest version online at https://murrayefford.github.io/SECRbook/.
+
+Efford, M. G. (2025c) secrdesign: Sampling design for spatially explicit 
 capture--recapture. R package version 2.10.0.
   https://CRAN.R-project.org/package=secrdesign
 
@@ -401,17 +399,12 @@ Pebesma, E. (2018) Simple Features for R: Standardized Support for Spatial Vecto
 
 ----------------------------------------------------
 
-[secrdesign-Enrm.pdf]: http://www.otago.ac.nz/density/pdfs/secrdesign-tools.pdf
-[secr-polygondetectors.pdf]: http://www.otago.ac.nz/density/pdfs/secr-polygondetectors.pdf
-[secr-finitemixtures.pdf]: http://www.otago.ac.nz/density/pdfs/secr-finitemixtures.pdf
-[secr-manual.pdf]: http://www.otago.ac.nz/density/pdfs/secr-manual.pdf
-[secr-datainput.pdf]: http://www.otago.ac.nz/density/pdfs/secr-datainput.pdf
-[secr-overview.pdf]: http://www.otago.ac.nz/density/pdfs/secr-overview.pdf
+[secr-manual.pdf]: https://www.otago.ac.nz/density/pdfs/secr-manual.pdf
+[secr-datainput.pdf]: https://www.otago.ac.nz/density/pdfs/secr-datainput.pdf
+[secr-overview.pdf]: https://www.otago.ac.nz/density/pdfs/secr-overview.pdf
 
-[bias.D]: https://www.otago.ac.nz/density/html/suggest.buffer.html
-[detectfn]: https://www.otago.ac.nz/density/html/detectfn.html
-[pdotContour]: https://www.otago.ac.nz/density/html/contour.html
-[esa.plot]: https://www.otago.ac.nz/density/html/esaplot.html
 [subset.capthist]: https://www.otago.ac.nz/density/html/subset.capthist.html
 
 [step-by-step guide]: https://www.otago.ac.nz/density/pdfs/secrapp-tutorial.html
+
+[SECR book]: https://murrayefford.github.io/SECRbook/
