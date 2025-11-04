@@ -119,7 +119,7 @@ background: ghostwhite;
 
 #logPrint{
   color: black; 
-  font-size: 12px; 
+  font-size: 11px; 
   overflow-y: scroll; 
   min-height: 250px; 
   max-height: 320px; 
