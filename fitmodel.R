@@ -177,6 +177,7 @@ fitmodel <- function(LLonly = FALSE) {
     }
     
     if (is.null(fit) || fit$fit$minimum == 1e+10) {
+      log_and_run(stop("Model failed to fit"), "")
       showNotification("Model failed to fit",
                        type = "error", id = "error", duration = errorseconds)
     }
