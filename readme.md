@@ -1,12 +1,20 @@
 # secrapp 2.2
 
-This Shiny app performs simple spatially explicit capture-recapture analyses using the 
-R package [secr](https://CRAN.R-project.org/package=secr). For details see the 
-Help tab, the 
-[step-by-step tutorial](https://www.otago.ac.nz/density/pdfs/secrapp-tutorial.html), 
-and the [Density web page](https://www.otago.ac.nz/density/) .
+This Shiny app performs simple spatially explicit capture--recapture analyses using the 
+R package [secr](https://CRAN.R-project.org/package=secr) (Efford 2025a). For details see the internal 
+Help tab, the [step-by-step tutorial](https://www.otago.ac.nz/density/pdfs/secrapp-tutorial.html), 
+the online [SECR Book] (Efford 2025b), and the [Density web page](https://www.otago.ac.nz/density/). 
+See help.rmd for recent changes.
 
-To run secrapp directly from GitHub on your own machine, paste this code into an R session.
+### Usage
+
+Click this link to run [secrapp](https://www.stats.otago.ac.nz/secrapp) version 2.0 in your web 
+browser from a University of Otago server without installing it locally (2.2 will follow soon).
+
+It may be better to run **secrapp** on your own machine: models may fit faster, and you can 
+install the latest the GitHub version. Also, there is a limit to the number of simultaneous users on the server.
+
+To run secrapp in a local R session directly from GitHub, paste and run this code at the R command prompt:
 
 ```r
 install.packages("shinyjs")  # skip if already installed; installs 'shiny' if needed
@@ -19,13 +27,7 @@ Note:
 - for some functions you will also need the packages 'sf', 'stringr', and 'readxl'  
 - secrapp 2.2 requires secr 5.3.0 or a later version.
 
-Version 2.0 of the app may be run in a web browser without any setup by 
-following this [link](https://www.stats.otago.ac.nz/secrapp). 
-This arrangement has limited capacity for simultaneous users.
-
-See help.rmd for recent changes.
-
-----
+### Test data
 
 Some test data are provided here; see the **secr** help pages for details. 
 Further example datasets may be found on the 
@@ -53,3 +55,13 @@ OVforestL.shp |||
 OVforestL.shx |||
 ovenCHp.xlsx | Ovenbird proximity data as Excel spreadsheet | Data input |
 ovenCHp.rds | Saved ovenbird proximity dataset | Data input |
+
+### References
+
+Efford, M. G. (2025a) secr: Spatially explicit capture--recapture models. 
+R package version 5.3.0. https://CRAN.R-project.org/package=secr
+
+Efford, M. G. (2025b The SECR Book. A handbook of spatially explicit capture&ndash;recapture methods. Version 1.0.1.
+Zenodo 15109938. Latest version online at https://murrayefford.github.io/SECRbook/.
+
+[SECR book]: https://murrayefford.github.io/SECRbook/
