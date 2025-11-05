@@ -48,6 +48,7 @@ Version 2.2 (November 2025) has these user-visible changes:
 * optional 'method' field in Summary
 * user control of summary prefix (e.g. 'Analysis')
 * improved notifications
+* Log tab in Results, with improved error reporting
 
 # Main screen  <a name="main"></a>
 
