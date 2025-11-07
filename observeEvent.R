@@ -977,6 +977,7 @@ observeEvent(input$resetbtn, ignoreInit = TRUE, {
   removeNotification("error")
   
   log_data$messages <- character(0)
+  updateTabsetPanel(session, "plottabs", selected = "Code")
   
   showNotification("all inputs reset", 
                    id = "lastaction", type = "message", duration = seconds)
