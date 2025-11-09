@@ -8,8 +8,8 @@ See help.rmd for recent changes.
 
 ### Usage
 
-Click this link to run [secrapp](https://www.stats.otago.ac.nz/secrapp) version 2.0 in your web 
-browser from a University of Otago server without installing it locally (2.2 will follow soon).
+Click this link to run [secrapp](https://www.stats.otago.ac.nz/secrapp) version 2.2 in your web 
+browser from a University of Otago server without installing it locally.
 
 It may be better to run **secrapp** on your own machine: models may fit faster, and you can 
 install the latest the GitHub version. Also, there is a limit to the number of simultaneous users on the server.
