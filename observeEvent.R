@@ -1127,8 +1127,8 @@ observeEvent(c(
   hideplotif (is.null(fitrv$value) , "Buffer")
   hideplotif (is.null(fitrv$value) , "Pxy")
   hideplotif (FALSE, "Log")
-  hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != 'Full'), "Dxy")
-  hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != "Full"), "Power")
+  hideplotif (is.null(fitrv$value) || ((input$likelihoodbtn != "Full") && !fitrv$value$details$relativeD), "Dxy")
+  hideplotif (is.null(fitrv$value) || (input$likelihoodbtn != 'Full'), "Power")
 })
 
 ## read or re-read trap file
